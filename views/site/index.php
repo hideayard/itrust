@@ -120,7 +120,7 @@ $i=1;
     </div>
 </div>  
 
-<section class="support-team-block">
+<section class="">
 
   <div class="site-section">
     <div class="container">
