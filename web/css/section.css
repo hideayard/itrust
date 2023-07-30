@@ -1,0 +1,27 @@
+#left-loader {
+    position: absolute;
+    background-color: #333;
+    opacity: 0.7;
+    height: 100%;
+    width: 100%;
+    left: 0;
+    top: 0;
+    z-index: 1;
+
+    /* display: flex; */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    display: none;
+}
+
+#left-loader img {
+    height: 100px;
+    width: 100px;
+}
+
+#form-video-url,
+#form-video-duration,
+#form-resource-url {
+    display: none;
+}

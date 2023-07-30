@@ -1,0 +1,42 @@
+<?php
+
+use yii\helpers\Html;
+use kartik\detail\DetailView;
+use kartik\datecontrol\DateControl;
+
+/**
+ * @var yii\web\View $this
+ * @var app\models\Users $model
+ */
+
+$this->title = "View user";
+$this->params['breadcrumbs'][] = ['label' => 'Users', 'url' => ['index']];
+$this->params['breadcrumbs'][] = $model->user_nama;
+?>
+<div class="users-view">
+
+    <?= DetailView::widget([
+        'model' => $model,
+        'condensed' => false,
+        'hover' => true,
+        'mode' => Yii::$app->request->get('edit') == 't' ? DetailView::MODE_EDIT : DetailView::MODE_VIEW,
+        // 'panel' => [
+        //     'heading' => $this->title,
+        //     'type' => DetailView::TYPE_INFO,
+        // ],
+        'attributes' => [
+            'user_name',
+            'user_nama',
+            'user_hp',
+            'user_email:email',
+            'user_tipe',
+            'user_foto:ntext',
+            'user_status',
+        ],
+        'deleteOptions' => [
+            'url' => ['delete', 'id' => $model->user_id],
+        ],
+        'enableEditMode' => false,
+    ]) ?>
+
+</div>

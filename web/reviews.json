@@ -1,0 +1,241 @@
+{
+   "html_attributions" : [],
+   "result" : {
+      "address_components" : [
+         {
+            "long_name" : "No.12",
+            "short_name" : "No.12",
+            "types" : [ "street_number" ]
+         },
+         {
+            "long_name" : "Jalan Tambak Windu I",
+            "short_name" : "Jl. Tambak Windu I",
+            "types" : [ "route" ]
+         },
+         {
+            "long_name" : "RT.003",
+            "short_name" : "RT.003",
+            "types" : [ "administrative_area_level_7", "political" ]
+         },
+         {
+            "long_name" : "RW.08",
+            "short_name" : "RW.08",
+            "types" : [ "administrative_area_level_6", "political" ]
+         },
+         {
+            "long_name" : "Tambakrejo",
+            "short_name" : "Tambakrejo",
+            "types" : [ "administrative_area_level_4", "political" ]
+         },
+         {
+            "long_name" : "Kecamatan Simokerto",
+            "short_name" : "Kec. Simokerto",
+            "types" : [ "administrative_area_level_3", "political" ]
+         },
+         {
+            "long_name" : "Surabaya",
+            "short_name" : "Kota SBY",
+            "types" : [ "administrative_area_level_2", "political" ]
+         },
+         {
+            "long_name" : "Jawa Timur",
+            "short_name" : "Jawa Timur",
+            "types" : [ "administrative_area_level_1", "political" ]
+         },
+         {
+            "long_name" : "Indonesia",
+            "short_name" : "ID",
+            "types" : [ "country", "political" ]
+         },
+         {
+            "long_name" : "60142",
+            "short_name" : "60142",
+            "types" : [ "postal_code" ]
+         }
+      ],
+      "adr_address" : "\u003cspan class=\"street-address\"\u003eJl. Tambak Windu I No.12, RT.003/RW.08\u003c/span\u003e, \u003cspan class=\"extended-address\"\u003eTambakrejo, Kec. Simokerto\u003c/span\u003e, \u003cspan class=\"locality\"\u003eSurabaya\u003c/span\u003e, \u003cspan class=\"region\"\u003eJawa Timur\u003c/span\u003e \u003cspan class=\"postal-code\"\u003e60142\u003c/span\u003e, \u003cspan class=\"country-name\"\u003eIndonesia\u003c/span\u003e",
+      "business_status" : "CLOSED_TEMPORARILY",
+      "formatted_address" : "Jl. Tambak Windu I No.12, RT.003/RW.08, Tambakrejo, Kec. Simokerto, Surabaya, Jawa Timur 60142, Indonesia",
+      "formatted_phone_number" : "0882-0090-57770",
+      "geometry" : {
+         "location" : {
+            "lat" : -7.246813899999998,
+            "lng" : 112.7559283
+         },
+         "viewport" : {
+            "northeast" : {
+               "lat" : -7.245414619708496,
+               "lng" : 112.7572939802915
+            },
+            "southwest" : {
+               "lat" : -7.248112580291501,
+               "lng" : 112.7545960197085
+            }
+         }
+      },
+      "icon" : "https://maps.gstatic.com/mapfiles/place_api/icons/v1/png_71/generic_business-71.png",
+      "icon_background_color" : "#7B9EB0",
+      "icon_mask_base_uri" : "https://maps.gstatic.com/mapfiles/place_api/icons/v2/generic_pinlet",
+      "international_phone_number" : "+62 882-0090-57770",
+      "name" : "iTRUST | SERVICE IPHONE | SURABAYA",
+      "permanently_closed" : true,
+      "photos" : [
+         {
+            "height" : 3456,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcLej6RBTQRwWv69E6DN2WahRkd3OkuQnS5hiOR5MHNGwxGXyAQ9Fq9TUu92Tlju8-Tg4boE017Ujt8b8VhWeHRS8fsUeLydJpt7OW3U1aK-kPqy8bmeOnkEM9vO3ohweR1XBoVVE99DiuQeKGSYD13GA0B2GqCzZ9CtLo1dHDMhJDCu",
+            "width" : 5184
+         },
+         {
+            "height" : 3456,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcJ3exfvzAiJXPrdK9r_ujsXo85HEBFUqGt_SYeVNRbWmQ8lAmF4Hqof64fzKnW6B2KTqOKp2le5OxgemQhlxEyWEj-5UsyPdcv4JK6yj9-AP_CZKFRDGaGc9Abdk1ScqzlRWKQcOisS2MfplLI9yePdDsX8bfOefyH8jvpU_alAxLF_",
+            "width" : 5184
+         },
+         {
+            "height" : 3456,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcJ3xqV2ArH1VPtF9v2_eIvWOPGIKz6CH0eDJ0c5iarfyGOiLdsGO0ljPECfFUk6beU2VnnweTgsuESHVvtMgT_suw76zpq9YfN1sqK3hYRArW2j1Vxg-UxXMLhwmW_8Du_fx8C4vke8ZoNI2-Yc5QstSqo7ks4sJI0YFGYdk6EcKfR7",
+            "width" : 5184
+         },
+         {
+            "height" : 3025,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcLcRH_S_NHpCN6DDna7_9F5nB1RZCPTkYoH_0CU-Yr6NxEmFTqw3vVyJegc2he8hgrcvDtvcsrtP7IUnh-CJeDgatJHvhabS7x9ZCuSpJUjrHR3aG_ZdhGd59Vxr8jQKOIh03vXXGyqZr5k7C9qOs3_X-pj1lxg6CWJ6iqB-lJMiUYn",
+            "width" : 3024
+         },
+         {
+            "height" : 3456,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcIB-aM7as1mJ4GMnbkKWMGlHYhou1V4oSYMbDj19I9Xp-l1aOxUcAyQe9N2EaBUyx2n1q_MCN466hzWtl-lDN9w9YLIcWWHsUghJ_RGZHuZgzkOcpRv5H6C2MctIkTgwTeBDz-WwwgNcJNvCcnq0MNiEhCjS7_B2MXhbch-rBHq4BHI",
+            "width" : 5184
+         },
+         {
+            "height" : 1434,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/109180542405451166572\"\u003eYusnan Arif Setyawan\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcIsN2b7pPSSjdDlqbaPpekFxU3wXi1pwC4p-ukv_DFSP2iGMtUt9ajdNIdrd91ICbEp7OIuZvwwStp_7M0jwIh6LYUjRpJNIrkLVCaXmKLW7t6ZHnVaGX2rf0DkwRd7Pc80XVjdO3D4ADXfHWBF1gnHHuTEZVVqGOVJ-Bhu2-Xwkdp7",
+            "width" : 1080
+         },
+         {
+            "height" : 1077,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/109180542405451166572\"\u003eYusnan Arif Setyawan\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcLVxcSgZzAUA55dpEEsE-mJx7LSo6uqeIzDoo4Jr3lgbG1oPhgoYHWcZldy_L9ak8iAXHlLOTClmkl5TP9vWpWuJqW-DlsX2481hwe57QjSaImhMVLfUUTtyVFVu7nq2MJYWC66QJa7WHNFjnRcL6xR72CvtlQ-zM7Jika3FURkT5tp",
+            "width" : 912
+         },
+         {
+            "height" : 3511,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcJ_SE69kfi6AIJKKP0xfpT6xdecZaVWeHVK8MFfMeYu9oOIUfOOKfMuVVrW0NndNn-9VCGfHzLKGmmyluhzxmf8D0WupECKMiB7hv2VUGJQj1Be-iw6chXwBjoOliNeaZXCJplPfaMguRRrdHG5nqbtzDAgQCakjXWTXjzvzzuQVkyS",
+            "width" : 2484
+         },
+         {
+            "height" : 608,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcJKqXcwH08hGplcNEJPLThSwbk43SgXeKCHl2xlZD2fw6j-Ah7v7iqMaixvG26PDT040zzHeMobnhOfy5_HVPnshPthuKdeEYiaqQWnpXRR4Ckobzur4kMbNnHEbQrAoy9oC7KeDuC1zYoxBk_yBxYO-F6w2906a537Ge_XoCzq5FvL",
+            "width" : 1080
+         },
+         {
+            "height" : 1625,
+            "html_attributions" : [
+               "\u003ca href=\"https://maps.google.com/maps/contrib/116327622415725040976\"\u003eiTRUST | SERVICE IPHONE | SURABAYA\u003c/a\u003e"
+            ],
+            "photo_reference" : "Aaw_FcLmgbU_1ouXv6Xo6RWMjTXt4EcRCQagS5aXHUjL6apAleQ909sKuke2rGvWKsyXcrdwY_8z9R3WsHaw1Z2Rlmh2XyPTYr-Er1zpjHJblw97Se5c8_dJZ_xKRm4isRTxXKSJ7lV40x-UODvIqP7U7Q7hiT1D0fORr3_Oc-QSvk--CuNK",
+            "width" : 1083
+         }
+      ],
+      "place_id" : "ChIJybxNK-T51y0R66SmaBJ170M",
+      "plus_code" : {
+         "compound_code" : "QQ34+79 Tambakrejo, Surabaya, East Java, Indonesia",
+         "global_code" : "6P4JQQ34+79"
+      },
+      "rating" : 4.9,
+      "reference" : "ChIJybxNK-T51y0R66SmaBJ170M",
+      "reviews" : [
+         {
+            "author_name" : "basofi. ali",
+            "author_url" : "https://www.google.com/maps/contrib/107021804018470932547/reviews",
+            "language" : "en",
+            "original_language" : "en",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a-/AD_cMMSa0GTHJJYcXjBe9wRs_c_NZN2lU8ic7BeDdXWssyA7FWc=s128-c0x00000000-cc-rp-mo",
+            "rating" : 5,
+            "relative_time_description" : "2 years ago",
+            "text" : "Goodjob",
+            "time" : 1627453393,
+            "translated" : false
+         },
+         {
+            "author_name" : "Yusnan Arif Setyawan",
+            "author_url" : "https://www.google.com/maps/contrib/109180542405451166572/reviews",
+            "language" : "en",
+            "original_language" : "id",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a-/AD_cMMRYzXdJurc13tjCfIY988uSqmKx3AOPeQNN-3F5ii4G6Do=s128-c0x00000000-cc-rp-mo-ba2",
+            "rating" : 5,
+            "relative_time_description" : "a year ago",
+            "text" : "Iphone & Ipad service in Surabaya, as the name suggests, really trusted, it doesn't disappoint, this is the experience of servicing a child's iPad with a broken LCD. Eh, it turns out that the price is not expensive, the workmanship is neat, and it only takes 1-2 days to complete.. RECOMMENDED..",
+            "time" : 1627950157,
+            "translated" : true
+         },
+         {
+            "author_name" : "Arry Anggriawan",
+            "author_url" : "https://www.google.com/maps/contrib/116916436434580574063/reviews",
+            "language" : "en",
+            "original_language" : "id",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a-/AD_cMMQd6sBvPntQ8psVQMHXjHijewdF575D6Zg8XeK9eiVvpw=s128-c0x00000000-cc-rp-mo-ba2",
+            "rating" : 5,
+            "relative_time_description" : "a year ago",
+            "text" : "I thank you very much, fast handling, fast response, affordable prices. I really recommend it, maybe if someone wants service here, but it would be nice to make an appointment with the mas first. toopp itrust, as the name implies \ud83d\udc4d\ud83d\udc4d\ud83d\udc4d",
+            "time" : 1653093502,
+            "translated" : true
+         },
+         {
+            "author_name" : "Achmad Efendi",
+            "author_url" : "https://www.google.com/maps/contrib/115832192914500253391/reviews",
+            "language" : "en",
+            "original_language" : "id",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a/AAcHTte9EIi38SaDfCneO9BgJhlZ2ZN0phs1vXrKsuQjQNTO=s128-c0x00000000-cc-rp-mo-ba4",
+            "rating" : 5,
+            "relative_time_description" : "a year ago",
+            "text" : "Recommend for service, ask questions about iPhone problems, the mas are kind and friendly and always give suggestions for iPhone users, price/service 5 feet 5 star quality",
+            "time" : 1642633769,
+            "translated" : true
+         },
+         {
+            "author_name" : "Dewi Mega Permana Putri",
+            "author_url" : "https://www.google.com/maps/contrib/111693006386187896929/reviews",
+            "language" : "en",
+            "original_language" : "id",
+            "profile_photo_url" : "https://lh3.googleusercontent.com/a/AAcHTtcuO0rV7De8_m171hOvDFD24GLZqIwGkEy_wtH9he5h=s128-c0x00000000-cc-rp-mo",
+            "rating" : 5,
+            "relative_time_description" : "2 years ago",
+            "text" : "You can consult HP damage first and get an explanation about this in a clear and easy to understand way. Good service, and good HP repair results.",
+            "time" : 1624595508,
+            "translated" : true
+         }
+      ],
+      "types" : [ "point_of_interest", "establishment" ],
+      "url" : "https://maps.google.com/?cid=4895260041900631275",
+      "user_ratings_total" : 54,
+      "utc_offset" : 420,
+      "vicinity" : "Jalan Tambak Windu I No.12, RT.003/RW.08, Tambakrejo",
+      "website" : "http://www.itrust.care/"
+   },
+   "status" : "OK"
+}
