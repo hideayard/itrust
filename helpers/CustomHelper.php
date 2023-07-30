@@ -161,9 +161,9 @@ class CustomHelper
             'google_maps_review_cid' => Yii::$app->params['google_maps_review_cid'], 
             'google_reviews_sorting' => 'most_relevant',  // reviews are sorted by relevance (default), or in chronological order (most_relevant/newest)
             'cache_data_xdays_local' => 30,       // every x day the reviews are loaded from google (save API traffic)
-            'your_language_for_tran' => 'en',     // give you language for auto translate reviews
-            'show_not_more_than_max' => 5,        // (0-5) only show first x reviews
-            'show_only_if_with_text' => false,    // true = show only reviews that have text
+            'your_language_for_tran' => 'id',     // give you language for auto translate reviews
+            'show_not_more_than_max' => 10,        // (0-5) only show first x reviews
+            'show_only_if_with_text' => true,    // true = show only reviews that have text
             'show_only_if_greater_x' => 0,        // (0-4) only show reviews with more than x stars
             'sort_reviews_by_a_data' => 'rating', // sort by 'time' or by 'rating' (newest/best first)
             'show_cname_as_headline' => true,     // true = show customer name as headline
@@ -173,9 +173,10 @@ class CustomHelper
             'show_txt_of_the_review' => true,     // true = show the text of each review
             'show_author_of_reviews' => true,     // true = show the author of each review
             'show_age_of_the_review' => true,     // true = show the age of each review
-            'dateformat_for_the_age' => 'Y.m.d',  // see https://www.php.net/manual/en/datetime.format.php
+            'dateformat_for_the_age' => 'd-m-Y',  // see https://www.php.net/manual/en/datetime.format.php
             'show_rule_after_review' => true,     // false = don't show <hr> Tag after each review (and before first)
             'add_schemaorg_metadata' => true,     // add schemo.org data to loop back your rating to SERP
+            'reviews_no_translations' => true,      
         );
         
         $url = 'https://maps.googleapis.com/maps/api/place/details/json?place_id='.$option['google_maps_review_cid'].'&reviews_sort='.$option['google_reviews_sorting'].'&key='.$option['googlemaps_free_apikey'];
@@ -212,7 +213,7 @@ class CustomHelper
         $data  = json_decode($result, true);
         #echo'<pre>';var_dump($data);echo'</pre>'; // DEV & DEBUG
     
-        $reviews = $data['result']['reviews'];
+        $reviews = $data['result'];
         return $reviews;
         // $html = '';
     

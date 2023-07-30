@@ -33,6 +33,7 @@ use app\models\forms\LoginForm;
 use app\models\forms\ContactForm;
 use Codeception\Lib\Notification;
 use app\models\forms\RegisterForm;
+use app\models\Gallery;
 
 class SiteController extends Controller
 {
@@ -87,15 +88,26 @@ class SiteController extends Controller
     public function actionIndex()
     {
 
-        $reviews = CustomHelper::getReviews()??[];
+        $result_reviews = CustomHelper::getReviews();
 
+        $reviews = $result_reviews['reviews']??[];
+        $rating = $result_reviews['rating']??0;
         // var_dump( $reviews );die;
         $banner_list = Banner::find()
             ->where(['b_status' => 1])
             ->limit(5)
             ->orderBy('b_id DESC')->all();
 
-        return $this->render('index', ['banner_list' => $banner_list,'reviews' => $reviews]);
+        $gallery_list = Gallery::find()
+            ->where(['g_status' => 1])
+            ->limit(6)
+            ->orderBy('g_id DESC')->all();
+        return $this->render('index', [
+            'banner_list' => $banner_list,
+            'gallery_list' => $gallery_list,
+            'rating' => $rating,
+            'reviews' => $reviews
+        ]);
     }
 
     /**
