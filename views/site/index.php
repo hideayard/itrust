@@ -160,7 +160,7 @@ $i=1;
                                 <p class="mb-1">
                                 <?=$reviews[$i]['text']?>
                                 </p>
-                                <small><a href="<?=$reviews[$i]['author_url']?>"><?=$reviews[$i]['author_name']?></a> -
+                                <small><a target="_blank" href="<?=$reviews[$i]['author_url']?>"><?=$reviews[$i]['author_name']?></a> -
                                   <span class="text-muted"><?=$reviews[$i]['relative_time_description']?></span></small>
                               </div>
                             </div>
