@@ -190,6 +190,7 @@ $a = Yii::$app->controller->action->id;
 
       <!-- [ footer apps ] start -->
     <footer class="footer">
+
       <section class="bg-primary overflow-hidden">
 
         <div class="container title mb-0">
@@ -210,6 +211,23 @@ $a = Yii::$app->controller->action->id;
         </div>
 
       </section>
+
+      <div class="border-top footer-center">
+        <div class="row mb-2 justify-content-center text-center">
+          <div class="col-lg-6 mb-5">
+            <h2 class="section-title-underline mb-2">
+              <span>Lokasi Kami</span>
+            </h2>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12 text-center">
+          <iframe src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d15831.790060754425!2d112.7559283!3d-7.2468139!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x2dd7f9e42b4dbcc9%3A0x43ef751268a6a4eb!2siTRUST%20%7C%20SERVICE%20IPHONE%20%7C%20SURABAYA!5e0!3m2!1sid!2shk!4v1690740293544!5m2!1sid!2shk" style="overflow:hidden;height:450px;width:100%" height="450px" width="100%" allowfullscreen="true" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          </div>
+        </div>
+      
+      </div>
+
       <div class="border-top border-bottom footer-center">
         <div class="container">
           <div class="row">
@@ -227,7 +245,15 @@ $a = Yii::$app->controller->action->id;
                   <h5 class="mb-4">Alamat</h5>
                   <ul class="list-unstyled footer-link">
                     <li>
-                      <a href="https://wa.me/62882009057770" target="_blank">0882-0090-57770</a>
+                    <a target="_blank" href="https://goo.gl/maps/rZRGrGA8Ba1B4UZ2A"><button class="btn btn-primary">Lihat Rute</button></a>
+                    
+                    </li>
+                    <li>
+                      <a href="https://wa.me/62882009057770" target="_blank">
+                        Jalan Tambak Windu I No.12
+                        RT.003/RW.08
+                        Jawa Timur 60142
+                        Indonesia</a>
                     </li>
                   </ul>
                 </div>

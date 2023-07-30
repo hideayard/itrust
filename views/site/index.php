@@ -124,7 +124,7 @@ $i=1;
 
   <div class="site-section">
     <div class="container">
-      <div class="row mb-8 justify-content-center text-center">
+      <div class="row mb-2 justify-content-center text-center">
         <div class="col-lg-6 mb-5">
           <h2 class="section-title-underline mb-2">
             <span>Testimoni</span>
