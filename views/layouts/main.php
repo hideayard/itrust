@@ -249,7 +249,7 @@ $a = Yii::$app->controller->action->id;
                     
                     </li>
                     <li>
-                      <a href="https://wa.me/62882009057770" target="_blank">
+                      <a href="https://goo.gl/maps/rZRGrGA8Ba1B4UZ2A" target="_blank">
                         Jalan Tambak Windu I No.12
                         RT.003/RW.08
                         Jawa Timur 60142
