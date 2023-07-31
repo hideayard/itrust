@@ -145,7 +145,7 @@ $i=1;
 
                     <div class="row">
 
-                      <div class="col-6" style="float:none;margin:auto;">
+                      <div class="col-lg-6 col-md-12 col-sm-12 col-xs-12" style="float:none;margin:auto;">
                         <div class="card support-card">
                           <div class="card-body">
                             <div class="d-flex">
@@ -169,7 +169,7 @@ $i=1;
                       </div>
 
                       <?php if ($i + 1 < $totalObjects) { ?>
-                      <div class="col-6">
+                      <div class="col-lg-6 col-md-12 col-sm-12 col-xs-12">
                         <div class="card support-card">
                           <div class="card-body">
                             <div class="d-flex">
