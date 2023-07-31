@@ -127,7 +127,7 @@ $i=1;
       <div class="row mb-2 justify-content-center text-center">
         <div class="col-lg-6 mb-5">
           <h2 class="section-title-underline mb-2">
-            <span>Testimoni</span>
+            <span><a href="https://www.google.com/search?hl=id-ID&gl=id&q=iTRUST+%7C+SERVICE+IPHONE+%7C+SURABAYA,+Jl.+Tambak+Windu+I+No.12,+RT.003/RW.08,+Tambakrejo,+Kec.+Simokerto,+Surabaya,+Jawa+Timur+60142&ludocid=4895260041900631275&lsig=AB86z5WXctJevflxRqe5XAUhnVNZ&mat=CVbPY43clVbnElcBeenfiBD6Y4dqHousvIiBR8pWw-oPLeeKw2GLAIwUIXl59vWqyqIvIVxuicRtI6NaOn5Tkk7U5YzsaiEjHQu38vpiuF2ghuqvmc6fjUeejsuSqGYW5Yo#lrd=0x2dd7f9e42b4dbcc9:0x43ef751268a6a4eb,1,,,," target="_blank"> Testimoni </a></span>
           </h2>
         </div>
       </div>
