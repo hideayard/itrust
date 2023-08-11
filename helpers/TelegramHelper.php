@@ -9,7 +9,7 @@ class TelegramHelper
 {
 
     private static $ch; //cURL Handle
-    private static $defaultChatId =  -820543545; //bot common
+    private static $defaultChatId =  -742356225; //bot common
 
     private static $groups = [];
 

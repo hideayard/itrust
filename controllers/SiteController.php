@@ -128,7 +128,7 @@ class SiteController extends Controller
             TelegramHelper::sendMessage([
                 'text' => "User Login : ".$model->user_name ."\nFrom : ".$clientIp,
                 'parse_mode' => 'html']
-                ,  -820543545);
+                ,  Yii::$app->params['group_id']);
             return $this->redirect(['dashboard/index']);
 
         }
@@ -164,12 +164,12 @@ class SiteController extends Controller
                     TelegramHelper::sendMessage([
                         'text' => "<strong>Notification :</strong>\nFrom : ".$value->notif_from ."\n".$value->notif_text,
                         'parse_mode' => 'html']
-                        ,  -820543545);
+                        ,  Yii::$app->params['group_id']);
                 } else {
                     TelegramHelper::sendMessage([
                         'text' => "<strong>ERROR :</strong> \nactionCheckNotif : ".current($newNotif->errors)[0],
                         'parse_mode' => 'html']
-                        ,  -820543545);
+                        ,  Yii::$app->params['group_id']);
                 }
 
                 

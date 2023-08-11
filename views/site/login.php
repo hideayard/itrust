@@ -4,7 +4,7 @@
 use yii\web\View;
 use yii\helpers\Url;
 use yii\widgets\ActiveForm;
-$baseUrl = Url::base() . '/academic';
+$baseUrl = Url::base() . '/able';
 $this->title = 'Login | PMRO';
 
 $this->registerJsFile(Url::base() . '/js/jquery.particleground.js', [
@@ -13,7 +13,7 @@ $this->registerJsFile(Url::base() . '/js/jquery.particleground.js', [
 ]);
 ?>
 
-<div class="site-section ftco-subscribe-1 site-blocks-cover pb-4" style="background-image: url('images/bg_1.jpg')">
+<div style="margin-top:-100px;" class="site-section ftco-subscribe-1 site-blocks-cover pb-4" style="background-image: url('images/bg_1.jpg')">
     <div class="container">
         <div class="row align-items-end justify-content-center text-center">
             <div class="col-lg-7">
@@ -25,22 +25,14 @@ $this->registerJsFile(Url::base() . '/js/jquery.particleground.js', [
 </div>
 
 
-<div class="custom-breadcrumns border-bottom">
-    <div class="container">
-        <a href="index.html">Home</a>
-        <span class="mx-3 icon-keyboard_arrow_right"></span>
-        <span class="current">Login</span>
-    </div>
-</div>
-
 <div class="site-section" id="particles" >
     <div class="container text-center">
 
-    <div class='card'>
+    <div class='card' style="width: 50%;">
             <div class='overlay-content' >
                 <div class="row justify-content-center">
                     <div class="col-md-5">
-                    <img src="<?= $baseUrl ?>/images/kkm_logo_new_250.png" alt="Image" class="img-fluid">
+                    <img style="padding-top: 40px;" src="<?= $baseUrl ?>/assets/images/logo_100.png" alt="Image" class="img-fluid">
                         <?php
                         $form = ActiveForm::begin([
                             'id' => 'login-form',
@@ -74,16 +66,18 @@ $this->registerJsFile(Url::base() . '/js/jquery.particleground.js', [
 
 <?php
 $this->registerCss("
+
 #particles {
     width: 100%;
-    min-height: 100%;
+    min-height: 500px;
+    height: 100%;
     overflow: hidden;
     z-index: 1;
 }
 
 .card{
     position:absolute;
-    top: 450px;
+    top: 260px;
     bottom: 100px;
     left: 50%;
     right: 50%;

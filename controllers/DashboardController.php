@@ -80,20 +80,21 @@ class DashboardController extends Controller
 
         $start = Yii::$app->request->post('start') ? (new DateTime(Yii::$app->request->post('start')))->format('Y-m-d') : date('Y-m-d', strtotime((new DateTime())->format('Y-m-d'))); //. ' - 1 month'));
         $end = Yii::$app->request->post('end') ? (new DateTime(Yii::$app->request->post('end')))->format('Y-m-d') : (new DateTime())->format('Y-m-d');
-        $maintenance1 = DataSensors::findOne(['remark'=>$nodeId["node_name"]]);
+        $maintenance1 = [];//DataSensors::findOne(['remark'=>$nodeId["node_name"]]);
 
         $dataTraining = $formatted = $formatted3 = $formatted2 = [];
         $Anomaly = array();
         $countAnomaly['s1'] = $countAnomaly['s2'] = $countAnomaly['s3'] = $countAnomaly['s4'] = $countAnomaly['s5'] = $countAnomaly['flow1'] = $countAnomaly['flow2'] = $countAnomaly['con1'] = $countAnomaly['con2'] = 0;
         
-        $result_sensors = DataSensors::find()
-                            ->where(['remark'=>$nodeId["node_name"]])
-                            // ->andWhere(['between', 'DATE(`modified_at`)', $start, $end])
-                            ->andWhere(['DATE(`modified_at`)' => $start])
-                            ->orderBy(['modified_at' => SORT_ASC])
-                            ->limit(100)
-                            ->asArray()
-                            ->all();
+        $result_sensors = [];
+                            // DataSensors::find()
+                            // ->where(['remark'=>$nodeId["node_name"]])
+                            // // ->andWhere(['between', 'DATE(`modified_at`)', $start, $end])
+                            // ->andWhere(['DATE(`modified_at`)' => $start])
+                            // ->orderBy(['modified_at' => SORT_ASC])
+                            // ->limit(100)
+                            // ->asArray()
+                            // ->all();
         $i=0;
         foreach($result_sensors as $key => $value)
         {
@@ -260,7 +261,7 @@ $dataML = json_encode(array($dataTraining,$lastData,($results_pressure2["id"]??0
             // 'formatted' => $formatted,
             // 'formatted2' => $formatted2,
             // 'formatted3' => $formatted3,
-            'maintenance1' => $maintenance1["modified_at"],
+            'maintenance1' => $maintenance1["modified_at"]??'',
         ]);
     }
 
