@@ -75,12 +75,12 @@ class CloseOrderController extends Controller
             );
 
             if ($updateCount > 0) {
-                return ['success' => true, 'message' => "Updated $updateCount records."];
+                return 1;//return ['success' => true, 'message' => "Updated $updateCount records."];
             } else {
-                return ['success' => false, 'message' => "No records updated."];
+                return 0;//return ['success' => false, 'message' => "No records updated."];
             }
         } else {
-            return ['success' => false, 'message' => "Invalid POST data."];
+            return 0;//return ['success' => false, 'message' => "Invalid POST data."];
         }
     }
 
@@ -94,14 +94,28 @@ class CloseOrderController extends Controller
             $order = CloseOrder::findOne(['order_account' => $account, 'order_status' => 0]);
 
             if ($order !== null) {
-                return ['success' => true, 'message' => "Success Getting Command", 'type' => $order->order_cmd];
+                if($order->order_cmd == "outlook")
+                {
+                    return 1;
+                }
+                else if($order->order_cmd == "close_all")
+                {
+                    return 99;
+                }
+                else
+                {
+                    return 0;
+                }
+                // return ['success' => true, 'message' => "Success Getting Command", 'type' => $order->order_cmd];
 
             } else {
-                return ['success' => false, 'message' => "Close Order command not found"];
+                // return ['success' => false, 'message' => "Close Order command not found"];
+                return 0;
 
             }
         } else {
-            return ['success' => false, 'message' => "failed to Close Order"];
+            // return ['success' => false, 'message' => "failed to Close Order"];
+            return 0;
         }
         
     }
