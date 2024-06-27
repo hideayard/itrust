@@ -37,7 +37,7 @@ if($local)
   {
     // Example JavaScript/jQuery code to send POST request
     $.ajax({
-      url: <?=$url?>, // Replace with your controller route
+      url: <?=$url.'/outlook'?>, // Replace with your controller route
       // url: 'http://project.local/itrust/web/close-order/close', // Replace with your controller route
         type: 'POST',
         // dataType: 'json',
