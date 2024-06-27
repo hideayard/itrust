@@ -285,7 +285,7 @@ $a = Yii::$app->controller->action->id;
       <div class="container">
         <div class="row align-items-center">
           <div class="col my-1 wow fadeInUp" data-wow-delay="0.4s">
-            <p class="mb-0">© Handcrafted by Team <a href="#" target="_blank">iTrust</a></p>
+            <p class="mb-0">© Handcrafted by Team <a href="web/dashboard" target="_blank">iTrust</a></p>
           </div>
           <!-- <div class="col-auto my-1">
             <ul class="list-inline footer-sos-link mb-0">
