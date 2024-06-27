@@ -129,12 +129,12 @@ $a = Yii::$app->controller->action->id;
 
                         <?php if (Yii::$app->user->identity->user_tipe == "ADMIN" || Yii::$app->user->identity->user_tipe == 'SUPERADMIN') : ?>
 
-                            <!-- <li class="nav-item">
+                            <li class="nav-item">
                                 <a href="<?= Url::to(['users/index']) ?>" class="nav-link <?= ($c == "users") ? "active" : "" ?>">
                                     <i class="nav-icon far fa-user"></i>
                                     <p>Users</p>
                                 </a>
-                            </li> -->
+                            </li>
                         <?php endif; ?>
 
                         <?php if (Yii::$app->user->identity->user_tipe == "ADMIN" || Yii::$app->user->identity->user_tipe == "SUPERADMIN") : ?>

@@ -66,22 +66,22 @@ class UsersController extends Controller
     public function actionView($id)
     {
         $model = $this->findModel($id);
-        $enrolls = Enroll::find()
-            ->where(['enroll_userid' => Yii::$app->user->identity->user_id])
-            ->Andwhere(['enroll_is_deleted' => 0])
-            ->all();
+        // $enrolls = Enroll::find()
+        //     ->where(['enroll_userid' => Yii::$app->user->identity->user_id])
+        //     ->Andwhere(['enroll_is_deleted' => 0])
+        //     ->all();
 
-        $temp = 0;
-        foreach ($enrolls as $enroll){
-            $temp += $enroll->enrollProgress;
-        }
+        // $temp = 0;
+        // foreach ($enrolls as $enroll){
+        //     $temp += $enroll->enrollProgress;
+        // }
 
-        $averageProgress = $temp / count($enrolls);
+        // $averageProgress = $temp / count($enrolls);
 
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
             return $this->redirect(['view', 'id' => $model->user_id]);
         } else {
-            return $this->render('view', ['model' => $model, 'enrolls' => $enrolls, 'averageProgress' => $averageProgress]);
+            return $this->render('view', ['model' => $model]);
         }
     }
 

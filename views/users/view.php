@@ -25,12 +25,6 @@ $this->title = "User Details"
                         <li class="list-group-item">
                             <b>Join Date</b> <a class="float-right"><?= date("Y-m-d", strtotime($model->created_at)) ?></a>
                         </li>
-                        <!-- <li class="list-group-item">
-                            <b>Enrollments</b> <a class="float-right"><?= count($enrolls) ?></a>
-                        </li>
-                        <li class="list-group-item">
-                            <b>Average Progress</b> <a class="float-right"><?= $averageProgress ?>%</a>
-                        </li> -->
                     </ul>
                 </div>
                 <!-- /.card-body -->
@@ -62,48 +56,7 @@ $this->title = "User Details"
         </div>
         <!-- /.col -->
         <div class="col-md-9">
-            <!-- <div class="card">
-                <div class="card-header p-2">
-                    <ul class="nav nav-pills">
-                        <li class="nav-item"><a class="nav-link active" href="#activity" data-toggle="tab">Enrollments</a></li>
-                    </ul>
-                </div>
-                <div class="card-body">
-                    <div class="tab-content">
-                        <div class="active tab-pane" id="activity">
-                            <table class="table table-bordered table-condensed">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Category</th>
-                                        <th>Task</th>
-                                        <th>Progress</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php $no = 1;
-                                    foreach ($enrolls as $enroll) : ?>
-                                        <tr>
-                                            <td><?= $no ?></td>
-                                            <td><?= $enroll->enrollCourse->course_type ?></td>
-                                            <td><?= $enroll->enrollCourse->course_title ?></td>
-                                            <td>
-                                                <div class="progress">
-                                                    <div class="progress-bar" role="progressbar" style="width: <?= ($enroll->enrollProgress) ?>%" aria-valuenow="<?= ($enroll->enrollProgress) ?>" aria-valuemin="0" aria-valuemax="100"></div>
-                                                </div>
-                                                <?= ($enroll->enrollProgress) ?>%
-                                            </td>
-                                            <td><?= date("Y-m-d", strtotime($enroll->enroll_created_at)); ?></td>
-                                        </tr>
-                                    <?php $no++;
-                                    endforeach; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div> -->
+            
             <!-- /.card -->
             <div class="users-update">
 
