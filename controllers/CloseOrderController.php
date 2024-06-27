@@ -17,6 +17,7 @@ class CloseOrderController extends Controller
     {
         echo "Working";
     }
+    
     public function actionClose()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
@@ -36,6 +37,28 @@ class CloseOrderController extends Controller
             return ['success' => true, 'message' => "Close order command sent"];
         } else {
             return ['success' => false, 'message' => "failed to Close Order"];
+        }
+    }
+
+    public function actionOutlook()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $account = Yii::$app->request->post('id');
+
+        if ($account) {
+
+            $order = new CloseOrder();
+            $order->order_account = $account;
+            $order->order_cmd = "outlook";
+            $order->order_status = 0;
+            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                return ($order->errors)[0];
+            }
+            return ['success' => true, 'message' => "Outlook command sent"];
+        } else {
+            return ['success' => false, 'message' => "failed to send command"];
         }
     }
 
@@ -71,7 +94,7 @@ class CloseOrderController extends Controller
             $order = CloseOrder::findOne(['order_account' => $account, 'order_status' => 0]);
 
             if ($order !== null) {
-                return ['success' => true, 'message' => "Success Getting Command"];
+                return ['success' => true, 'message' => "Success Getting Command", 'type' => $order->order_cmd];
 
             } else {
                 return ['success' => false, 'message' => "Close Order command not found"];
