@@ -37,7 +37,7 @@ $this->title = 'About Us | PMRO';
       </div>
       <div class="col-lg-8">
         <p class="lead">PMRO </p>
-        <p>Predictive Maintenance System of Hemodialysis Reverse Osmosis Water Purification System (PMRO).</p>
+        <p>iTrust Trading Platform.</p>
         <p><a href="#">Read more</a></p>
       </div>
     </div>
