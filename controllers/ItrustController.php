@@ -156,8 +156,8 @@ class ItrustController extends Controller
         $currentDate = new DateTime();
         $result = -1;//$account ." - " . $license;
         $user = Users::find()
-            ->where(['user_account' => $account])
-            ->andWhere(['user_license' => $license])
+            ->where(['user_account' => "$account"])
+            ->andWhere(['user_license' => "$license"])
             ->one();
         $result =$user;//$account ." - " . $license;
 
