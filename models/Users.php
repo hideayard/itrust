@@ -59,8 +59,8 @@ class Users extends \yii\db\ActiveRecord implements
             [['user_pass', 'user_foto'], 'string'],
             [['user_status', 'created_by', 'modified_by', 'is_deleted'], 'integer'],
             [['created_at', 'modified_at'], 'safe'],
-            [['user_name', 'user_nama', 'user_email','user_account','user_license'], 'string', 'max' => 100],
-            [['user_hp'], 'string', 'max' => 20],
+            [['user_name', 'user_nama', 'user_email'], 'string', 'max' => 100],
+            [['user_hp','user_account','user_license'], 'string', 'max' => 20],
             [['user_tipe','user_token'], 'string', 'max' => 15],
             [['imageFile'], 'file', 'skipOnEmpty' => true, 'extensions' => ['png', 'jpg'], 'maxFiles' => 1],
         ];
