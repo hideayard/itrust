@@ -159,6 +159,7 @@ class ItrustController extends Controller
             ->where(['user_account' => $account])
             ->andWhere(['user_license' => $license])
             ->one();
+        $result =$user;//$account ." - " . $license;
 
         if ($user) {
             $license_expired = new DateTime($user->user_license_expired);
