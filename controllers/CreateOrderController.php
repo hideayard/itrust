@@ -5,17 +5,87 @@ namespace app\controllers;
 use Yii;
 use DateTime;
 use app\models\CloseOrder;
-
+use app\models\CourseSession;
+use app\models\CourseSessionSearch;
+use yii\filters\AccessControl;
 use yii\web\Controller;
+use yii\web\NotFoundHttpException;
+use yii\filters\VerbFilter;
+use app\models\Courses;
+use yii\helpers\ArrayHelper;
+use app\models\Users;
 use yii\web\Response;
 
-class CloseOrderController extends Controller
+class CreateOrderController extends Controller
 {
-    public $enableCsrfValidation = false; // Disable CSRF validation for this controller
+
+    /**
+     * {@inheritdoc}
+     */
+    public function behaviors()
+    {
+        return [
+            'access' => [
+                'class' => AccessControl::className(),
+                'only' => ['logout'],
+                'rules' => [
+                    [
+                        'actions' => ['logout'],
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+            ],
+            'verbs' => [
+                'class' => VerbFilter::className(),
+                'actions' => [
+                    'logout' => ['post'],
+                    'generate' => ['post'],
+                    'submit-section' => ['post'],
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function actions()
+    {
+        return [
+            'error' => [
+                'class' => 'yii\web\ErrorAction',
+            ],
+            'captcha' => [
+                'class' => 'yii\captcha\CaptchaAction',
+                'fixedVerifyCode' => YII_ENV_TEST ? 'testme' : null,
+            ],
+        ];
+    }
+
+
+    // public $enableCsrfValidation = false; // Disable CSRF validation for this controller
 
     public function actionIndex()
     {
         echo "Working";
+    }
+
+    public function actionGenerate()
+    {
+        // $uniqueId = Yii::$app->user->id; // Replace with your unique identifier
+        $uniqueId = Yii::$app->request->post('id');
+
+        $licenseNumber = $this->generateLicenseNumber($uniqueId);
+        // return $this->render('license', ['licenseNumber' => $licenseNumber]);
+        echo $licenseNumber;
+    }
+
+    private function generateLicenseNumber($uniqueId)
+    {
+        $salt = 'B15m1ll4#'; // Use a secret salt for added security
+        $hash = md5($uniqueId . $salt); // You can use other hashing algorithms like sha256
+        return hexdec(substr($hash, 0, 8)) . " - ". $uniqueId; // Convert hash to a number and return the first 8 digits
     }
     
     public function actionClose()
@@ -118,23 +188,6 @@ class CloseOrderController extends Controller
             return 0;
         }
         
-    }
-
-    public function actionGenerate()
-    {
-        // $uniqueId = Yii::$app->user->id; // Replace with your unique identifier
-        $uniqueId = Yii::$app->request->post('id');
-
-        $licenseNumber = $this->generateLicenseNumber($uniqueId);
-        // return $this->render('license', ['licenseNumber' => $licenseNumber]);
-        echo $licenseNumber;
-    }
-
-    private function generateLicenseNumber($uniqueId)
-    {
-        $salt = 'B15m1ll4#'; // Use a secret salt for added security
-        $hash = md5($uniqueId . $salt); // You can use other hashing algorithms like sha256
-        return hexdec(substr($hash, 0, 8)) . " - " . $uniqueId; // Convert hash to a number and return the first 8 digits
     }
 
 }

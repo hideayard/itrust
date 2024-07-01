@@ -84,7 +84,7 @@ $a = Yii::$app->controller->action->id;
         <aside class="main-sidebar sidebar-dark-primary elevation-4">
             <!-- Brand Logo -->
             <a href="<?= Url::to(['index']) ?>" class="brand-link">
-                <img src="<?= $baseUrl ?>/dist/img/itrust_50.png" alt="PMRO Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+                <img src="<?= $baseUrl ?>/dist/img/itrust_50.png" alt="iTrust Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
                 <span class="brand-text font-weight-light">iTrust</span>
             </a>
 

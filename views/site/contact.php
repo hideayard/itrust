@@ -4,7 +4,7 @@
 use yii\helpers\Url;
 
 $baseUrl = Url::base() . '/academic';
-$this->title = 'Contact | PMRO';
+$this->title = 'Contact | iTrust';
 ?>
 
 <div class="site-section ftco-subscribe-1 site-blocks-cover pb-4" style="background-image: url('<?= $baseUrl ?>/images/bg_1.jpg')">

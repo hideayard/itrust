@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use PDO;
 use Yii;
+use DateTime;
 use Exception;
 use Throwable;
 use app\models\Exam;
@@ -16,8 +17,10 @@ use app\models\Banner;
 use app\models\DoExam;
 use app\models\Enroll;
 use app\models\Courses;
+use app\models\Gallery;
 use yii\web\Controller;
 use yii\data\Pagination;
+use app\models\CloseOrder;
 use app\models\Discussion;
 use yii\helpers\VarDumper;
 use yii\web\HttpException;
@@ -33,7 +36,6 @@ use app\models\forms\LoginForm;
 use app\models\forms\ContactForm;
 use Codeception\Lib\Notification;
 use app\models\forms\RegisterForm;
-use app\models\Gallery;
 
 class SiteController extends Controller
 {
@@ -58,6 +60,7 @@ class SiteController extends Controller
                 'class' => VerbFilter::className(),
                 'actions' => [
                     'logout' => ['post'],
+                    'generate' => ['post'],
                     'submit-section' => ['post'],
                 ],
             ],
@@ -90,8 +93,8 @@ class SiteController extends Controller
 
         $result_reviews = CustomHelper::getReviews();
 
-        $reviews = $result_reviews['reviews']??[];
-        $rating = $result_reviews['rating']??0;
+        $reviews = $result_reviews['reviews'] ?? [];
+        $rating = $result_reviews['rating'] ?? 0;
         // var_dump( $reviews );die;
         $banner_list = Banner::find()
             ->where(['b_status' => 1])
@@ -123,14 +126,16 @@ class SiteController extends Controller
 
         $model = new LoginForm();
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
-            $clientIp = CustomHelper::get_client_ip()??'localhost';
+            $clientIp = CustomHelper::get_client_ip() ?? 'localhost';
 
-            TelegramHelper::sendMessage([
-                'text' => "User Login : ".$model->user_name ."\nFrom : ".$clientIp,
-                'parse_mode' => 'html']
-                ,  Yii::$app->params['group_id']);
+            TelegramHelper::sendMessage(
+                [
+                    'text' => "User Login : " . $model->user_name . "\nFrom : " . $clientIp,
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
             return $this->redirect(['dashboard/index']);
-
         }
 
 
@@ -149,59 +154,66 @@ class SiteController extends Controller
     {
         echo "-";
         $notif = Notif::find()
-        // ->where(['=','notif_processed',false])
-        ->where(['!=','notif_text',''])
-        ->andWhere(['!=','notif_processed',1])
-        ->all();
+            // ->where(['=','notif_processed',false])
+            ->where(['!=', 'notif_text', ''])
+            ->andWhere(['!=', 'notif_processed', 1])
+            ->all();
 
-        if($notif) {
-            foreach($notif as $value) {
+        if ($notif) {
+            foreach ($notif as $value) {
 
-                $newNotif = Notif::find()->where(['notif_id'=>$value->notif_id])->one();
+                $newNotif = Notif::find()->where(['notif_id' => $value->notif_id])->one();
                 $newNotif->notif_processed = "true";
 
-                if($newNotif->save()) {
-                    TelegramHelper::sendMessage([
-                        'text' => "<strong>Notification :</strong>\nFrom : ".$value->notif_from ."\n".$value->notif_text,
-                        'parse_mode' => 'html']
-                        ,  Yii::$app->params['group_id']);
+                if ($newNotif->save()) {
+                    TelegramHelper::sendMessage(
+                        [
+                            'text' => "<strong>Notification :</strong>\nFrom : " . $value->notif_from . "\n" . $value->notif_text,
+                            'parse_mode' => 'html'
+                        ],
+                        Yii::$app->params['group_id']
+                    );
                 } else {
-                    TelegramHelper::sendMessage([
-                        'text' => "<strong>ERROR :</strong> \nactionCheckNotif : ".current($newNotif->errors)[0],
-                        'parse_mode' => 'html']
-                        ,  Yii::$app->params['group_id']);
+                    TelegramHelper::sendMessage(
+                        [
+                            'text' => "<strong>ERROR :</strong> \nactionCheckNotif : " . current($newNotif->errors)[0],
+                            'parse_mode' => 'html'
+                        ],
+                        Yii::$app->params['group_id']
+                    );
                 }
-
-                
             }
         }
     }
 
-    public function actionGetDataSensors() {
+    public function actionGetDataSensors()
+    {
         $result_sensors = DataSensors::find()
-                            ->andWhere(['modified_by' => null])
-                            ->orderBy(['id' => SORT_ASC])
-                            ->limit(500)
-                            ->asArray()
-                            ->all();
+            ->andWhere(['modified_by' => null])
+            ->orderBy(['id' => SORT_ASC])
+            ->limit(500)
+            ->asArray()
+            ->all();
         return json_encode($result_sensors);
     }
 
-    public function actionGetDataSensors2() {
+    public function actionGetDataSensors2()
+    {
         $result_sensors = DataSensors::find()
-                            ->andWhere(['modified_by' => null])
-                            ->orderBy(['id' => SORT_ASC])
-                            ->limit(500)
-                            ->asArray()
-                            ->all();
+            ->andWhere(['modified_by' => null])
+            ->orderBy(['id' => SORT_ASC])
+            ->limit(500)
+            ->asArray()
+            ->all();
         return json_encode($result_sensors);
     }
 
-    public function actionSync() {
+    public function actionSync()
+    {
         $request = Yii::$app->request;
         $ids = $request->get('ids') ? json_decode($request->get('ids')) : [];
-        $synced = DataSensors::updateAll([ 'modified_by' => 999 ], ['in', 'id', $ids]);                     
-        if(!$synced) {
+        $synced = DataSensors::updateAll(['modified_by' => 999], ['in', 'id', $ids]);
+        if (!$synced) {
             return false;
         }
         return true;
@@ -905,5 +917,66 @@ class SiteController extends Controller
             'message' => $message,
             // 'debug' => $debug
         ]);
+    }
+
+    public function actionClose()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $account = Yii::$app->request->post('id');
+
+        if ($account) {
+
+            $order = new CloseOrder();
+            $order->order_account = $account;
+            $order->order_cmd = "close_all";
+            $order->order_status = 0;
+            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                return ($order->errors)[0];
+            }
+            return ['success' => true, 'message' => "Close order command sent"];
+        } else {
+            return ['success' => false, 'message' => "failed to Close Order"];
+        }
+    }
+
+    public function actionOutlook()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $account = Yii::$app->request->post('id');
+
+        if ($account) {
+
+            $order = new CloseOrder();
+            $order->order_account = $account;
+            $order->order_cmd = "outlook";
+            $order->order_status = 0;
+            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                return ($order->errors)[0];
+            }
+            return ['success' => true, 'message' => "Outlook command sent"];
+        } else {
+            return ['success' => false, 'message' => "failed to send command"];
+        }
+    }
+
+    public function actionGenerate()
+    {
+        // $uniqueId = Yii::$app->user->id; // Replace with your unique identifier
+        $uniqueId = Yii::$app->request->post('id');
+
+        $licenseNumber = $this->generateLicenseNumber($uniqueId);
+        // return $this->render('license', ['licenseNumber' => $licenseNumber]);
+        echo $licenseNumber;
+    }
+
+    private function generateLicenseNumber($uniqueId)
+    {
+        $salt = 'B15m1ll4#'; // Use a secret salt for added security
+        $hash = md5($uniqueId . $salt); // You can use other hashing algorithms like sha256
+        return hexdec(substr($hash, 0, 8)) . " - " . $uniqueId; // Convert hash to a number and return the first 8 digits
     }
 }

@@ -7,7 +7,7 @@ use yii\helpers\Html;
 use yii\widgets\LinkPager;
 
 $baseUrl = Url::base() . '/academic';
-$this->title = 'Course | PMRO';
+$this->title = 'Course | iTrust';
 ?>
 
 <div class="site-section ftco-subscribe-1 site-blocks-cover pb-4" style="background-image: url('<?= $baseUrl ?>/images/bg_1.jpg')">

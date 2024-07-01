@@ -6,7 +6,7 @@ use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 
 $baseUrl = Url::base() . '/academic';
-$this->title = 'Register | PMRO';
+$this->title = 'Register | iTrust';
 ?>
 
 <div class="site-section ftco-subscribe-1 site-blocks-cover pb-4" style="background-image: url('<?= $baseUrl ?>/images/bg_1.jpg')">
@@ -14,7 +14,7 @@ $this->title = 'Register | PMRO';
         <div class="row align-items-end justify-content-center text-center">
             <div class="col-lg-7">
                 <h2 class="mb-0">Register</h2>
-                <p>Register to Digital PMRO Academy.</p>
+                <p>Register to iTrust Trading Group.</p>
             </div>
         </div>
     </div>

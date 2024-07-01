@@ -6,7 +6,7 @@ use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 
 $baseUrl = Url::base() . '/academic';
-$this->title = 'Email Confirmation | PMRO';
+$this->title = 'Email Confirmation | iTrust';
 ?>
 
 <div class="site-section ftco-subscribe-1 site-blocks-cover pb-4" style="background-image: url('<?= $baseUrl ?>/images/bg_1.jpg')">

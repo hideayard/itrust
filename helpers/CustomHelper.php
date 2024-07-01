@@ -213,7 +213,7 @@ class CustomHelper
         $data  = json_decode($result, true);
         #echo'<pre>';var_dump($data);echo'</pre>'; // DEV & DEBUG
     
-        $reviews = $data['result'];
+        $reviews = $data['result'] ?? [];
         return $reviews;
         // $html = '';
     

@@ -330,7 +330,7 @@ ENROLL_JS;
 
 $this->registerJs($js, View::POS_END);
 
-$this->title = $enroll->enrollCourse->course_title . ' | PMRO';
+$this->title = $enroll->enrollCourse->course_title . ' | iTrust';
 
 //php function nanti akan dipakai saat insert new data
 function getDuration($videoID){

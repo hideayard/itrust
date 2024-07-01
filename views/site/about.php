@@ -4,7 +4,7 @@
 use yii\helpers\Url;
 
 $baseUrl = Url::base() . '/academic';
-$this->title = 'About Us | PMRO';
+$this->title = 'About Us | iTrust';
 ?>
 
 <div class="site-section ftco-subscribe-1 site-blocks-cover pb-4" style="background-image: url('<?= $baseUrl ?>/images/bg_1.jpg')">
@@ -12,7 +12,7 @@ $this->title = 'About Us | PMRO';
         <div class="row align-items-end">
             <div class="col-lg-7">
                 <h2 class="mb-0">About Us</h2>
-                <p>About PMRO.</p>
+                <p>About iTrust.</p>
             </div>
         </div>
     </div>
@@ -36,7 +36,7 @@ $this->title = 'About Us | PMRO';
         </h2>
       </div>
       <div class="col-lg-8">
-        <p class="lead">PMRO </p>
+        <p class="lead">iTrust </p>
         <p>iTrust Trading Platform.</p>
         <p><a href="#">Read more</a></p>
       </div>

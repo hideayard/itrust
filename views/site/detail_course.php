@@ -6,7 +6,7 @@ use yii\helpers\Url;
 use yii\helpers\Html;
 
 $baseUrl = Url::base() . '/academic';
-$this->title = 'Course | PMRO';
+$this->title = 'Course | iTrust';
 //for debugging, delete when finished
 // var_dump($enroll);
 // echo "<hr>";
