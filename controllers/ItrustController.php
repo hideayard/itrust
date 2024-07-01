@@ -154,7 +154,7 @@ class ItrustController extends Controller
         $account = Yii::$app->request->post('id');
         $license = Yii::$app->request->post('license');
         $currentDate = new DateTime();
-
+        $result = -1;//$account ." - " . $license;
         $user = Users::find()
             ->where(['user_account' => $account])
             ->andWhere(['user_license' => $license])
@@ -168,7 +168,7 @@ class ItrustController extends Controller
                 return 0;
             }
         } else {
-            return -1;
+            return $result;
         }
     }
 
