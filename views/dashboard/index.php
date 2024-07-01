@@ -5,21 +5,27 @@ use yii\helpers\Url;
 use kartik\helpers\Html;
 
 $this->title = "Dashboard";
+$csrfParam = Yii::$app->request->csrfParam;
+$csrfToken = Yii::$app->request->csrfToken;
 
 $now = (new \DateTime())->format('Y-m-d');
+$baseUrl = Url::base() . '/';
+$outlookUrl = Url::to(['site/outlook']);
+$closeOrderUrl = Url::to(['site/close']);
 
-$local = false;
-$url = 'https://itrustcare.id/itrust/web/close-order';
+$local = true;
+$url = 'https://itrustcare.id/itrust/web/site/create-order';
 if($local)
 {
-  $url = 'http://project.local/itrust/web/close-order';
+  $url = 'http://project.local/itrust/web/site/create-order';
 }
 $account = Yii::$app->user->identity->user_account;
 $dashboardJS = <<<DASHBOARD_JS
 
 $('#outlook-btn').click(function(){
     console.log('outlook-btn triggered');
-    $.post('$url/outlook', {
+    $.post('$outlookUrl', {
+        $csrfParam: '$csrfToken',
         id : $account,
     }, function(response){
             console.log(response);
@@ -33,7 +39,8 @@ $('#outlook-btn').click(function(){
 
 $('#close-order-btn').click(function(){
     console.log('close-order-btn triggered');
-    $.post('$url/close', {
+    $.post('$closeOrderUrl', {
+        $csrfParam: '$csrfToken',
         id : $account,
     }, function(response){
             console.log(response);

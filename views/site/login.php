@@ -5,7 +5,7 @@ use yii\web\View;
 use yii\helpers\Url;
 use yii\widgets\ActiveForm;
 $baseUrl = Url::base() . '/able';
-$this->title = 'Login | PMRO';
+$this->title = 'Login | iTrust';
 
 $this->registerJsFile(Url::base() . '/js/jquery.particleground.js', [
     'depends' => [\yii\web\JqueryAsset::className()],
@@ -18,7 +18,7 @@ $this->registerJsFile(Url::base() . '/js/jquery.particleground.js', [
         <div class="row align-items-end justify-content-center text-center">
             <div class="col-lg-7">
                 <h2 class="mb-0">Login</h2>
-                <p>Login to get more access and detail about PMRO.</p>
+                <p>Login to get more access and detail about iTrust.</p>
             </div>
         </div>
     </div>
