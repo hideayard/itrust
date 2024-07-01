@@ -92,7 +92,11 @@ class ItrustController extends Controller
 
         if ($account) {
 
-            $order = CloseOrder::findOne(['order_account' => $account, 'order_status' => 0]);
+            $order = CloseOrder::find()
+                ->where(['order_account' => $account, 'order_status' => 0])
+                ->orderBy(['order_date' => SORT_DESC])
+                ->one();
+
 
             if ($order !== null) {
                 if ($order->order_cmd == "outlook") {

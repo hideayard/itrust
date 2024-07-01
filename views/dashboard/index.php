@@ -30,7 +30,7 @@ $('#outlook-btn').click(function(){
     }, function(response){
             console.log(response);
           if (response.success) {
-                alert('Data saved successfully.');
+                alert('Outlook Command sent.');
             } else {
                 alert('Failed to save data.');
             }
@@ -45,7 +45,7 @@ $('#close-order-btn').click(function(){
     }, function(response){
             console.log(response);
           if (response.success) {
-                alert('Data saved successfully.');
+                alert('Close command sent.');
             } else {
                 alert('Failed to save data.');
             }
@@ -67,7 +67,7 @@ $this->registerJs($dashboardJS);
     <p>ITrust Trading Platform </p>
     <p>Your License :  <?=$model->user_license?></p>
     <p> <button class="btn btn-info" id="outlook-btn"><span class="fa fa-image"></span> GET OUTLOOK</button> </p>
-    <p> <button class="btn btn-danger" id="close-order-btn"><span class="fa fa-trash"></span> CLOSE ALL</button> </p>
+    <p> <button class="btn btn-danger" id="close-order-btn"><span class="fa fa-dollar-sign"></span> CLOSE ALL</button> </p>
     <!-- <p> <button class="btn btn-primary" onclick="addItem()"><span class="fa fa-trash"></span> CLOSE ALL</button> </p> -->
       
     </div>
