@@ -65,6 +65,7 @@ $this->registerJs($dashboardJS);
 
     <div class="card-body">
     <p>ITrust Trading Platform </p>
+    <p>Your License :  <?=$model->user_license?></p>
     <p> <button class="btn btn-info" id="outlook-btn"><span class="fa fa-image"></span> GET OUTLOOK</button> </p>
     <p> <button class="btn btn-danger" id="close-order-btn"><span class="fa fa-trash"></span> CLOSE ALL</button> </p>
     <!-- <p> <button class="btn btn-primary" onclick="addItem()"><span class="fa fa-trash"></span> CLOSE ALL</button> </p> -->
