@@ -190,4 +190,34 @@ class CreateOrderController extends Controller
         
     }
 
+    public function actionLicense()
+    {
+        $currentDate = new DateTime();
+
+        $account = Yii::$app->request->post('id');
+
+        $user = Users::find()
+            ->where(['user_account' => $account])
+            ->one();
+
+        if ($user) {
+            $license_expired = new DateTime($user->user_license_expired);
+
+            if ($user->user_license && ($license_expired > $currentDate)) {
+                return $user->user_license;
+            } else if ($license_expired < $currentDate) {
+                return "expired at " . $user->user_license_expired;
+            } else {
+                $licenseNumber = $this->generateLicenseNumber($account);
+                $user->user_license = $licenseNumber;
+                if (!$user->save()) {
+                    return 0;
+                } else {
+                    return $licenseNumber;
+                }
+            }
+        } else {
+            return -1;
+        }
+    }
 }

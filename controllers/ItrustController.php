@@ -118,7 +118,6 @@ class ItrustController extends Controller
     {
         $currentDate = new DateTime();
 
-        // $uniqueId = Yii::$app->user->id; // Replace with your unique identifier
         $account = Yii::$app->request->post('id');
 
         $user = Users::find()
