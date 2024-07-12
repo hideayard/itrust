@@ -103,6 +103,8 @@ class ItrustController extends Controller
                     return 1;
                 } else if ($order->order_cmd == "close_all") {
                     return 99;
+                } else if (str_contains($order->order_cmd, 'OP')) {
+                    return $order->order_cmd;
                 } else {
                     return 0;
                 }
