@@ -963,6 +963,29 @@ class SiteController extends Controller
         }
     }
 
+    public function actionMaxop()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $account = Yii::$app->request->post('id');
+        $maxop = Yii::$app->request->post('maxop');
+
+        if ($account) {
+
+            $order = new CloseOrder();
+            $order->order_account = $account;
+            $order->order_cmd = "OP".$maxop;
+            $order->order_status = 0;
+            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                return ($order->errors)[0];
+            }
+            return ['success' => true, 'message' => "SET MAX OP command sent"];
+        } else {
+            return ['success' => false, 'message' => "failed to SET MAX OP command"];
+        }
+    }
+
     public function actionGenerate()
     {
         // $uniqueId = Yii::$app->user->id; // Replace with your unique identifier

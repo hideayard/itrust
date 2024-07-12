@@ -159,7 +159,26 @@ class ItrustController extends Controller
             ->where(['user_account' => "$account"])
             ->andWhere(['user_license' => "$license"])
             ->one();
-        $result =$user;//$account ." - " . $license;
+        // $result =$user;//$account ." - " . $license;
+
+        if ($user) {
+            $license_expired = new DateTime($user->user_license_expired);
+            if ($license_expired > $currentDate) {
+                return 1;
+            } else {
+                return 0;
+            }
+        } else {
+            return $result;
+        }
+    }
+
+    public function actionCheckLicenseV2()
+    {
+        $license = Yii::$app->request->post('license');
+        $currentDate = new DateTime();
+        $result = -1;//$account ." - " . $license;
+        $user = Users::findOne(['user_license' => "$license"]);
 
         if ($user) {
             $license_expired = new DateTime($user->user_license_expired);
