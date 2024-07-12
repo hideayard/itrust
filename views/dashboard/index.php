@@ -53,7 +53,7 @@ $('#close-order-btn').click(function(){
 });
 
 $('#minus-btn').click(function(){
-    let maxop = ( ( parseInt($('#maxop').val()) - 5 ) >= 10 )? ( parseInt($('#maxop').val()) - 5 ) : $('#maxop').val();
+    let maxop = ( ( parseInt($('#maxop').val()) - 5 ) >= 5 )? ( parseInt($('#maxop').val()) - 5 ) : $('#maxop').val();
     console.log("maxop",maxop);
     $('#maxop').val(maxop);
 });
@@ -66,7 +66,7 @@ $('#plus-btn').click(function(){
 
 $('#maxop-btn').click(function(){
     let maxop = parseInt($('#maxop').val());
-    if(maxop >= 10 && maxop <= 100) {
+    if(maxop >= 5 && maxop <= 100) {
         //maxOPUrl
          $.post('$maxOPUrl', {
             $csrfParam: '$csrfToken',
@@ -102,7 +102,7 @@ $this->registerJs($dashboardJS);
         <hr>
         <div class="row">
             <div class="col-lg-1 col-md-1 col-sm-12 col-xs-12">
-                <input type="number" pattern="[0-9]*" id="maxop" name="maxop" class="form-control" value="10" min="10" max="100" />
+                <input type="number" pattern="[0-9]*" id="maxop" name="maxop" class="form-control" value="5" min="5" max="100" />
             </div>
             <div class="col-lg-2 col-md-2 col-sm-12 col-xs-12">
                 <p> <button class="btn btn-success" id="maxop-btn"><span class="fa fa-check-square"></span> SET MAX OP</button> </p>
