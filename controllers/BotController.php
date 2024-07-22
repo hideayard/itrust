@@ -29,7 +29,7 @@ class BotController extends Controller
         if ($text == '/start') {
             $this->sendMenu($chatId);
         } else {
-            $this->sendMessage($chatId, "You said: " . $text);
+            $this->sendMessage($chatId, "Hey You said: " . $text);
         }
     }
 
