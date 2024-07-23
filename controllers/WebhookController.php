@@ -201,18 +201,33 @@ class WebhookController extends Controller
         }
     }
 
-    public function answerCallbackQuery($callbackQueryId, $text)
+    // public function answerCallbackQuery($callbackQueryId, $text)
+    // {
+    //     $url = "https://api.telegram.org/bot{$this->bot_token}/answerCallbackQuery";
+
+    //     $data = [
+    //         'callback_query_id' => $callbackQueryId,
+    //         'text' => $text
+    //     ];
+
+    //     return $this->sendRequest($url, $data);
+    //     // return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
+
+    // }
+
+    protected function handleCallbackQuery($callbackQuery)
     {
-        $url = "https://api.telegram.org/bot{$this->bot_token}/answerCallbackQuery";
-
-        $data = [
-            'callback_query_id' => $callbackQueryId,
-            'text' => $text
-        ];
-
-        return $this->sendRequest($url, $data);
-        // return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
-
+        $callbackQueryId = $callbackQuery['id'];
+        $chatId = $callbackQuery['message']['chat']['id'];
+        $data = $callbackQuery['data'];
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "You selected ".$data], $this->chat_id);
+        // if ($data == 'option_1') {
+        //     $this->botHelper->sendMessage($chatId, "You selected Option 1");
+        //     $this->botHelper->answerCallbackQuery($callbackQueryId, "Option 1 selected");
+        // } elseif ($data == 'option_2') {
+        //     $this->botHelper->sendMessage($chatId, "You selected Option 2");
+        //     $this->botHelper->answerCallbackQuery($callbackQueryId, "Option 2 selected");
+        // }
     }
 
     private function check()
