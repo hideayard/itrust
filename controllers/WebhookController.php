@@ -286,7 +286,7 @@ class WebhookController extends Controller
                 $order = new CloseOrder();
                 $order->order_account = $account;
                 $order->order_cmd = "close_all";
-                $order->order_status = 1;
+                $order->order_status = 0;
                 $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
                 if (!$order->save()) {
                     return ($order->errors)[0];
