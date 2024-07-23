@@ -320,7 +320,7 @@ class WebhookController extends Controller
 
             $this->notifLog('maxop', 'maxop', $message_id, $chat_id, $from_id, $from_username);
 
-            $user = $this->getUser($this->from_id);
+            $user = $this->getUser($from_id);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
