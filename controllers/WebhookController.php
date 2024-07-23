@@ -250,7 +250,7 @@ class WebhookController extends Controller
             [
                 'reply_to_message_id' => $callbackQueryId,
                 'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
-                'reply_markup' => array('remove_keyboard' => true)
+                'reply_markup' => json_encode(array('remove_keyboard' => true))
             ],
             $chatId
         );
