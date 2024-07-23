@@ -248,8 +248,7 @@ class WebhookController extends Controller
         TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chatId);
         TelegramHelper::sendMessage(
             [
-                'chat_id' =>$callbackQuery['message']['chat']['id'],
-                'message_id' => $callbackQuery['id'],//$callbackQuery['message']['chat']['id'],
+                'message_id' => $callbackQueryId,
                 'reply_markup' => json_encode(array('remove_keyboard' => true))
                 // 'reply_markup' => json_encode([])
             ],
