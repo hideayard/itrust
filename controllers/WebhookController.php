@@ -245,13 +245,21 @@ class WebhookController extends Controller
         // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $callbackQueryId, $chatId, $data, $log_string);
 
         //logs to notif
-        TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You (@".$callbackQuery['from']['username'].") choose " . $data], $chatId);
+        // TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You (@".$callbackQuery['from']['username'].") choose " . $data], $chatId);
+        TelegramHelper::sendMessage(
+            [
+                'reply_to_message_id' => $callbackQueryId,
+                'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
+                'reply_markup' => array('remove_keyboard' => true)
+            ],
+            $chatId
+        );
         $this->matchCommand($data, null);
     }
 
     private function check()
     {
-        $user = $this->getUser($this->from_id,$this->from_name);
+        $user = $this->getUser($this->from_id, $this->from_name);
         if (!$user) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
@@ -275,7 +283,7 @@ class WebhookController extends Controller
             }
             $this->notifLog('close_all', 'close_all', $message_id, $chat_id, $from_id, $from_username);
 
-            $user = $this->getUser($from_id,$from_username);
+            $user = $this->getUser($from_id, $from_username);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
@@ -294,7 +302,6 @@ class WebhookController extends Controller
             } else {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "FAILED to CLOSE ALL ORDER command <bSent</b> for user " . $account], $chat_id);
             }
-
         } catch (\Exception $ex) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
@@ -319,7 +326,7 @@ class WebhookController extends Controller
 
             $this->notifLog('maxop', 'maxop', $message_id, $chat_id, $from_id, $from_username);
 
-            $user = $this->getUser($from_id,$from_username);
+            $user = $this->getUser($from_id, $from_username);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
@@ -353,7 +360,7 @@ class WebhookController extends Controller
                 return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/maxop &lt;spasi&gt;&lt;jumlah&gt;</pre>");
             }
 
-            $user = $this->getUser($from_id,$from_username);
+            $user = $this->getUser($from_id, $from_username);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
@@ -402,7 +409,7 @@ class WebhookController extends Controller
 
             $this->notifLog('outlook', 'outlook', $message_id, $chat_id, $from_id, $from_username);
 
-            $user = $this->getUser($from_id,$from_username);
+            $user = $this->getUser($from_id, $from_username);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
@@ -420,7 +427,6 @@ class WebhookController extends Controller
                 }
                 // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
-
             } else {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
             }
@@ -473,7 +479,7 @@ class WebhookController extends Controller
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Chat ID : " . $this->chat_id], $this->chat_id);
     }
 
-    private function getUser($from_id,$from_name='')
+    private function getUser($from_id, $from_name = '')
     {
         $user = Users::find()
             ->where(['telegram_id' => $from_id])
@@ -486,10 +492,10 @@ class WebhookController extends Controller
     {
         $message = "Hallo @" . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/link &lt;nomor lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
-        $user = $this->getUser($this->from_id,$this->from_name);
+        $user = $this->getUser($this->from_id, $this->from_name);
 
         if ($user) {
-            $message = "Hallo @" . $this->from_username . " (". $user->user_nama ."|" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
+            $message = "Hallo @" . $this->from_username . " (" . $user->user_nama . "|" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
         }
 
         // if (!$user) {
