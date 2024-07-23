@@ -245,11 +245,11 @@ class WebhookController extends Controller
         // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $callbackQueryId, $chatId, $data, $log_string);
 
         //logs to notif
-        // TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You (@".$callbackQuery['from']['username'].") choose " . $data], $chatId);
+        TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You (@".$callbackQuery['from']['username'].") choose " . $data], $chatId);
         TelegramHelper::sendMessage(
             [
-                'reply_to_message_id' => $callbackQueryId,
-                'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
+                'chat_id' => $callbackQueryId,
+                'message_id' => $callbackQuery['message']['chat']['id'],
                 'reply_markup' => json_encode(array('remove_keyboard' => true))
             ],
             $chatId
@@ -448,7 +448,7 @@ class WebhookController extends Controller
         $encodedKeyboard = json_encode([
             'keyboard' => [
                 [
-                    ['text' => 'check', 'callback_data' => "check"],
+                    ['text' => 'Check', 'callback_data' => "check"],
                 ],
                 [
                     ['text' => 'Outlook', 'callback_data' => "outlook"],
@@ -465,10 +465,9 @@ class WebhookController extends Controller
                     ['text' => 'Pendaftaran Lisensi', 'callback_data' => "license"],
                 ]
             ],
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true,
+            // 'resize_keyboard' => true,
+            // 'one_time_keyboard' => true,
             'selective' => true,
-
         ]);
 
         return TelegramHelper::sendMessage(
