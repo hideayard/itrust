@@ -206,10 +206,10 @@ class WebhookController extends Controller
 
         $user = $this->getUser();
         if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
 
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Terdaftar</b>"], $this->chat_id);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Terdaftar</b>"], $this->chat_id);
     }
     private function maxop()
     {
@@ -218,7 +218,7 @@ class WebhookController extends Controller
 
         $user = $this->getUser();
         if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
 
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => $message], $this->chat_id);
@@ -232,7 +232,7 @@ class WebhookController extends Controller
 
         $user = $this->getUser();
         if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
         $maxop = trim($params[0]);
 
@@ -261,7 +261,7 @@ class WebhookController extends Controller
     {
         $user = $this->getUser();
         if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
 
         $account = $user->user_account ?? null;
