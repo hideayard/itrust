@@ -220,9 +220,6 @@ class WebhookController extends Controller
         $chatId = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
-        // $log = json_encode($callbackQuery);
-        // $callbackQuery['message']
-
         $log[] = $callbackQuery['id'];
         $log[] = $callbackQuery['from']['id'];
         $log[] = $callbackQuery['from']['username'];
@@ -234,7 +231,7 @@ class WebhookController extends Controller
         $notif->notif_date =  (new DateTime())->format('Y-m-d H:i:s');
         $notif->notif_processed = "false";
         $notif->notif_title = "title handleCallbackQuery";
-        $notif->notif_text = "text handleCallbackQuery " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data. " | log=" . $log_string;
+        $notif->notif_text = "text handleCallbackQuery " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data . " | log=" . $log_string;
 
         if (!$notif->save()) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery" . $notif->errors], $chatId);
@@ -264,10 +261,10 @@ class WebhookController extends Controller
         $callbackQuery  = $this->callback_query;
 
         if ($callbackQuery) {
-            $message_id = $this->message_id['id'];
-            $from_username = $callbackQuery['message']['from']['username']??" _username_ ";
-            $from_id = $callbackQuery['message']['from']['id']??" _id_ "; 
-            $chat_id = $callbackQuery['message']['chat']['id'];
+            $message_id = $callbackQuery['id'];
+            $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
+            $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
+            $chat_id = $callbackQuery['chat']['id'];
         }
 
         $user = $this->getUser();
@@ -313,9 +310,23 @@ class WebhookController extends Controller
 
     private function outlook()
     {
+        $callbackQuery  = $this->callback_query;
+
+        $message_id = $this->message_id;
+        $from_username = $this->from_username;
+        $from_id = $this->from_id;
+        $chat_id = $this->chat_id;
+
+        if ($callbackQuery) {
+            $message_id = $callbackQuery['id'];
+            $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
+            $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
+            $chat_id = $callbackQuery['chat']['id'];
+        }
+
         $user = $this->getUser();
         if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
         }
 
         $account = $user->user_account ?? null;
@@ -329,9 +340,9 @@ class WebhookController extends Controller
             if (!$order->save()) {
                 return ($order->errors)[0];
             }
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $_GETmessage_id, 'text' => "Outlook command <bSent</b> for user " . $account], $_GETchat_id);
         } else {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "<b>Failed</b> to send command for user " . $account], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $_GETmessage_id, 'text' => "<b>Failed</b> to send command for user " . $account], $_GETchat_id);
         }
     }
 
