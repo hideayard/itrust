@@ -214,15 +214,15 @@ class WebhookController extends Controller
         }
     }
 
-    private function notifLog($callbackQueryId, $chatId, $data, $log_string)
+    private function notifLog($from,$title,$callbackQueryId, $chatId, $data, $log_string)
     {
         $notif = new Notif();
-        $notif->notif_from = "handleCallbackQuery";
+        $notif->notif_from = $from;
         $notif->notif_to = null;
         $notif->notif_date =  (new DateTime())->format('Y-m-d H:i:s');
         $notif->notif_processed = "false";
-        $notif->notif_title = "title handleCallbackQuery";
-        $notif->notif_text = "text handleCallbackQuery " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data . " | log=" . $log_string;
+        $notif->notif_title = "title - ". $title;
+        $notif->notif_text = "text " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data . " | log=" . $log_string;
 
         if (!$notif->save()) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery" . $notif->errors], $chatId);
@@ -240,7 +240,7 @@ class WebhookController extends Controller
         $log[] = $callbackQuery['from']['username'];
         $log_string = implode(", ", $log);
 
-        $this->notifLog($callbackQueryId, $chatId, $data, $log_string);
+        $this->notifLog('handleCallbackQuery','handleCallbackQuery',$callbackQueryId, $chatId, $data, $log_string);
 
         //logs to notif
         TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose " . $data], $chatId);
@@ -333,7 +333,7 @@ class WebhookController extends Controller
                 $chat_id = $callbackQuery['chat']['id'];
             }
 
-            $this->notifLog($message_id, $chat_id, $from_id, $from_username);
+            $this->notifLog('outlook', 'outlook', $message_id, $chat_id, $from_id, $from_username);
 
             $user = $this->getUser();
             if (!$user) {
