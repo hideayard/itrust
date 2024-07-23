@@ -129,15 +129,14 @@ class WebhookController extends Controller
                         ];
 
                         $response = 'no message';
-                        if ($update['callback_query']['data'] )
-                        {
+                        if ($update['callback_query']['data']) {
                             $response = $update['callback_query']['data'];
                         }
 
                         $encodedKeyboard = json_encode([
                             'inline_keyboard' => [[]]
                         ]);
-                        
+
                         // return TelegramHelper::editMessageText([
                         //     'chat_id' => $update['callback_query']['message']['chat']['id'],
                         //     'message_id' => $update['callback_query']['message']['message_id'],
@@ -145,13 +144,10 @@ class WebhookController extends Controller
                         //     'text' => "<pre>$response</pre>",
                         //     'reply_markup' => $encodedKeyboard
                         // ]);
-                        return TelegramHelper::sendMessage(['reply_to_message_id' => $update['callback_query']['message']['message_id'], 'text' => $response ], $update['callback_query']['message']['chat']['id']);
-
+                        return TelegramHelper::sendMessage(['reply_to_message_id' => $update['callback_query']['message']['message_id'], 'text' => $response], $update['callback_query']['message']['chat']['id']);
                     }
-
                 }
-            }
-            else if (isset($update['message'])) {
+            } else if (isset($update['message'])) {
                 if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
 
                     $command = ArrayHelper::getValue($match, 'command', "");
@@ -162,11 +158,14 @@ class WebhookController extends Controller
                         case "id";
                             return $this->chatId();
                             break;
-                        case "coba";
-                            return $this->coba();
+                        case "menu";
+                            return $this->menu();
                             break;
                         case "start";
                             return $this->start();
+                            break;
+                        case "outlook";
+                            return $this->outlook();
                             break;
                         case "list";
                             return $this->getlist();
@@ -191,37 +190,43 @@ class WebhookController extends Controller
             return $e->getMessage();
         }
     }
-    
-    private function coba()
+
+    private function outlook()
+    {
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Chat ID : " . $this->chat_id], $this->chat_id);
+    }
+
+    private function menu()
     {
         $keyboard = [
             ['7', '8', '9'],
             ['4', '5', '6'],
             ['1', '2', '3'],
-                 ['0']
+            ['0']
         ];
-                
+
 
         $encodedKeyboard = json_encode([
             'inline_keyboard' => [
                 [
-                    ['text' => 'Profile', 'callback_data' => "profile"],
-                    ['text' => 'Biro Jodoh', 'callback_data' => "biro_jodoh"],
-                    
+                    ['text' => 'Outlook', 'callback_data' => "outlook"],
+                    ['text' => 'MaxOP', 'callback_data' => "maxop"],
                 ],
                 [
-                    ['text' => 'Donasi', 'callback_data' => "donasi"],
-                    ['text' => 'Unit Usaha', 'callback_data' => "unit_usaha"],
-                    
+                    ['text' => 'Close BUY', 'callback_data' => "close_buy"],
+                    ['text' => 'Close SELL', 'callback_data' => "close_sell"],
                 ],
                 [
-                    ['text' => 'Pendaftaran Sekolah', 'callback_data' => "pendaftaran_sekolah"],
+                    ['text' => 'Close All Order', 'callback_data' => "close_all"],
+                ],
+                [
+                    ['text' => 'Pendaftaran Lisensi', 'callback_data' => "license"],
                 ]
             ]
         ]);
-        
+
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Selamat Datang, Silahkan pilih menu berikut', 'reply_to_message_id' => $this->message_id, 'reply_markup' => $encodedKeyboard], $this->chat_id);
-        
+
         // return TelegramHelper::editMessageText([
         //     'chat_id' => $this->chat_id, 
         //     'message_id' => $this->message_id,
@@ -237,7 +242,7 @@ class WebhookController extends Controller
 
     private function start()
     {
-        $message = "Selamat datang di layanan Rochat.id\nSilahkan ketik layanan dengan format <pre>/sambungkan &lt;nama layanan&gt;</pre>";
+        $message = "Selamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
@@ -276,9 +281,9 @@ class WebhookController extends Controller
         $service = Channel::find()->all();
 
         if (!$service) {
-            return $this->reply("Mohon maaf, Belum ada Channel, hubungi CS rochat di @rochat.id");
+            return $this->reply("Mohon maaf, Belum ada Channel, hubungi CS iTrust di admin@itrust-care.com");
         }
-        $msg = "List Channel yang terdaftar pada rochat.id : \n";
+        $msg = "List Channel yang terdaftar pada iTrust.id : \n";
         $last_code = null;
         $i = 1;
         foreach ($service as $key) {
@@ -311,9 +316,9 @@ class WebhookController extends Controller
         $service = Service::find()->all();
 
         if (!$service) {
-            return $this->reply("Mohon maaf, Belum ada Layanan, hubungi CS rochat di @rochat.id");
+            return $this->reply("Mohon maaf, Belum ada Layanan, hubungi CS iTrust di admin@itrust-care.com");
         }
-        $msg = "List layanan yang terdaftar pada rochat.id : \n";
+        $msg = "List layanan yang terdaftar pada iTrust.id : \n";
         $last_code = null;
         $i = 1;
         foreach ($service as $key) {
@@ -325,6 +330,56 @@ class WebhookController extends Controller
         $msg .= "\nContoh ketik :\n<pre>/pilih " . $last_code . "</pre>\n";
 
         return $this->reply($msg);
+    }
+
+
+    private function lisensi($params)
+    {
+
+        if (count($params) != 1) {
+            return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/lisensi &lt;spasi&gt;&lt;nama kanal&gt;</pre>");
+        }
+
+        $user = UserTele::findOne(['telegram_id' => $this->from_id]);
+
+        if (!$user) {
+            $user = new UserTele;
+            $user->name = $this->from_name;
+            $user->telegram_id = $this->from_id;
+            $user->telegram_username = $this->from_username;
+
+            if (!$user->save()) {
+                throw new Exception(current($user->errors)[0]);
+            }
+        }
+
+        $channel = Channel::findOne(['code' => trim($params[0])]);
+
+        if (!$channel) {
+            return $this->reply("Kanal " . $params[0] . " tidak ditemukan");
+        }
+
+        $user->channel = $channel->id;
+        if (!$user->save()) {
+            throw new Exception(current($user->errors)[0]);
+        }
+
+        $message = "Anda telah terhubung dengan kanal <strong>" . $channel->name . "</strong>,\nBerikut layanan kami yang bisa anda pilih :";
+
+        $services = Service::find()->where(['channel_id' => $channel->id])->all();
+        $i = 1;
+        foreach ($services as $service) {
+            $message .= "<pre>" . $i . ". " . $service->name . " &lt;" . $service->code . "&gt;</pre>";
+            $i++;
+        }
+
+        $message .= "Silahkan pilih layanan kami dengan cara ketik :  <pre>/pilih " . current($services)->code . "</pre>";
+
+        $this->reply($message);
+
+        if (!empty($channel->greeting)) {
+            $this->reply($channel->greeting);
+        }
     }
 
     private function sambungkan($params)
