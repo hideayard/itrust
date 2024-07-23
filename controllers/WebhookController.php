@@ -220,7 +220,8 @@ class WebhookController extends Controller
         $chatId = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
-        $log = json_encode($callbackQuery);
+        // $log = json_encode($callbackQuery);
+        $log = implode(", ", $callbackQuery);
 
         $notif = new Notif();
         $notif->notif_from = "handleCallbackQuery";
