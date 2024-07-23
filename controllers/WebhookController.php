@@ -122,7 +122,6 @@ class WebhookController extends Controller
 
             if (isset($update['callback_query'])) {
                 if ($update['callback_query']) {
-                    // $data = $update['callback_query']['data'];
                     $this->handleCallbackQuery($update['callback_query']);
                 }
                 if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
@@ -165,7 +164,7 @@ class WebhookController extends Controller
                     $command = ArrayHelper::getValue($match, 'command', "");
                     $this->command = $command;;
                     $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
-                    $this->matchCommand($match['command'],$params);
+                    $this->matchCommand($match['command'], $params);
                 }
             } else {
                 return "invalid request";
@@ -176,7 +175,7 @@ class WebhookController extends Controller
         }
     }
 
-    private function matchCommand($val,$params)
+    private function matchCommand($val, $params)
     {
         switch ($val) {
             case "id";
@@ -227,21 +226,19 @@ class WebhookController extends Controller
         $notif->notif_date =  (new DateTime())->format('Y-m-d H:i:s');
         $notif->notif_processed = "false";
         $notif->notif_title = "title handleCallbackQuery";
-        $notif->notif_text = "text handleCallbackQuery ".$callbackQueryId ." | chatID=".$chatId." | data=".$data;
+        $notif->notif_text = "text handleCallbackQuery " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data;
 
         if (!$notif->save()) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery".$notif->errors], $chatId);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery" . $notif->errors], $chatId);
         }
 
         //logs to notif
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose ".$data], $chatId);
-        $this->matchCommand($data,null);
-
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose " . $data], $chatId);
+        $this->matchCommand($data, null);
     }
 
     private function check()
     {
-
         $user = $this->getUser();
         if (!$user) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
@@ -251,14 +248,26 @@ class WebhookController extends Controller
     private function maxop()
     {
 
-        $message = "Setting MAXOP dari bot dengan format\n<pre>/setmaxop &lt;nilai_max_op&gt;</pre>";
+        $message        = "Setting MAXOP dari bot dengan format\n<pre>/setmaxop &lt;nilai_max_op&gt;</pre>";
+        $message_id     = $this->message_id;
+        $from_username  = $this->from_username;
+        $from_id        = $this->from_id;
+        $chat_id        = $this->chat_id;
+        $callbackQuery  = $this->callback_query;
+
+        if ($callbackQuery) {
+            $message_id = $this->message_id['id'];
+            $from_username = $callbackQuery['message']['from']['username']??" _username_ ";
+            $from_id = $callbackQuery['message']['from']['id']??" _id_ "; 
+            $chat_id = $callbackQuery['message']['chat']['id'];
+        }
 
         $user = $this->getUser();
         if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
         }
 
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => $message], $this->chat_id);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => $message], $chat_id);
     }
 
     private function setmaxop($params)
