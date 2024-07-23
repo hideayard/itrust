@@ -21,7 +21,7 @@ use app\models\Prepaid;
 use app\models\Question;
 use app\models\Service;
 use app\models\TelegramToken;
-use app\models\User;
+use app\models\UserTele;
 use app\models\Vendor;
 use app\models\VendorPr;
 use app\models\VendorRequest;
@@ -242,7 +242,7 @@ class WebhookController extends Controller
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
         if (!$user) {
-            $user = new User;
+            $user = new UserTele;
         }
 
         $user->name = $this->from_name;
@@ -263,7 +263,7 @@ class WebhookController extends Controller
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
         if (!$user) {
-            $user = new User;
+            $user = new UserTele;
             $user->name = $this->from_name;
             $user->telegram_id = $this->from_id;
             $user->telegram_username = $this->from_username;
@@ -298,7 +298,7 @@ class WebhookController extends Controller
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
         if (!$user) {
-            $user = new User;
+            $user = new UserTele;
             $user->name = $this->from_name;
             $user->telegram_id = $this->from_id;
             $user->telegram_username = $this->from_username;
@@ -337,7 +337,7 @@ class WebhookController extends Controller
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
         if (!$user) {
-            $user = new User;
+            $user = new UserTele;
             $user->name = $this->from_name;
             $user->telegram_id = $this->from_id;
             $user->telegram_username = $this->from_username;
@@ -386,7 +386,7 @@ class WebhookController extends Controller
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
         if (!$user) {
-            $user = new User;
+            $user = new UserTele;
             $user->name = $this->from_name;
             $user->telegram_id = $this->from_id;
             $user->telegram_username = $this->from_username;
@@ -447,7 +447,7 @@ class WebhookController extends Controller
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
         if (!$user) {
-            $user = new User;
+            $user = new UserTele;
             $user->name = $this->from_name;
             $user->telegram_id = $this->from_id;
             $user->telegram_username = $this->from_username;
