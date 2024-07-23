@@ -1,8 +1,8 @@
 <?php
 
-namespace app\components;
-
+namespace app\helpers;
 use Yii;
+
 use yii\base\Component;
 
 class TelegramBotHelper extends Component

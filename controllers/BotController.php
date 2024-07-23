@@ -7,11 +7,13 @@ use app\models\Notif;
 use app\models\NotifSearch;
 use yii\web\Controller;
 use yii\web\Response;
-use app\components\TelegramBotHelper;
+use app\helpers\TelegramBotHelper;
 
 class BotController extends Controller
 {
     public $enableCsrfValidation = false;
+
+    protected $botHelper;
 
     public function actionIndex()
     {
