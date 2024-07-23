@@ -321,12 +321,10 @@ class WebhookController extends Controller
         try {
             $callbackQuery  = $this->callback_query;
 
-            $message_id = $this->message_id;
-            $from_username = $this->from_username;
-            $from_id = $this->from_id;
-            $chat_id = $this->chat_id;
-
-            $this->notifLog($message_id, $chat_id, $from_id, $from_username);
+            $message_id = $this->message_id??"";
+            $from_username = $this->from_username??"";
+            $from_id = $this->from_id??"";
+            $chat_id = $this->chat_id??"";
 
             if ($callbackQuery) {
                 $message_id = $callbackQuery['id'];
@@ -334,6 +332,8 @@ class WebhookController extends Controller
                 $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
                 $chat_id = $callbackQuery['chat']['id'];
             }
+
+            $this->notifLog($message_id, $chat_id, $from_id, $from_username);
 
             $user = $this->getUser();
             if (!$user) {
