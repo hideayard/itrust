@@ -243,7 +243,7 @@ class WebhookController extends Controller
         $this->notifLog($callbackQueryId, $chatId, $data, $log_string);
 
         //logs to notif
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose " . $data], $chatId);
+        TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose " . $data], $chatId);
         $this->matchCommand($data, null);
     }
 
