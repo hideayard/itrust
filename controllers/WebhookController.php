@@ -214,14 +214,14 @@ class WebhookController extends Controller
         }
     }
 
-    private function notifLog($from,$title,$callbackQueryId, $chatId, $data, $log_string)
+    private function notifLog($from, $title, $callbackQueryId, $chatId, $data, $log_string)
     {
         $notif = new Notif();
         $notif->notif_from = $from;
         $notif->notif_to = null;
         $notif->notif_date =  (new DateTime())->format('Y-m-d H:i:s');
         $notif->notif_processed = "false";
-        $notif->notif_title = "title - ". $title;
+        $notif->notif_title = "title - " . $title;
         $notif->notif_text = "text " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data . " | log=" . $log_string;
 
         if (!$notif->save()) {
@@ -240,7 +240,7 @@ class WebhookController extends Controller
         $log[] = $callbackQuery['from']['username'];
         $log_string = implode(", ", $log);
 
-        $this->notifLog('handleCallbackQuery','handleCallbackQuery',$callbackQueryId, $chatId, $data, $log_string);
+        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $callbackQueryId, $chatId, $data, $log_string);
 
         //logs to notif
         TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose " . $data], $chatId);
@@ -285,33 +285,53 @@ class WebhookController extends Controller
 
     private function setmaxop($params)
     {
-        if (count($params) != 1) {
-            return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/maxop &lt;spasi&gt;&lt;jumlah&gt;</pre>");
-        }
+        try {
+            $callbackQuery  = $this->callback_query;
 
-        $user = $this->getUser($this->from_id);
-        if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
-        }
-        $maxop = trim($params[0]);
+            $message_id = $this->message_id ?? "";
+            $from_username = $this->from_username ?? "";
+            $from_id = $this->from_id ?? "";
+            $chat_id = $this->chat_id ?? "";
 
-        $account = $user->user_account ?? null;
-
-        if ($account) {
-
-            $order = new CloseOrder();
-            $order->order_account = $account;
-            $order->order_cmd = "OP" . $maxop;
-            $order->order_status = 0;
-            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
-
-            if (!$order->save()) {
-                return ($order->errors)[0];
+            if ($callbackQuery) {
+                $message_id = $callbackQuery['id'];
+                $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
+                $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
+                $chat_id = $callbackQuery['message']['chat']['id'];
             }
-            // return ['success' => true, 'message' => "SET MAX OP command sent"];
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "SET MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $this->chat_id);
-        } else {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "FAILED to set MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $this->chat_id);
+
+            $this->notifLog('setmaxop', 'setmaxop', $message_id, $chat_id, $from_id, $from_username);
+
+            if (count($params) != 1) {
+                return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/maxop &lt;spasi&gt;&lt;jumlah&gt;</pre>");
+            }
+
+            $user = $this->getUser($from_id);
+            if (!$user) {
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+            }
+            $maxop = trim($params[0]);
+
+            $account = $user->user_account ?? null;
+
+            if ($account) {
+
+                $order = new CloseOrder();
+                $order->order_account = $account;
+                $order->order_cmd = "OP" . $maxop;
+                $order->order_status = 0;
+                $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+                if (!$order->save()) {
+                    return ($order->errors)[0];
+                }
+                // return ['success' => true, 'message' => "SET MAX OP command sent"];
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "SET MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $chat_id);
+            } else {
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "FAILED to set MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $chat_id);
+            }
+        } catch (\Exception $ex) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
     }
 
@@ -321,10 +341,10 @@ class WebhookController extends Controller
         try {
             $callbackQuery  = $this->callback_query;
 
-            $message_id = $this->message_id??"";
-            $from_username = $this->from_username??"";
-            $from_id = $this->from_id??"";
-            $chat_id = $this->chat_id??"";
+            $message_id = $this->message_id ?? "";
+            $from_username = $this->from_username ?? "";
+            $from_id = $this->from_id ?? "";
+            $chat_id = $this->chat_id ?? "";
 
             if ($callbackQuery) {
                 $message_id = $callbackQuery['id'];
