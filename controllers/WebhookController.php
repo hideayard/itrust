@@ -214,17 +214,8 @@ class WebhookController extends Controller
         }
     }
 
-    protected function handleCallbackQuery($callbackQuery)
+    private function notifLog($callbackQueryId, $chatId, $data, $log_string)
     {
-        $callbackQueryId = $callbackQuery['id'];
-        $chatId = $callbackQuery['message']['chat']['id'];
-        $data = $callbackQuery['data'];
-
-        $log[] = $callbackQuery['id'];
-        $log[] = $callbackQuery['from']['id'];
-        $log[] = $callbackQuery['from']['username'];
-        $log_string = implode(", ", $log);
-
         $notif = new Notif();
         $notif->notif_from = "handleCallbackQuery";
         $notif->notif_to = null;
@@ -236,6 +227,20 @@ class WebhookController extends Controller
         if (!$notif->save()) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery" . $notif->errors], $chatId);
         }
+    }
+
+    protected function handleCallbackQuery($callbackQuery)
+    {
+        $callbackQueryId = $callbackQuery['id'];
+        $chatId = $callbackQuery['message']['chat']['id'];
+        $data = $callbackQuery['data'];
+
+        $log[] = $callbackQuery['id'];
+        $log[] = $callbackQuery['from']['id'];
+        $log[] = $callbackQuery['from']['username'];
+        $log_string = implode(", ", $log);
+
+        $this->notifLog($callbackQueryId, $chatId, $data, $log_string);
 
         //logs to notif
         return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose " . $data], $chatId);
@@ -252,27 +257,30 @@ class WebhookController extends Controller
     }
     private function maxop()
     {
+        try {
+            $message        = "Setting MAXOP dari bot dengan format\n<pre>/setmaxop &lt;nilai_max_op&gt;</pre>";
+            $message_id     = $this->message_id;
+            $from_username  = $this->from_username;
+            $from_id        = $this->from_id;
+            $chat_id        = $this->chat_id;
+            $callbackQuery  = $this->callback_query;
 
-        $message        = "Setting MAXOP dari bot dengan format\n<pre>/setmaxop &lt;nilai_max_op&gt;</pre>";
-        $message_id     = $this->message_id;
-        $from_username  = $this->from_username;
-        $from_id        = $this->from_id;
-        $chat_id        = $this->chat_id;
-        $callbackQuery  = $this->callback_query;
+            if ($callbackQuery) {
+                $message_id = $callbackQuery['id'];
+                $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
+                $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
+                $chat_id = $callbackQuery['chat']['id'];
+            }
 
-        if ($callbackQuery) {
-            $message_id = $callbackQuery['id'];
-            $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
-            $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
-            $chat_id = $callbackQuery['chat']['id'];
+            $user = $this->getUser();
+            if (!$user) {
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+            }
+
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => $message], $chat_id);
+        } catch (\Exception $ex) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
-
-        $user = $this->getUser();
-        if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
-        }
-
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => $message], $chat_id);
     }
 
     private function setmaxop($params)
@@ -310,39 +318,44 @@ class WebhookController extends Controller
 
     private function outlook()
     {
-        $callbackQuery  = $this->callback_query;
+        try {
 
-        $message_id = $this->message_id;
-        $from_username = $this->from_username;
-        $from_id = $this->from_id;
-        $chat_id = $this->chat_id;
+            $callbackQuery  = $this->callback_query;
 
-        if ($callbackQuery) {
-            $message_id = $callbackQuery['id'];
-            $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
-            $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
-            $chat_id = $callbackQuery['chat']['id'];
-        }
+            $message_id = $this->message_id;
+            $from_username = $this->from_username;
+            $from_id = $this->from_id;
+            $chat_id = $this->chat_id;
 
-        $user = $this->getUser();
-        if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
-        }
-
-        $account = $user->user_account ?? null;
-        if ($account) {
-            $order = new CloseOrder();
-            $order->order_account = $account;
-            $order->order_cmd = "outlook";
-            $order->order_status = 0;
-            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
-
-            if (!$order->save()) {
-                return ($order->errors)[0];
+            if ($callbackQuery) {
+                $message_id = $callbackQuery['id'];
+                $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
+                $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
+                $chat_id = $callbackQuery['chat']['id'];
             }
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
-        } else {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user " . $account], $chat_id);
+
+            $user = $this->getUser();
+            if (!$user) {
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+            }
+
+            $account = $user->user_account ?? null;
+            if ($account) {
+                $order = new CloseOrder();
+                $order->order_account = $account;
+                $order->order_cmd = "outlook";
+                $order->order_status = 0;
+                $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+                if (!$order->save()) {
+                    return ($order->errors)[0];
+                }
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
+            } else {
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user " . $account], $chat_id);
+            }
+        } catch (\Exception $ex) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
     }
 
