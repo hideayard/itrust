@@ -246,7 +246,7 @@ class WebhookController extends Controller
 
         //logs to notif
         TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chatId);
-        TelegramHelper::sendMessage(
+        TelegramHelper::editMessageReplyMarkup(
             [
                 'message_id' => $callbackQueryId,
                 // 'reply_markup' => json_encode(array('remove_keyboard' => true))
@@ -278,7 +278,7 @@ class WebhookController extends Controller
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Terdaftar</b>"], $this->chat_id);
         } catch (\Exception $ex) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
