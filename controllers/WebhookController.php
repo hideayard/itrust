@@ -208,7 +208,6 @@ class WebhookController extends Controller
         if (!$user) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
-
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Terdaftar</b>"], $this->chat_id);
     }
     private function maxop()
@@ -310,7 +309,7 @@ class WebhookController extends Controller
             ]
         ]);
 
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Selamat Datang, Silahkan pilih menu berikut', 'reply_to_message_id' => $this->message_id, 'reply_markup' => $encodedKeyboard], $this->chat_id);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Selamat Datang '.$this->from_name.', Silahkan pilih menu berikut', 'reply_to_message_id' => $this->message_id, 'reply_markup' => $encodedKeyboard], $this->chat_id);
 
         // return TelegramHelper::editMessageText([
         //     'chat_id' => $this->chat_id, 
@@ -333,7 +332,7 @@ class WebhookController extends Controller
 
     private function start()
     {
-        $message = "Selamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
+        $message = "Hello ".$this->from_name."\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
         $user = $this->getUser();
 
