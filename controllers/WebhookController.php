@@ -11,6 +11,7 @@ use app\models\Pc;
 use ErrorException;
 use app\jobs\McaJob;
 use app\models\Group;
+use app\models\Notif;
 use app\models\Users;
 use app\models\Answer;
 use app\models\GitLog;
@@ -120,7 +121,7 @@ class WebhookController extends Controller
             $text                   = ArrayHelper::getValue($update, "message.text", null);
 
             if (isset($update['callback_query'])) {
-                if($update['callback_query']) {
+                if ($update['callback_query']) {
                     // $data = $update['callback_query']['data'];
                     $this->handleCallbackQuery($update['callback_query']);
                 }
@@ -153,8 +154,9 @@ class WebhookController extends Controller
                         //     'reply_markup' => $encodedKeyboard
                         // ]);
                         return TelegramHelper::sendMessage([
-                            'reply_to_message_id' => $update['callback_query']['message']['message_id'], 
-                            'text' => $response], $update['callback_query']['message']['chat']['id']);
+                            'reply_to_message_id' => $update['callback_query']['message']['message_id'],
+                            'text' => $response
+                        ], $update['callback_query']['message']['chat']['id']);
                     }
                 }
             } else if (isset($update['message'])) {
@@ -225,10 +227,22 @@ class WebhookController extends Controller
 
     protected function handleCallbackQuery($callbackQuery)
     {
-        // $callbackQueryId = $callbackQuery['id'];
-        // $chatId = $callbackQuery['message']['chat']['id'];
-        // $data = $callbackQuery['data'];
-        
+        $callbackQueryId = $callbackQuery['id'];
+        $chatId = $callbackQuery['message']['chat']['id'];
+        $data = $callbackQuery['data'];
+
+        $notif = new Notif();
+        $notif->notif_from = "handleCallbackQuery";
+        $notif->notif_to = null;
+        $notif->notif_date =  (new DateTime())->format('Y-m-d H:i:s');
+        $notif->notif_processed = "false";
+        $notif->notif_title = "title handleCallbackQuery";
+        $notif->notif_text = "text handleCallbackQuery ".$callbackQueryId ." | chatID=".$chatId." | data=".$data;
+
+        if (!$notif->save()) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "ERROR handleCallbackQuery".$notif->errors], $this->chat_id);
+        }
+
         // return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "You selected " . $data], $this->chat_id);
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "handleCallbackQuery"], $this->chat_id);
         // if ($data == 'option_1') {
