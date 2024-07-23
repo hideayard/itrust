@@ -2,36 +2,38 @@
 
 namespace app\controllers;
 
+use PDO;
 use Yii;
-use yii\helpers\ArrayHelper;
-use yii\web\Controller;
+use DateTime;
+use Exception;
+use Throwable;
+use app\models\Pc;
+use ErrorException;
+use app\jobs\McaJob;
+use app\models\Group;
 use app\models\Users;
+use app\models\Answer;
+use app\models\GitLog;
+use app\models\Vendor;
+use app\models\Channel;
+use app\models\Prepaid;
+use app\models\Service;
+use yii\web\Controller;
+use app\models\Question;
+use app\models\UserTele;
+use app\models\VendorPr;
+use app\jobs\TelegramJob;
+use app\models\CloseOrder;
+use yii\rest\CreateAction;
+use app\models\GitStatistic;
+use yii\helpers\ArrayHelper;
 use app\helpers\CustomHelper;
+use app\models\TelegramToken;
+use app\models\VendorRequest;
 use app\helpers\SecurityHelper;
 use app\helpers\TelegramHelper;
-use app\jobs\McaJob;
-use app\jobs\TelegramJob;
-use app\models\Answer;
-use app\models\Channel;
-use app\models\GitLog;
-use app\models\GitStatistic;
-use app\models\Group;
-use app\models\Pc;
-use app\models\Prepaid;
-use app\models\Question;
-use app\models\Service;
-use app\models\TelegramToken;
-use app\models\UserTele;
-use app\models\Vendor;
-use app\models\VendorPr;
-use app\models\VendorRequest;
 use app\models\VendorTeamMapping;
-use ErrorException;
-use Exception;
 use Google\Cloud\Firestore\FirestoreClient;
-use PDO;
-use Throwable;
-use yii\rest\CreateAction;
 
 class WebhookController extends Controller
 {
@@ -193,7 +195,26 @@ class WebhookController extends Controller
 
     private function outlook()
     {
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Chat ID : " . $this->chat_id], $this->chat_id);
+        $user = $this->getUser();
+        if (!$user) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User ".$this->from_id." <b>Belum Terdaftar</b>"], $this->chat_id);
+        }
+
+        $account = $user->user_account??null;
+        if ($account) {
+            $order = new CloseOrder();
+            $order->order_account = $account;
+            $order->order_cmd = "outlook";
+            $order->order_status = 0;
+            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                return ($order->errors)[0];
+            }
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Outlook command <bSent</b> for user ".$account], $this->chat_id);
+        } else {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "<b>Failed</b> to send command for user ".$account], $this->chat_id);
+        }
     }
 
     private function menu()
@@ -240,15 +261,22 @@ class WebhookController extends Controller
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Chat ID : " . $this->chat_id], $this->chat_id);
     }
 
+    private function getUser()
+    {
+        $user = Users::findOne(['telegram_id' => $this->from_id]);
+        return $user;
+    }
+
     private function start()
     {
         $message = "Selamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
-        $user = Users::findOne(['telegram_id' => $this->from_id]);
+        $user = $this->getUser();
 
         if ($user) {
-            $message = "Selamat datang " . $user->user_nama . " (" . $user->user_license . ") " . " di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
+            $message = "Hallo " . $user->user_nama . " (" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
         }
+
         // if (!$user) {
         //     $user = new Users;
         // }
@@ -368,22 +396,22 @@ class WebhookController extends Controller
         //     throw new Exception(current($user->errors)[0]);
         // }
 
-        $message = "User Anda telah terhubung dengan lisensi <strong>" . $channel->name . "</strong>,\nBerikut layanan kami yang bisa anda pilih :";
+        // $message = "User Anda telah terhubung dengan lisensi <strong>" . $channel->name . "</strong>,\nBerikut layanan kami yang bisa anda pilih :";
 
-        $services = Service::find()->where(['channel_id' => $channel->id])->all();
-        $i = 1;
-        foreach ($services as $service) {
-            $message .= "<pre>" . $i . ". " . $service->name . " &lt;" . $service->code . "&gt;</pre>";
-            $i++;
-        }
+        // $services = Service::find()->where(['channel_id' => $channel->id])->all();
+        // $i = 1;
+        // foreach ($services as $service) {
+        //     $message .= "<pre>" . $i . ". " . $service->name . " &lt;" . $service->code . "&gt;</pre>";
+        //     $i++;
+        // }
 
-        $message .= "Silahkan pilih layanan kami dengan cara ketik :  <pre>/pilih " . current($services)->code . "</pre>";
+        // $message .= "Silahkan pilih layanan kami dengan cara ketik :  <pre>/pilih " . current($services)->code . "</pre>";
 
-        $this->reply($message);
+        // $this->reply($message);
 
-        if (!empty($channel->greeting)) {
-            $this->reply($channel->greeting);
-        }
+        // if (!empty($channel->greeting)) {
+        //     $this->reply($channel->greeting);
+        // }
     }
 
     private function sambungkan($params)
