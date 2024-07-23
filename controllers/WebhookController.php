@@ -220,13 +220,15 @@ class WebhookController extends Controller
         $chatId = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
+        $log = json_encode($callbackQuery);
+
         $notif = new Notif();
         $notif->notif_from = "handleCallbackQuery";
         $notif->notif_to = null;
         $notif->notif_date =  (new DateTime())->format('Y-m-d H:i:s');
         $notif->notif_processed = "false";
         $notif->notif_title = "title handleCallbackQuery";
-        $notif->notif_text = "text handleCallbackQuery " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data;
+        $notif->notif_text = "text handleCallbackQuery " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data. " | log=" . $log;
 
         if (!$notif->save()) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery" . $notif->errors], $chatId);
