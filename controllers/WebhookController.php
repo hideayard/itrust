@@ -196,9 +196,23 @@ class WebhookController extends Controller
                 return "invalid request";
             }
         } catch (Throwable $e) {
-            TelegramHelper::sendMessage(['text' => $e->getMessage()],  -118356001);
+            TelegramHelper::sendMessage(['text' => $e->getMessage()],  -1002149598297);
             return $e->getMessage();
         }
+    }
+
+    public function answerCallbackQuery($callbackQueryId, $text)
+    {
+        $url = "https://api.telegram.org/bot{$this->bot_token}/answerCallbackQuery";
+
+        $data = [
+            'callback_query_id' => $callbackQueryId,
+            'text' => $text
+        ];
+
+        return $this->sendRequest($url, $data);
+        // return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
+
     }
 
     private function check()
