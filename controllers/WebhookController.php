@@ -462,6 +462,7 @@ class WebhookController extends Controller
                     ['text' => 'Pendaftaran Lisensi', 'callback_data' => "license"],
                 ]
                 ],
+                'resize_keyboard' => true,
                 'one_time_keyboard' => true,
                 'selective' => true,
                 
