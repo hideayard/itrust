@@ -169,6 +169,12 @@ class WebhookController extends Controller
                         case "outlook";
                             return $this->outlook();
                             break;
+                        case "maxop";
+                            return $this->maxop();
+                            break;
+                        case "setmaxop";
+                            return $this->setmaxop($params);
+                            break;
                         case "list";
                             return $this->getlist();
                             break;
@@ -193,14 +199,63 @@ class WebhookController extends Controller
         }
     }
 
+    private function maxop()
+    {
+
+        $message = "Setting MAXOP dari bot dengan format\n<pre>/setmaxop &lt;nilai_max_op&gt;</pre>";
+
+        $user = $this->getUser();
+        if (!$user) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
+        }
+
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => $message], $this->chat_id);
+    }
+
+    private function setmaxop($params)
+    {
+        $message = "SETTING MAXOP menu";
+
+        if (count($params) != 1) {
+            return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/maxop &lt;spasi&gt;&lt;jumlah&gt;</pre>");
+        }
+
+        $user = $this->getUser();
+        if (!$user) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
+        }
+        $maxop = trim($params[0]);
+
+        $account = $user->user_account ?? null;
+
+        if ($account) {
+
+            $order = new CloseOrder();
+            $order->order_account = $account;
+            $order->order_cmd = "OP" . $maxop;
+            $order->order_status = 0;
+            $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                return ($order->errors)[0];
+            }
+            // return ['success' => true, 'message' => "SET MAX OP command sent"];
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "SET MAX OP (".$maxop.") command <bSent</b> for user " . $account], $this->chat_id);
+
+        } else {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "FAILED to set MAX OP (".$maxop.") command <bSent</b> for user " . $account], $this->chat_id);
+        }
+    }
+
+
     private function outlook()
     {
         $user = $this->getUser();
         if (!$user) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User ".$this->from_id." <b>Belum Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
 
-        $account = $user->user_account??null;
+        $account = $user->user_account ?? null;
         if ($account) {
             $order = new CloseOrder();
             $order->order_account = $account;
@@ -211,9 +266,9 @@ class WebhookController extends Controller
             if (!$order->save()) {
                 return ($order->errors)[0];
             }
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Outlook command <bSent</b> for user ".$account], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $this->chat_id);
         } else {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "<b>Failed</b> to send command for user ".$account], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "<b>Failed</b> to send command for user " . $account], $this->chat_id);
         }
     }
 
