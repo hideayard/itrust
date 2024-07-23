@@ -27,20 +27,32 @@ class BotController extends Controller
 
     public function actionWebhook()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
         $update = json_decode(Yii::$app->request->getRawBody(), true);
+        
         if ($update) {
-            // Process the update
-            $this->processUpdate($update);
+            try {
+                $this->processUpdate($update);
+                return ['status' => 'success'];
+            } catch (\Exception $e) {
+                Yii::error("Webhook Error: " . $e->getMessage(), __METHOD__);
+                return ['status' => 'error', 'message' => $e->getMessage()];
+            }
         }
-        return 'OK';
+
+        return ['status' => 'no_update'];
     }
 
     protected function processUpdate($update)
     {
+        if (!isset($update['message'])) {
+            throw new \Exception('Invalid update structure.');
+        }
+
         $message = $update['message'];
         $chatId = $message['chat']['id'];
         $messageId = $message['message_id'];
-        $text = $message['text'];
+        $text = $message['text'] ?? '';
 
         if ($text == '/start') {
             $this->botHelper->sendMenu($chatId, $messageId);
@@ -48,6 +60,7 @@ class BotController extends Controller
             $this->botHelper->sendMessage($chatId, "You said: " . $text, $messageId);
         }
     }
+    
     // public function actionWebhook()
     // {
     //     $update = json_decode(Yii::$app->request->getRawBody(), true);
