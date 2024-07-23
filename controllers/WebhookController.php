@@ -461,7 +461,10 @@ class WebhookController extends Controller
                 [
                     ['text' => 'Pendaftaran Lisensi', 'callback_data' => "license"],
                 ]
-            ]
+                ],
+                'one_time_keyboard' => true,
+                'selective' => true,
+                
         ]);
 
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Selamat Datang ' . $this->from_name . ', Silahkan pilih menu berikut', 'reply_to_message_id' => $this->message_id, 'reply_markup' => $encodedKeyboard], $this->chat_id);
