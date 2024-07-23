@@ -238,15 +238,14 @@ class WebhookController extends Controller
         $chatId = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
-        $log[] = $callbackQuery['id'];
-        $log[] = $callbackQuery['from']['id'];
-        $log[] = $callbackQuery['from']['username'];
-        $log_string = implode(", ", $log);
-
-        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $callbackQueryId, $chatId, $data, $log_string);
+        // $log[] = $callbackQuery['id'];
+        // $log[] = $callbackQuery['from']['id'];
+        // $log[] = $callbackQuery['from']['username'];
+        // $log_string = implode(", ", $log);
+        // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $callbackQueryId, $chatId, $data, $log_string);
 
         //logs to notif
-        TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose " . $data], $chatId);
+        TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You (@".$callbackQuery['from']['username'].") choose " . $data], $chatId);
         $this->matchCommand($data, null);
     }
 
@@ -483,12 +482,12 @@ class WebhookController extends Controller
 
     private function start()
     {
-        $message = "Hello " . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
+        $message = "Hallo @" . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
         $user = $this->getUser($this->from_id,$this->from_name);
 
         if ($user) {
-            $message = "Hallo " . $user->user_nama . " (" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
+            $message = "Hallo @" . $user->user_nama . " (" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
         }
 
         // if (!$user) {
