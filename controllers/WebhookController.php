@@ -274,10 +274,11 @@ class WebhookController extends Controller
                 $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
                 $chat_id = $callbackQuery['chat']['id'];
             }
+            $this->notifLog('close_all', 'close_all', $message_id, $chat_id, $from_id, $from_username);
 
-            $user = $this->getUser($this->from_id);
+            $user = $this->getUser($from_id);
             if (!$user) {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
             $account = $user->user_account ?? null;
 
