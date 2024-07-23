@@ -373,9 +373,9 @@ class WebhookController extends Controller
                     return ($order->errors)[0];
                 }
                 // return ['success' => true, 'message' => "SET MAX OP command sent"];
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "SET MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $chat_id);
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "SET MAX OP (" . $maxop . ") command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
             } else {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "FAILED to set MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $chat_id);
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "FAILED to set MAX OP (" . $maxop . ") command <bSent</b>  @" . $from_username . "(" . $from_id . ")"], $chat_id);
             }
         } catch (\Exception $ex) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
@@ -418,9 +418,11 @@ class WebhookController extends Controller
                 if (!$order->save()) {
                     return ($order->errors)[0];
                 }
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
+                // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
+
             } else {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user " . $account], $chat_id);
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
             }
         } catch (\Exception $ex) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
