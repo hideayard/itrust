@@ -7,6 +7,7 @@ use app\models\Notif;
 use app\models\NotifSearch;
 use yii\web\Controller;
 use yii\web\Response;
+use app\components\TelegramBotHelper;
 
 class BotController extends Controller
 {
@@ -17,21 +18,14 @@ class BotController extends Controller
         return "BOT OK";
     }
 
+    public function init()
+    {
+        $this->botHelper = new TelegramBotHelper(Yii::$app->params['telegramBotToken']);
+    }
+
     public function actionWebhook()
     {
         $update = json_decode(Yii::$app->request->getRawBody(), true);
-        $notif = new Notif();
-        $notif->notif_from = "SYSTEM TELELOG";
-        $notif->notif_to = null;
-        $notif->notif_date = null; // (new DateTime())->format('Y-m-d H:i:s');
-        $notif->notif_processed = "false";
-        $notif->notif_title = "TELE";
-        $notif->notif_text = Yii::$app->request->getRawBody();
-
-        if (!$notif->save()) {
-            return ($notif->errors)[0];
-            // return ($notif->errors);
-        }
         if ($update) {
             // Process the update
             $this->processUpdate($update);
@@ -47,77 +41,114 @@ class BotController extends Controller
         $text = $message['text'];
 
         if ($text == '/start') {
-            $this->sendMenu($chatId, $messageId);
+            $this->botHelper->sendMenu($chatId, $messageId);
         } else {
-            $this->sendMessage($chatId, "You said: " . $text, $messageId);
+            $this->botHelper->sendMessage($chatId, "You said: " . $text, $messageId);
         }
     }
+    // public function actionWebhook()
+    // {
+    //     $update = json_decode(Yii::$app->request->getRawBody(), true);
+    //     $notif = new Notif();
+    //     $notif->notif_from = "SYSTEM TELELOG";
+    //     $notif->notif_to = null;
+    //     $notif->notif_date = null; // (new DateTime())->format('Y-m-d H:i:s');
+    //     $notif->notif_processed = "false";
+    //     $notif->notif_title = "TELE";
+    //     $notif->notif_text = Yii::$app->request->getRawBody();
 
-    protected function sendMessage($chatId, $text, $replyToMessageId = null)
-    {
-        $token = Yii::$app->params['telegramBotToken'];
-        $url = "https://api.telegram.org/bot$token/sendMessage";
+    //     if (!$notif->save()) {
+    //         return ($notif->errors)[0];
+    //         // return ($notif->errors);
+    //     }
+    //     if ($update) {
+    //         // Process the update
+    //         $this->processUpdate($update);
+    //     }
+    //     return 'OK';
+    // }
 
-        $data = [
-            'chat_id' => $chatId,
-            'text' => $text
-        ];
+    // protected function processUpdate($update)
+    // {
+    //     $message = $update['message'];
+    //     $chatId = $message['chat']['id'];
+    //     $messageId = $message['message_id'];
+    //     $text = $message['text'];
 
-        if ($replyToMessageId) {
-            $data['reply_to_message_id'] = $replyToMessageId;
-        }
+    //     if ($text == '/start') {
+    //         $this->sendMenu($chatId, $messageId);
+    //     } else {
+    //         $this->sendMessage($chatId, "You said: " . $text, $messageId);
+    //     }
+    // }
 
-        $options = [
-            'http' => [
-                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                'method'  => 'POST',
-                'content' => http_build_query($data),
-            ],
-        ];
-        $context  = stream_context_create($options);
-        file_get_contents($url, false, $context);
-    }
+    // protected function sendMessage($chatId, $text, $replyToMessageId = null)
+    // {
+    //     $token = Yii::$app->params['telegramBotToken'];
+    //     $url = "https://api.telegram.org/bot$token/sendMessage";
 
-    protected function sendMenu($chatId, $replyToMessageId = null)
-    {
-        $keyboard = [
-            'keyboard' => [
-                [['text' => 'Option 1']],
-                [['text' => 'Option 2']],
-                [['text' => 'Option 3']]
-            ],
-            'resize_keyboard' => true,
-            'one_time_keyboard' => true
-        ];
+    //     $data = [
+    //         'chat_id' => $chatId,
+    //         'text' => $text
+    //     ];
 
-        $this->sendMessageWithKeyboard($chatId, "Choose an option:", $keyboard, $replyToMessageId);
-    }
+    //     if ($replyToMessageId) {
+    //         $data['reply_to_message_id'] = $replyToMessageId;
+    //     }
 
-    protected function sendMessageWithKeyboard($chatId, $text, $keyboard, $replyToMessageId = null)
-    {
-        $token = Yii::$app->params['telegramBotToken'];
-        $url = "https://api.telegram.org/bot$token/sendMessage";
+    //     $options = [
+    //         'http' => [
+    //             'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+    //             'method'  => 'POST',
+    //             'content' => http_build_query($data),
+    //         ],
+    //     ];
+    //     $context  = stream_context_create($options);
+    //     file_get_contents($url, false, $context);
+    // }
 
-        $data = [
-            'chat_id' => $chatId,
-            'text' => $text,
-            'reply_markup' => json_encode($keyboard)
-        ];
+    // protected function sendMenu($chatId, $replyToMessageId = null)
+    // {
+    //     $keyboard = [
+    //         'keyboard' => [
+    //             [['text' => 'Option 1']],
+    //             [['text' => 'Option 2']],
+    //             [['text' => 'Option 3']]
+    //         ],
+    //         'resize_keyboard' => true,
+    //         'one_time_keyboard' => true
+    //     ];
 
-        if ($replyToMessageId) {
-            $data['reply_to_message_id'] = $replyToMessageId;
-        }
+    //     $this->sendMessageWithKeyboard($chatId, "Choose an option:", $keyboard, $replyToMessageId);
+    // }
 
-        $options = [
-            'http' => [
-                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                'method'  => 'POST',
-                'content' => http_build_query($data),
-            ],
-        ];
-        $context  = stream_context_create($options);
-        file_get_contents($url, false, $context);
-    }
+    // protected function sendMessageWithKeyboard($chatId, $text, $keyboard, $replyToMessageId = null)
+    // {
+    //     $token = Yii::$app->params['telegramBotToken'];
+    //     $url = "https://api.telegram.org/bot$token/sendMessage";
+
+    //     $data = [
+    //         'chat_id' => $chatId,
+    //         'text' => $text,
+    //         'reply_markup' => json_encode($keyboard)
+    //     ];
+
+    //     if ($replyToMessageId) {
+    //         $data['reply_to_message_id'] = $replyToMessageId;
+    //     }
+
+    //     $options = [
+    //         'http' => [
+    //             'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+    //             'method'  => 'POST',
+    //             'content' => http_build_query($data),
+    //         ],
+    //     ];
+    //     $context  = stream_context_create($options);
+    //     file_get_contents($url, false, $context);
+    // }
+
+    //--------------------------------------
 
     // protected function processUpdate($update)
     // {
