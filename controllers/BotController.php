@@ -25,7 +25,7 @@ class BotController extends Controller
         $message = $update['message'];
         $chatId = $message['chat']['id'];
         $text = $message['text'];
-
+        
         if ($text == '/start') {
             $this->sendMenu($chatId);
         } else {
@@ -40,6 +40,7 @@ class BotController extends Controller
 
         $data = [
             'chat_id' => $chatId,
+            'thread_id' => Yii::$app->params['thread_id'],
             'text' => $text
         ];
 
