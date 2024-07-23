@@ -249,7 +249,7 @@ class WebhookController extends Controller
 
     private function check()
     {
-        $user = $this->getUser();
+        $user = $this->getUser($this->from_id);
         if (!$user) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
@@ -272,7 +272,7 @@ class WebhookController extends Controller
                 $chat_id = $callbackQuery['chat']['id'];
             }
 
-            $user = $this->getUser();
+            $user = $this->getUser($this->from_id);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
@@ -289,7 +289,7 @@ class WebhookController extends Controller
             return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/maxop &lt;spasi&gt;&lt;jumlah&gt;</pre>");
         }
 
-        $user = $this->getUser();
+        $user = $this->getUser($this->from_id);
         if (!$user) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
         }
@@ -335,7 +335,7 @@ class WebhookController extends Controller
 
             $this->notifLog('outlook', 'outlook', $message_id, $chat_id, $from_id, $from_username);
 
-            $user = $this->getUser();
+            $user = $this->getUser($from_id);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
@@ -404,9 +404,9 @@ class WebhookController extends Controller
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Chat ID : " . $this->chat_id], $this->chat_id);
     }
 
-    private function getUser()
+    private function getUser($from_id)
     {
-        $user = Users::findOne(['telegram_id' => $this->from_id]);
+        $user = Users::findOne(['telegram_id' => $from_id]);
         return $user;
     }
 
@@ -414,7 +414,7 @@ class WebhookController extends Controller
     {
         $message = "Hello " . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
-        $user = $this->getUser();
+        $user = $this->getUser($this->from_id);
 
         if ($user) {
             $message = "Hallo " . $user->user_nama . " (" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
