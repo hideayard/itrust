@@ -246,18 +246,22 @@ class WebhookController extends Controller
 
         $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
-        if (!$user) {
-            $user = new UserTele;
+        if ($user) {
+            $message = "Selamat datang " . $user->user_nama . " (" . $user->user_license . ") " . " di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
         }
+        // if (!$user) {
+        //     $user = new UserTele;
+        // }
 
-        $user->name = $this->from_name;
-        $user->telegram_id = $this->from_id;
-        $user->telegram_username = $this->from_username;
-        $user->service = 0;
+        // $user->user_nama = $this->from_name;
+        // $user->telegram_id = $this->from_id;
+        // $user->telegram_username = $this->from_username;
 
-        if (!$user->save()) {
-            throw new Exception(current($user->errors)[0]);
-        }
+        // if (!$user->save()) {
+        //     throw new Exception(current($user->errors)[0]);
+        // }
+
+        // disabled create new user from tele
 
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => $message], $this->chat_id);
     }
@@ -340,10 +344,10 @@ class WebhookController extends Controller
             return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/lisensi &lt;spasi&gt;&lt;nama kanal&gt;</pre>");
         }
 
-        $user = UserTele::findOne(['telegram_id' => $this->from_id]);
+        $user = Users::findOne(['telegram_id' => $this->from_id]);
 
         if (!$user) {
-            $user = new UserTele;
+            $user = new Users;
             $user->name = $this->from_name;
             $user->telegram_id = $this->from_id;
             $user->telegram_username = $this->from_username;
@@ -353,18 +357,18 @@ class WebhookController extends Controller
             }
         }
 
-        $channel = Channel::findOne(['code' => trim($params[0])]);
+        // $channel = Channel::findOne(['code' => trim($params[0])]);
 
-        if (!$channel) {
-            return $this->reply("Kanal " . $params[0] . " tidak ditemukan");
-        }
+        // if (!$channel) {
+        //     return $this->reply("Kanal " . $params[0] . " tidak ditemukan");
+        // }
 
-        $user->channel = $channel->id;
-        if (!$user->save()) {
-            throw new Exception(current($user->errors)[0]);
-        }
+        // $user->channel = $channel->id;
+        // if (!$user->save()) {
+        //     throw new Exception(current($user->errors)[0]);
+        // }
 
-        $message = "Anda telah terhubung dengan kanal <strong>" . $channel->name . "</strong>,\nBerikut layanan kami yang bisa anda pilih :";
+        $message = "User Anda telah terhubung dengan lisensi <strong>" . $channel->name . "</strong>,\nBerikut layanan kami yang bisa anda pilih :";
 
         $services = Service::find()->where(['channel_id' => $channel->id])->all();
         $i = 1;

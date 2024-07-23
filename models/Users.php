@@ -35,7 +35,7 @@ class Users extends \yii\db\ActiveRecord implements
     public function scenarios()
     {
         return [
-            self::SCENARIO_DEFAULT => ['user_id', 'user_name', 'user_nama', 'user_hp', 'user_pass', 'user_email', 'user_hp', 'user_foto', 'user_status', 'is_deleted', 'created_at', 'created_by', 'modified_at', 'modified_by'],
+            self::SCENARIO_DEFAULT => ['user_id', 'user_name', 'user_nama', 'user_hp', 'user_pass', 'user_email', 'user_hp', 'user_foto', 'user_status', 'is_deleted', 'created_at', 'created_by', 'modified_at', 'modified_by', 'telegram_id', 'telegram_username'],
             self::SCENARIO_LOGIN => ['user_name', 'user_pass'],
             self::SCENARIO_UPDATE => ['user_id', 'user_name', 'user_nama', 'user_hp', 'user_email', 'user_hp', 'user_foto', 'user_tipe'],
         ];
@@ -90,6 +90,8 @@ class Users extends \yii\db\ActiveRecord implements
             'user_account' => 'Account',
             'user_license' => 'License',
             'user_license_expired' => 'License Expired',
+            'telegram_id' => 'Telegram ID',
+            'telegram_username' => 'Telegram Username',
         ];
     }
 
