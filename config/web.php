@@ -21,7 +21,6 @@ $config = [
             ],
         ],
         'request' => [
-            // !!! insert a secret key in the following (if it is empty) - this is required by cookie validation
             'cookieValidationKey' => 'bp-XQRAbA9PenFf2ghbKdUpWKbAjTY_p',
         ],
         'cache' => [
@@ -62,6 +61,7 @@ $config = [
                 'course/<id:\d+>' => 'site/detailcourse',
                 'enroll/<id:\d+>/<id_section:\d+>' => 'site/enroll',
                 'courses/sections/<id:\d+>' => 'courses/sections',
+                'bot/webhook' => 'bot/webhook',
                 // 'confirm/<email:\s+>/<token:\s+>' => 'site/confirm',
             ],
         ],
