@@ -319,13 +319,14 @@ class WebhookController extends Controller
     private function outlook()
     {
         try {
-
             $callbackQuery  = $this->callback_query;
 
             $message_id = $this->message_id;
             $from_username = $this->from_username;
             $from_id = $this->from_id;
             $chat_id = $this->chat_id;
+
+            $this->notifLog($message_id, $chat_id, $from_id, $from_username);
 
             if ($callbackQuery) {
                 $message_id = $callbackQuery['id'];
