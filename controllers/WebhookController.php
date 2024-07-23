@@ -331,8 +331,8 @@ class WebhookController extends Controller
         $encodedKeyboard = json_encode([
             'inline_keyboard' => [
                 [
-                    ['text' => 'Outlook', 'callback_data' => "/outlook"],
-                    ['text' => 'MaxOP', 'callback_data' => "/maxop"],
+                    ['text' => 'Outlook', 'callback_data' => "outlook"],
+                    ['text' => 'MaxOP', 'callback_data' => "maxop"],
                 ],
                 [
                     ['text' => 'Close BUY', 'callback_data' => "close_buy"],
