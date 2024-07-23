@@ -225,10 +225,12 @@ class WebhookController extends Controller
 
     protected function handleCallbackQuery($callbackQuery)
     {
-        $callbackQueryId = $callbackQuery['id'];
-        $chatId = $callbackQuery['message']['chat']['id'];
-        $data = $callbackQuery['data'];
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "You selected " . $data], $this->chat_id);
+        // $callbackQueryId = $callbackQuery['id'];
+        // $chatId = $callbackQuery['message']['chat']['id'];
+        // $data = $callbackQuery['data'];
+        
+        // return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "You selected " . $data], $this->chat_id);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "handleCallbackQuery"], $this->chat_id);
         // if ($data == 'option_1') {
         //     $this->botHelper->sendMessage($chatId, "You selected Option 1");
         //     $this->botHelper->answerCallbackQuery($callbackQueryId, "Option 1 selected");
