@@ -185,6 +185,8 @@ class WebhookController extends Controller
                             return $this->sambungkan($params);
                         case "pilih";
                             return $this->pilih($params);
+                        case "check";
+                            return $this->check();
                         default;
                             return $this->defaultAction($params);
                             break;
@@ -199,6 +201,16 @@ class WebhookController extends Controller
         }
     }
 
+    private function check()
+    {
+
+        $user = $this->getUser();
+        if (!$user) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Belum Terdaftar</b>"], $this->chat_id);
+        }
+
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_id . " <b>Terdaftar</b>"], $this->chat_id);
+    }
     private function maxop()
     {
 
@@ -214,8 +226,6 @@ class WebhookController extends Controller
 
     private function setmaxop($params)
     {
-        $message = "SETTING MAXOP menu";
-
         if (count($params) != 1) {
             return $this->reply("Format pesan tidak valid, silahkan ketik dengan format <pre>/maxop &lt;spasi&gt;&lt;jumlah&gt;</pre>");
         }
@@ -240,10 +250,9 @@ class WebhookController extends Controller
                 return ($order->errors)[0];
             }
             // return ['success' => true, 'message' => "SET MAX OP command sent"];
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "SET MAX OP (".$maxop.") command <bSent</b> for user " . $account], $this->chat_id);
-
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "SET MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $this->chat_id);
         } else {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "FAILED to set MAX OP (".$maxop.") command <bSent</b> for user " . $account], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "FAILED to set MAX OP (" . $maxop . ") command <bSent</b> for user " . $account], $this->chat_id);
         }
     }
 
