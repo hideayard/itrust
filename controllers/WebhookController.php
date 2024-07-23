@@ -250,7 +250,7 @@ class WebhookController extends Controller
             [
                 'chat_id' => $callbackQueryId,
                 'message_id' => $callbackQuery['message']['chat']['id'],
-                'reply_markup' => json_encode(array('remove_keyboard' => true))
+                'reply_markup' => json_encode([])
             ],
             $chatId
         );
@@ -446,7 +446,7 @@ class WebhookController extends Controller
 
 
         $encodedKeyboard = json_encode([
-            'keyboard' => [
+            'inline_keyboard' => [
                 [
                     ['text' => 'Check', 'callback_data' => "check"],
                 ],
