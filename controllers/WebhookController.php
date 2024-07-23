@@ -165,42 +165,7 @@ class WebhookController extends Controller
                     $command = ArrayHelper::getValue($match, 'command', "");
                     $this->command = $command;;
                     $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
-
-                    switch ($match['command']) {
-                        case "id";
-                            return $this->chatId();
-                            break;
-                        case "menu";
-                            return $this->menu();
-                            break;
-                        case "start";
-                            return $this->start();
-                            break;
-                        case "outlook";
-                            return $this->outlook();
-                            break;
-                        case "maxop";
-                            return $this->maxop();
-                            break;
-                        case "setmaxop";
-                            return $this->setmaxop($params);
-                            break;
-                        case "list";
-                            return $this->getlist();
-                            break;
-                        case "kanal";
-                            return $this->getchannel();
-                            break;
-                        case "sambungkan";
-                            return $this->sambungkan($params);
-                        case "pilih";
-                            return $this->pilih($params);
-                        case "check";
-                            return $this->check();
-                        default;
-                            return $this->defaultAction($params);
-                            break;
-                    }
+                    $this->matchCommand($match['command'],$params);
                 }
             } else {
                 return "invalid request";
@@ -211,19 +176,44 @@ class WebhookController extends Controller
         }
     }
 
-    // public function answerCallbackQuery($callbackQueryId, $text)
-    // {
-    //     $url = "https://api.telegram.org/bot{$this->bot_token}/answerCallbackQuery";
-
-    //     $data = [
-    //         'callback_query_id' => $callbackQueryId,
-    //         'text' => $text
-    //     ];
-
-    //     return $this->sendRequest($url, $data);
-    //     // return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
-
-    // }
+    private function matchCommand($val,$params)
+    {
+        switch ($val) {
+            case "id";
+                return $this->chatId();
+                break;
+            case "menu";
+                return $this->menu();
+                break;
+            case "start";
+                return $this->start();
+                break;
+            case "outlook";
+                return $this->outlook();
+                break;
+            case "maxop";
+                return $this->maxop();
+                break;
+            case "setmaxop";
+                return $this->setmaxop($params);
+                break;
+            case "list";
+                return $this->getlist();
+                break;
+            case "kanal";
+                return $this->getchannel();
+                break;
+            case "sambungkan";
+                return $this->sambungkan($params);
+            case "pilih";
+                return $this->pilih($params);
+            case "check";
+                return $this->check();
+            default;
+                return $this->defaultAction($params);
+                break;
+        }
+    }
 
     protected function handleCallbackQuery($callbackQuery)
     {
@@ -243,15 +233,10 @@ class WebhookController extends Controller
             return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery".$notif->errors], $chatId);
         }
 
-        // return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You selected " . $data], $this->chat_id);
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "handleCallbackQuery"], $chatId);
-        // if ($data == 'option_1') {
-        //     $this->botHelper->sendMessage($chatId, "You selected Option 1");
-        //     $this->botHelper->answerCallbackQuery($callbackQueryId, "Option 1 selected");
-        // } elseif ($data == 'option_2') {
-        //     $this->botHelper->sendMessage($chatId, "You selected Option 2");
-        //     $this->botHelper->answerCallbackQuery($callbackQueryId, "Option 2 selected");
-        // }
+        //logs to notif
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You choose ".$data], $chatId);
+        $this->matchCommand($data,null);
+
     }
 
     private function check()
