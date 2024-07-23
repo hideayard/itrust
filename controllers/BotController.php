@@ -3,6 +3,8 @@
 namespace app\controllers;
 
 use Yii;
+use app\models\Notif;
+use app\models\NotifSearch;
 use yii\web\Controller;
 use yii\web\Response;
 
@@ -13,6 +15,18 @@ class BotController extends Controller
     public function actionWebhook()
     {
         $update = json_decode(Yii::$app->request->getRawBody(), true);
+        $notif = new Notif();
+        $notif->notif_from = "SYSTEM TELELOG";
+        $notif->notif_to = null;
+        $notif->notif_date = null;// (new DateTime())->format('Y-m-d H:i:s');
+        $notif->notif_processed = "false";
+        $notif->notif_title = "TELE";
+        $notif->notif_text = Yii::$app->request->getRawBody();
+
+        if (!$notif->save()) {
+            return ($notif->errors)[0];
+            // return ($notif->errors);
+        }
         if ($update) {
             // Process the update
             $this->processUpdate($update);
@@ -25,7 +39,7 @@ class BotController extends Controller
         $message = $update['message'];
         $chatId = $message['chat']['id'];
         $text = $message['text'];
-        
+
         if ($text == '/start') {
             $this->sendMenu($chatId);
         } else {
