@@ -446,7 +446,7 @@ class WebhookController extends Controller
 
 
         $encodedKeyboard = json_encode([
-            'inline_keyboard' => [
+            'keyboard' => [
                 [
                     ['text' => 'Outlook', 'callback_data' => "outlook"],
                     ['text' => 'MaxOP', 'callback_data' => "maxop"],
@@ -461,14 +461,22 @@ class WebhookController extends Controller
                 [
                     ['text' => 'Pendaftaran Lisensi', 'callback_data' => "license"],
                 ]
-                ],
-                'resize_keyboard' => true,
-                'one_time_keyboard' => true,
-                'selective' => true,
-                
+            ],
+            'resize_keyboard' => true,
+            'one_time_keyboard' => true,
+            'selective' => true,
+
         ]);
 
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Selamat Datang ' . $this->from_name . ', Silahkan pilih menu berikut', 'reply_to_message_id' => $this->message_id, 'reply_markup' => $encodedKeyboard], $this->chat_id);
+        return TelegramHelper::sendMessage(
+            [
+                'reply_to_message_id' => $this->message_id,
+                'text' => 'Hallo ' . $this->from_name . ', Silahkan pilih menu berikut',
+                'reply_to_message_id' => $this->message_id,
+                'reply_markup' => $encodedKeyboard
+            ],
+            $this->chat_id
+        );
 
         // return TelegramHelper::editMessageText([
         //     'chat_id' => $this->chat_id, 
