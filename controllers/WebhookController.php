@@ -244,13 +244,13 @@ class WebhookController extends Controller
     {
         $message = "Selamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
-        $user = UserTele::findOne(['telegram_id' => $this->from_id]);
+        $user = Users::findOne(['telegram_id' => $this->from_id]);
 
         if ($user) {
             $message = "Selamat datang " . $user->user_nama . " (" . $user->user_license . ") " . " di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
         }
         // if (!$user) {
-        //     $user = new UserTele;
+        //     $user = new Users;
         // }
 
         // $user->user_nama = $this->from_name;
