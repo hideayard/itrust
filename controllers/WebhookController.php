@@ -489,7 +489,7 @@ class WebhookController extends Controller
         $user = $this->getUser($this->from_id,$this->from_name);
 
         if ($user) {
-            $message = "Hallo @" . $this->from_name . " (". $user->user_nama ."|" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
+            $message = "Hallo @" . $this->from_username . " (". $user->user_nama ."|" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
         }
 
         // if (!$user) {
