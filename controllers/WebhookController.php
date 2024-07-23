@@ -52,6 +52,7 @@ class WebhookController extends Controller
     private $from_username;
     private $from_name;
     private $command;
+    private $callback_query;
 
     private $is_admin = false;
 
@@ -107,6 +108,7 @@ class WebhookController extends Controller
             $this->bot_token        = Yii::$app->params['telegramBotToken'];
             $this->bot_username     = Yii::$app->params['telegramBotUsername'];
             $this->bot_admin        = Yii::$app->params['telegramBotAdmin'];
+            $this->callback_query   = ArrayHelper::getValue($update, 'callback_query', null);
             $this->message_id       = ArrayHelper::getValue($update, 'message.message_id', null);
             $this->chat_id          = ArrayHelper::getValue($update, 'message.chat.id', null);
             $this->chat_type        = ArrayHelper::getValue($update, 'message.chat.type', "");
@@ -118,6 +120,10 @@ class WebhookController extends Controller
             $text                   = ArrayHelper::getValue($update, "message.text", null);
 
             if (isset($update['callback_query'])) {
+                if($update['callback_query']) {
+                    // $data = $update['callback_query']['data'];
+                    $this->handleCallbackQuery($update['callback_query']);
+                }
                 if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
                     $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
 
@@ -146,7 +152,9 @@ class WebhookController extends Controller
                         //     'text' => "<pre>$response</pre>",
                         //     'reply_markup' => $encodedKeyboard
                         // ]);
-                        return TelegramHelper::sendMessage(['reply_to_message_id' => $update['callback_query']['message']['message_id'], 'text' => $response], $update['callback_query']['message']['chat']['id']);
+                        return TelegramHelper::sendMessage([
+                            'reply_to_message_id' => $update['callback_query']['message']['message_id'], 
+                            'text' => $response], $update['callback_query']['message']['chat']['id']);
                     }
                 }
             } else if (isset($update['message'])) {
@@ -220,7 +228,7 @@ class WebhookController extends Controller
         $callbackQueryId = $callbackQuery['id'];
         $chatId = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "You selected ".$data], $this->chat_id);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "You selected " . $data], $this->chat_id);
         // if ($data == 'option_1') {
         //     $this->botHelper->sendMessage($chatId, "You selected Option 1");
         //     $this->botHelper->answerCallbackQuery($callbackQueryId, "Option 1 selected");
@@ -338,7 +346,7 @@ class WebhookController extends Controller
             ]
         ]);
 
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Selamat Datang '.$this->from_name.', Silahkan pilih menu berikut', 'reply_to_message_id' => $this->message_id, 'reply_markup' => $encodedKeyboard], $this->chat_id);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Selamat Datang ' . $this->from_name . ', Silahkan pilih menu berikut', 'reply_to_message_id' => $this->message_id, 'reply_markup' => $encodedKeyboard], $this->chat_id);
 
         // return TelegramHelper::editMessageText([
         //     'chat_id' => $this->chat_id, 
@@ -361,7 +369,7 @@ class WebhookController extends Controller
 
     private function start()
     {
-        $message = "Hello ".$this->from_name."\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
+        $message = "Hello " . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
         $user = $this->getUser();
 
