@@ -484,7 +484,7 @@ class WebhookController extends Controller
 
     private function start()
     {
-        $message = "Hallo @" . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/sambungkan &lt;nama lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
+        $message = "Hallo @" . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/link &lt;nomor lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
         $user = $this->getUser($this->from_id,$this->from_name);
 
