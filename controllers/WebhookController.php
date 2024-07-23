@@ -240,11 +240,11 @@ class WebhookController extends Controller
         $notif->notif_text = "text handleCallbackQuery ".$callbackQueryId ." | chatID=".$chatId." | data=".$data;
 
         if (!$notif->save()) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "ERROR handleCallbackQuery".$notif->errors], $this->chat_id);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery".$notif->errors], $chatId);
         }
 
-        // return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "You selected " . $data], $this->chat_id);
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "handleCallbackQuery"], $this->chat_id);
+        // return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "You selected " . $data], $this->chat_id);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "handleCallbackQuery"], $chatId);
         // if ($data == 'option_1') {
         //     $this->botHelper->sendMessage($chatId, "You selected Option 1");
         //     $this->botHelper->answerCallbackQuery($callbackQueryId, "Option 1 selected");
