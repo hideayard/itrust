@@ -416,9 +416,7 @@ class WebhookController extends Controller
                 $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
 
                 if (!$order->save()) {
-                    return ($order->errors)[0];
                     return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"], $chat_id);
-
                 }
                 // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
