@@ -196,6 +196,9 @@ class WebhookController extends Controller
             case "setmaxop";
                 return $this->setmaxop($params);
                 break;
+            case "close_all";
+                return $this->close_all();
+                break;
             case "list";
                 return $this->getlist();
                 break;
@@ -255,6 +258,48 @@ class WebhookController extends Controller
         }
         return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Terdaftar</b>"], $this->chat_id);
     }
+
+    private function close_all()
+    {
+        try {
+            $message_id     = $this->message_id;
+            $from_username  = $this->from_username;
+            $from_id        = $this->from_id;
+            $chat_id        = $this->chat_id;
+            $callbackQuery  = $this->callback_query;
+
+            if ($callbackQuery) {
+                $message_id = $callbackQuery['id'];
+                $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
+                $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
+                $chat_id = $callbackQuery['chat']['id'];
+            }
+
+            $user = $this->getUser($this->from_id);
+            if (!$user) {
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
+            }
+            $account = $user->user_account ?? null;
+
+            if ($account) {
+                $order = new CloseOrder();
+                $order->order_account = $account;
+                $order->order_cmd = "close_all";
+                $order->order_status = 1;
+                $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+                if (!$order->save()) {
+                    return ($order->errors)[0];
+                }
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "CLOSE ALL ORDER command <bSent</b> for user " . $account], $chat_id);
+            } else {
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "FAILED to CLOSE ALL ORDER command <bSent</b> for user " . $account], $chat_id);
+            }
+
+        } catch (\Exception $ex) {
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
+        }
+    }
+
     private function maxop()
     {
         try {
@@ -272,6 +317,8 @@ class WebhookController extends Controller
                 $chat_id = $callbackQuery['chat']['id'];
             }
 
+            $this->notifLog('maxop', 'maxop', $message_id, $chat_id, $from_id, $from_username);
+
             $user = $this->getUser($this->from_id);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
@@ -286,7 +333,7 @@ class WebhookController extends Controller
     private function setmaxop($params)
     {
         try {
-            $callbackQuery  = $this->callback_query;
+            $callbackQuery  = $this->callback_query ?? null;
 
             $message_id = $this->message_id ?? "";
             $from_username = $this->from_username ?? "";
