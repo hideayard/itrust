@@ -271,6 +271,7 @@ class WebhookController extends Controller
                 $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
                 $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
                 $chat_id = $callbackQuery['message']['chat']['id'];
+                $this->notifLog('check', 'check', $message_id, $chat_id, $from_id, $from_username);
             }
 
             $user = $this->getUser($from_id, $from_username);
