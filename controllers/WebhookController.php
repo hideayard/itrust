@@ -266,8 +266,9 @@ class WebhookController extends Controller
                         if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
                             // $this->matchCommand('check', $params);
                             // $this->check();
-                            $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
-                            $this->sendGif($gifUrl);
+                            // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+                            // $this->sendGif($gifUrl);
+                            TelegramHelper::sendMessage(['text' => "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data']], $update['callback_query']['id']);
                         }
                     }
                 } else {
