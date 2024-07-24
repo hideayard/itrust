@@ -129,7 +129,7 @@ class WebhookController extends Controller
 
                 if (($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) || $this->bot_admin) {
                     $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
-                    $response = "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data'];
+                    // $response = "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data'];
 
                     if (preg_match('/^\/pull(.*)$/', $callback_reply_to_message)) {
 
@@ -145,13 +145,13 @@ class WebhookController extends Controller
                             'inline_keyboard' => [[]]
                         ]);
 
-                        return TelegramHelper::editMessageText([
-                            'chat_id' => $update['callback_query']['message']['chat']['id'],
-                            'message_id' => $update['callback_query']['message']['message_id'],
-                            'parse_mode' => 'html',
-                            'text' => "<pre>$response</pre>",
-                            'reply_markup' => $encodedKeyboard
-                        ]);
+                        // return TelegramHelper::editMessageText([
+                        //     'chat_id' => $update['callback_query']['message']['chat']['id'],
+                        //     'message_id' => $update['callback_query']['message']['message_id'],
+                        //     'parse_mode' => 'html',
+                        //     'text' => "<pre>$response</pre>",
+                        //     'reply_markup' => $encodedKeyboard
+                        // ]);
                     } elseif (preg_match('/^\/build(.*)$/', $callback_reply_to_message)) {
 
                         $matches = [];
