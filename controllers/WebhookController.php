@@ -426,14 +426,14 @@ class WebhookController extends Controller
         $this->matchCommand($data, null);
     }
 
-    private function check()
+    private function check($callbackQuery = null)
     {
         try {
             $message_id     = $this->message_id;
             $from_username  = $this->from_username;
             $from_id        = $this->from_id;
             $chat_id        = $this->chat_id;
-            $callbackQuery  = $this->callback_query;
+            // $callbackQuery  = $this->callback_query;
 
             if ($callbackQuery) {
                 $message_id = $callbackQuery['id'];
