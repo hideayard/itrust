@@ -128,6 +128,7 @@ class WebhookController extends Controller
 
                 if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
                     $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
+                    $response = "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data'];
 
                     if (preg_match('/^\/pull(.*)$/', $callback_reply_to_message)) {
 
@@ -138,41 +139,6 @@ class WebhookController extends Controller
                             ],
                         ];
 
-                        $response = 'no message';
-                        // if ($update['callback_query']['data'] == 'ptnw.net') {
-                        //     chdir("/var/www/pg_ptnw.net");
-                        //     $response = shell_exec("sudo git pull");
-                        // } elseif ($update['callback_query']['data'] == 'beta.ptnw.net') {
-                        //     chdir("/var/www/beta_ptnw.net");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // } elseif ($update['callback_query']['data'] == 'api.ptnw.net') {
-                        //     chdir("/var/www/api_ptnw.net");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // } elseif ($update['callback_query']['data'] == 'tsel.nexwaveindonesia.com') {
-                        //     $response = file_get_contents('https://tsel.nexwaveindonesia.com/pull.php', false, stream_context_create($contextOptions));
-                        // } elseif ($update['callback_query']['data'] == 'apitsel.nexwaveindonesia.com') {
-                        //     $response = file_get_contents('http://apitsel.nexwaveindonesia.com/pull.php', false, stream_context_create($contextOptions));
-                        // } elseif ($update['callback_query']['data'] == 'beta.ptnw.net/bod') {
-                        //     chdir("/var/www/beta_ptnw.net/bod");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // } elseif ($update['callback_query']['data'] == 'cs.ptnw.net') {
-                        //     chdir("/var/www/cs_ptnw.net");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // } elseif ($update['callback_query']['data'] == 'doc.ptnw.net') {
-                        //     chdir("/var/www/doc_ptnw.net");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // } elseif ($update['callback_query']['data'] == 'training.ptnw.net') {
-                        //     chdir("/var/www/training_ptnw.net");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // } elseif ($update['callback_query']['data'] == 'payment.ptnw.net') {
-                        //     chdir("/var/www/payment_ptnw.net");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // } elseif ($update['callback_query']['data'] == 'pmo.ptnw.net') {
-                        //     chdir("/var/www/pmo_ptnw.net");
-                        //     $response = shell_exec("sudo git pull origin master");
-                        // }
-
-                        $response = "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data'];
 
                         $encodedKeyboard = json_encode([
                             'inline_keyboard' => [[]]
@@ -295,6 +261,11 @@ class WebhookController extends Controller
                             'text' => "Selesai",
                             'reply_markup' => $encodedKeyboard
                         ]);
+                    } else {
+                        $this->handleCallbackQuery($update['callback_query']);
+                        // if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
+                        //     // $this->matchCommand('check', $params);
+                        // }
                     }
                 } else {
                     return TelegramHelper::answerCallbackQuery([
@@ -310,45 +281,11 @@ class WebhookController extends Controller
                 //     if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
                 //         $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
 
-                //         if (preg_match('/^\/pull(.*)$/', $callback_reply_to_message)) {
+                // }
+                // }
+                // else if (isset($update['message'])) {
+                // }
 
-                //             $contextOptions = [
-                //                 "ssl" => [
-                //                     "verify_peer" => false,
-                //                     "verify_peer_name" => false,
-                //                 ],
-                //             ];
-
-                //             $response = 'no message';
-                //             if ($update['callback_query']['data']) {
-                //                 $response = $update['callback_query']['data'];
-                //             }
-
-                //             $encodedKeyboard = json_encode([
-                //                 'inline_keyboard' => [[]]
-                //             ]);
-
-                //             // return TelegramHelper::editMessageText([
-                //             //     'chat_id' => $update['callback_query']['message']['chat']['id'],
-                //             //     'message_id' => $update['callback_query']['message']['message_id'],
-                //             //     'parse_mode' => 'html',
-                //             //     'text' => "<pre>$response</pre>",
-                //             //     'reply_markup' => $encodedKeyboard
-                //             // ]);
-                //             return TelegramHelper::sendMessage([
-                //                 'reply_to_message_id' => $update['callback_query']['message']['message_id'],
-                //                 'text' => $response
-                //             ], $update['callback_query']['message']['chat']['id']);
-                //         }
-                //     }
-                // } else if (isset($update['message'])) {
-                //     if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
-
-                //         $command = ArrayHelper::getValue($match, 'command', "");
-                //         $this->command = $command;;
-                //         $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
-                //         $this->matchCommand($match['command'], $params);
-                //     }
             } else if (isset($update['message'])) {
                 if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
 
