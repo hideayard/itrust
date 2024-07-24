@@ -292,7 +292,7 @@ class WebhookController extends Controller
 
                         //     TelegramHelper::answerCallbackQuery([
                         //         'callback_query_id' => $update['callback_query']['id'],
-                        //         'text' => 'Ga boleh nakal 293 ',
+                        //         'text' => ' ya! 293 ',
                         //         'show_alert' => true
                         //     ]);
                         // }
@@ -300,7 +300,7 @@ class WebhookController extends Controller
                 } else {
                     return TelegramHelper::answerCallbackQuery([
                         'callback_query_id' => $update['callback_query']['id'],
-                        'text' => 'Ga boleh nakal 301',
+                        'text' => ' ya! 301',
                         'show_alert' => true
                     ]);
                 }
@@ -428,7 +428,7 @@ class WebhookController extends Controller
         } else {
             return TelegramHelper::answerCallbackQuery([
                 'callback_query_id' => $callbackQuery['id'],
-                'text' => 'Ga boleh nakal 301',
+                'text' => 'Ga boleh nakal ya!',
                 'show_alert' => true
             ]);
         }
