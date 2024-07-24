@@ -298,11 +298,13 @@ class WebhookController extends Controller
                         // }
                     }
                 } else {
-                    return TelegramHelper::answerCallbackQuery([
-                        'callback_query_id' => $update['callback_query']['id'],
-                        'text' => 'gak boleh nakal ya!',
-                        'show_alert' => true
-                    ]);
+                    // return TelegramHelper::answerCallbackQuery([
+                    //     'callback_query_id' => $update['callback_query']['id'],
+                    //     'text' => 'gak boleh nakal ya!',
+                    //     'show_alert' => true
+                    // ]);
+                    $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+                    return $this->sendGif($gifUrl, 'gak boleh nakal ya!');
                 }
 
                 //     if ($update['callback_query']) {
@@ -342,7 +344,7 @@ class WebhookController extends Controller
             case "gif";
                 // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
                 $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
-                return $this->sendGif($gifUrl);
+                return $this->sendGif($gifUrl, 'Nope!');
                 break;
             case "menu";
                 return $this->menu();
@@ -380,7 +382,7 @@ class WebhookController extends Controller
         }
     }
 
-    private function sendGif($gifUrl)
+    private function sendGif($gifUrl, $msg)
     {
         //https://api.telegram.org/bot<token>/sendVideo?chat_id=<chat_id>&video=http://i.giphy.com/13IC4LVeP5NGNi.gif
 
@@ -391,7 +393,7 @@ class WebhookController extends Controller
         $data = [
             'chat_id' => $this->chat_id,
             'video' => $gifUrl,
-            'caption' => "Nope!"
+            'caption' => $msg //"Nope!"
         ];
         TelegramHelper::sendTelegramRequest('sendVideo', $data);
     }
@@ -429,11 +431,13 @@ class WebhookController extends Controller
             TelegramHelper::sendMessage(['text' => "" . $message . "."], $message_id);
             $this->matchCommand($data, null, $callbackQuery);
         } else {
-            return TelegramHelper::answerCallbackQuery([
-                'callback_query_id' => $callbackQuery['id'],
-                'text' => 'Ga boleh ya!',
-                'show_alert' => true
-            ]);
+            $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+            return $this->sendGif($gifUrl, 'gak boleh ya!');
+            // return TelegramHelper::answerCallbackQuery([
+            //     'callback_query_id' => $callbackQuery['id'],
+            //     'text' => 'Ga boleh ya!',
+            //     'show_alert' => true
+            // ]);
         }
     }
 
