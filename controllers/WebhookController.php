@@ -54,7 +54,6 @@ class WebhookController extends Controller
     private $from_name;
     private $command;
     private $callback_query;
-
     private $is_admin = false;
 
     public function actionTelegram()
@@ -356,16 +355,35 @@ class WebhookController extends Controller
                 $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
                 $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
                 $chat_id = $callbackQuery['message']['chat']['id'];
+
+                $this->notifLog('maxop', 'maxop', $message_id, $chat_id, $from_id, $from_username);
+
+                $user = $this->getUser($from_id, $from_username);
+                if (!$user) {
+                    TelegramHelper::editMessageText([
+                        'chat_id' => $chat_id,
+                        'message_id' => $message_id,
+                        'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>",
+                        'reply_markup' => json_encode(['inline_keyboard' => [[]]])
+                    ]);
+                }
+
+                TelegramHelper::editMessageText([
+                    'chat_id' => $chat_id,
+                    'message_id' => $message_id,
+                    'text' => $message,
+                    'reply_markup' => json_encode(['inline_keyboard' => [[]]])
+                ]);
+            } else {
+                $this->notifLog('maxop', 'maxop', $message_id, $chat_id, $from_id, $from_username);
+
+                $user = $this->getUser($from_id, $from_username);
+                if (!$user) {
+                    return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                }
+
+                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => $message], $chat_id);
             }
-
-            $this->notifLog('maxop', 'maxop', $message_id, $chat_id, $from_id, $from_username);
-
-            $user = $this->getUser($from_id, $from_username);
-            if (!$user) {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
-            }
-
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => $message], $chat_id);
         } catch (\Exception $ex) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
@@ -455,12 +473,30 @@ class WebhookController extends Controller
                 $order->order_cmd = "outlook";
                 $order->order_status = 0;
                 $order->order_date =  (new DateTime())->format('Y-m-d H:i:s');
+                $emptyKeyboard = json_encode(['inline_keyboard' => [[]]]);
 
-                if (!$order->save()) {
-                    return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"], $chat_id);
+                if ($callbackQuery) {
+                    if (!$order->save()) {
+                        TelegramHelper::editMessageText([
+                            'chat_id' => $chat_id,
+                            'message_id' => $message_id,
+                            'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")",
+                            'reply_markup' => $emptyKeyboard
+                        ]);
+                    }
+                    TelegramHelper::editMessageText([
+                        'chat_id' => $chat_id,
+                        'message_id' => $message_id,
+                        'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")",
+                        'reply_markup' => $emptyKeyboard
+                    ]);
+                } else {
+                    if (!$order->save()) {
+                        return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"], $chat_id);
+                    }
+                    // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
+                    return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
                 }
-                // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
             } else {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
             }
@@ -504,15 +540,21 @@ class WebhookController extends Controller
             'selective' => true,
         ]);
 
-        return TelegramHelper::sendMessage(
-            [
-                'reply_to_message_id' => $this->message_id,
-                'text' => 'Hallo ' . $this->from_name . ', Silahkan pilih menu berikut',
-                'reply_to_message_id' => $this->message_id,
-                'reply_markup' => $encodedKeyboard
-            ],
-            $this->chat_id
-        );
+        TelegramHelper::editMessageText([
+            'chat_id' => $this->chat_id, //$update['callback_query']['message']['chat']['id'],
+            'message_id' => $this->message_id, //$update['callback_query']['message']['message_id'],
+            'text' => 'Server yang mana?',
+            'reply_markup' => $encodedKeyboard
+        ]);
+
+        // return TelegramHelper::sendMessage(
+        //     [
+        //         'reply_to_message_id' => $this->message_id,
+        //         'text' => 'Hallo ' . $this->from_name . ', Silahkan pilih menu berikut',
+        //         'reply_markup' => $encodedKeyboard
+        //     ],
+        //     $this->chat_id
+        // );
 
         // return TelegramHelper::editMessageText([
         //     'chat_id' => $this->chat_id, 
