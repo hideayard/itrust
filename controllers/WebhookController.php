@@ -420,11 +420,19 @@ class WebhookController extends Controller
         $data = $callbackQuery['data'];
 
         $message = "You (@" . $callbackQuery['from']['username'] . ") choose " . $data;
-        // $output = array_map(function ($object) {
-        //     return  implode('.', $object);
-        // }, $callbackQuery);
-        $flattened_array = $this->flatten_array($callbackQuery);
-        $log_string = implode(', ', $flattened_array);
+
+        // $flattened_array = $this->flatten_array($callbackQuery);
+        // $log_string = implode(', ', $flattened_array);
+
+        // Flatten the array with keys
+        $flattened_array = $this->flatten_array_with_keys($callbackQuery);
+
+        // Convert flattened array to JSON-like string
+        $json_string = '{';
+        foreach ($flattened_array as $key => $value) {
+            $json_string .= '"' . $key . '":' . json_encode($value) . ',';
+        }
+        $log_string = rtrim($json_string, ',') . '}';
 
         // $log[] = "callbackId=" . $callbackQuery['id'];
         // $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
@@ -455,6 +463,22 @@ class WebhookController extends Controller
                 $result = array_merge($result, $this->flatten_array($element));
             } else {
                 $result[] = $element;
+            }
+        }
+        return $result;
+    }
+
+    private function flatten_array_with_keys($array)
+    {
+        $result = array();
+        foreach ($array as $key => $value) {
+            if (is_array($value)) {
+                $flattened = $this->flatten_array_with_keys($value);
+                foreach ($flattened as $subkey => $subvalue) {
+                    $result[$key . '.' . $subkey] = $subvalue;
+                }
+            } else {
+                $result[$key] = $value;
             }
         }
         return $result;
