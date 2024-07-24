@@ -195,4 +195,24 @@ class TelegramHelper
 
         return self::send('sendPoll', $params);
     }
+
+    // Function to send a request to the Telegram API
+    function sendTelegramRequest($method, $data)
+    {
+        global $botToken;
+        $url = "https://api.telegram.org/bot$botToken/$method";
+
+        $options = [
+            'http' => [
+                'header'  => "Content-Type: application/json\r\n",
+                'method'  => 'POST',
+                'content' => json_encode($data),
+            ],
+        ];
+
+        $context  = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+
+        return $result;
+    }
 }

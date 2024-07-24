@@ -419,8 +419,7 @@ class WebhookController extends Controller
             'animation' => $gifUrl,
             'caption' => "Here is your GIF!"
         ];
-        TelegramHelper::sendMessage($data);
-
+        TelegramHelper::sendTelegramRequest('sendAnimation', $data);
     }
 
     private function notifLog($from, $title, $callbackQueryId, $chatId, $data, $log_string)
