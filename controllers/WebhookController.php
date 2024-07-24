@@ -58,6 +58,7 @@ class WebhookController extends Controller
     private $command;
     private $callback_query;
     private $is_admin = false;
+    private static $defaultChatId =  -1002149598297; //bot common
 
     public function actionTelegram()
     {
@@ -474,14 +475,26 @@ class WebhookController extends Controller
             $from_id        = $this->from_id;
             $chat_id        = $this->chat_id;
             // $callbackQuery  = $this->callback_query;
+            $message = "no callbackQuery";
+
+            // if ($callbackQuery) {
+            //     $message_id = $callbackQuery['id'];
+            //     $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
+            //     $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
+            //     $chat_id = $callbackQuery['message']['chat']['id'];
+            // }
 
             if ($callbackQuery) {
                 $message_id = $callbackQuery['id'];
                 $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
                 $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
                 $chat_id = $callbackQuery['message']['chat']['id'];
+                $message = "callbackQuery";
+
                 $this->notifLog('check', 'check', $message_id, $chat_id, $from_id, $from_username);
             }
+
+            TelegramHelper::sendMessage(['text' => "check-".$message], $chat_id);
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
