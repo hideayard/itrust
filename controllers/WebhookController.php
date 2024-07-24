@@ -246,9 +246,9 @@ class WebhookController extends Controller
                         $response = 'Invalid callback data';
 
                         if ($update['callback_query']['data'] == 'wa_cowok') {
-                            $response = shell_exec("/var/scriptsh/restart_wa_cowok.sh > /dev/null 2>/dev/null &");
+                            // $response = shell_exec("/var/scriptsh/restart_wa_cowok.sh > /dev/null 2>/dev/null &");
                         } elseif ($update['callback_query']['data'] == 'wa_cewek') {
-                            $response = shell_exec("/var/scriptsh/restart_wa_cewek.sh > /dev/null 2>/dev/null &");
+                            // $response = shell_exec("/var/scriptsh/restart_wa_cewek.sh > /dev/null 2>/dev/null &");
                         }
 
                         $encodedKeyboard = json_encode([
@@ -428,11 +428,13 @@ class WebhookController extends Controller
         $flattened_array = $this->flatten_array_with_keys($callbackQuery);
 
         // Convert flattened array to JSON-like string
-        $json_string = '{';
-        foreach ($flattened_array as $key => $value) {
-            $json_string .= '"' . $key . '":' . json_encode($value) . ',';
-        }
-        $log_string = rtrim($json_string, ',') . '}';
+        // $json_string = '{';
+        // foreach ($flattened_array as $key => $value) {
+        //     $json_string .= '"' . $key . '":' . json_encode($value) . ',';
+        // }
+        // $log_string = rtrim($json_string, ',') . '}';
+
+        $log_string = json_encode($flattened_array);
 
         // $log[] = "callbackId=" . $callbackQuery['id'];
         // $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
