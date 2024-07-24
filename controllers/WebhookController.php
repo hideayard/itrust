@@ -410,7 +410,8 @@ class WebhookController extends Controller
 
     private function gif()
     {
-        return TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
+        TelegramHelper::sendMessage(['text' => "You choose gif"], $this->chat_id);
+        TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
     }
 
     private function notifLog($from, $title, $callbackQueryId, $chatId, $data, $log_string)
