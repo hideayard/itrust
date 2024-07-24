@@ -1022,89 +1022,91 @@ class WebhookController extends Controller
     private function defaultAction($params)
     {
 
-        $user = UserTele::findOne(['telegram_id' => $this->from_id]);
+        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Fitur On Progress.'], $this->chat_id);
 
-        if (!$user) {
-            $user = new UserTele;
-            $user->name = $this->from_name;
-            $user->telegram_id = $this->from_id;
-            $user->telegram_username = $this->from_username;
+        // $user = UserTele::findOne(['telegram_id' => $this->from_id]);
 
-            if (!$user->save()) {
-                throw new Exception(current($user->errors)[0]);
-            }
-        }
+        // if (!$user) {
+        //     $user = new UserTele;
+        //     $user->name = $this->from_name;
+        //     $user->telegram_id = $this->from_id;
+        //     $user->telegram_username = $this->from_username;
 
-        $nextQuestion = Yii::$app->db->createCommand("SELECT question.* FROM question
-            INNER JOIN section ON question.section_id = section.id
-            INNER JOIN service ON section.service_id = service.id
-            INNER JOIN `channel` ON service.channel_id = `channel`.id
-            WHERE `channel`.id = :channel_id
-            AND service.id = :service_id
-            AND question.`keyword` = :keyword
-            ORDER BY question.`order` 
-            LIMIT 1;")
-            ->bindValue(':channel_id', $user->channel, PDO::PARAM_INT)
-            ->bindValue(':service_id', $user->service, PDO::PARAM_INT)
-            ->bindValue(':keyword', $this->command, PDO::PARAM_STR)
-            ->queryOne();
+        //     if (!$user->save()) {
+        //         throw new Exception(current($user->errors)[0]);
+        //     }
+        // }
 
-        if ($this->command == $nextQuestion['keyword']) {
+        // $nextQuestion = Yii::$app->db->createCommand("SELECT question.* FROM question
+        //     INNER JOIN section ON question.section_id = section.id
+        //     INNER JOIN service ON section.service_id = service.id
+        //     INNER JOIN `channel` ON service.channel_id = `channel`.id
+        //     WHERE `channel`.id = :channel_id
+        //     AND service.id = :service_id
+        //     AND question.`keyword` = :keyword
+        //     ORDER BY question.`order` 
+        //     LIMIT 1;")
+        //     ->bindValue(':channel_id', $user->channel, PDO::PARAM_INT)
+        //     ->bindValue(':service_id', $user->service, PDO::PARAM_INT)
+        //     ->bindValue(':keyword', $this->command, PDO::PARAM_STR)
+        //     ->queryOne();
 
-            $cari = Answer::find()
-                ->where(["question_id" => $nextQuestion['id']])
-                ->andWhere(["user_id" => $user->id])
-                ->one();
+        // if ($this->command == $nextQuestion['keyword']) {
 
-            if (!$cari) {
-                $answer = new Answer;
-                $answer->question_id = $nextQuestion['id'];
-                $answer->user_id = $user->id;
-                $answer->answer = implode(' ', $params);
+        //     $cari = Answer::find()
+        //         ->where(["question_id" => $nextQuestion['id']])
+        //         ->andWhere(["user_id" => $user->id])
+        //         ->one();
 
-                if (!$answer->save()) {
-                    throw new Exception(current($answer->errors)[0]);
-                }
-            } else {
-                $cari->answer = implode(' ', $params);
-                $cari->modified_at = date('Y-m-d H:i:s');
+        //     if (!$cari) {
+        //         $answer = new Answer;
+        //         $answer->question_id = $nextQuestion['id'];
+        //         $answer->user_id = $user->id;
+        //         $answer->answer = implode(' ', $params);
 
-                if (!$cari->save()) {
-                    throw new Exception(current($cari->errors)[0]);
-                }
-            }
+        //         if (!$answer->save()) {
+        //             throw new Exception(current($answer->errors)[0]);
+        //         }
+        //     } else {
+        //         $cari->answer = implode(' ', $params);
+        //         $cari->modified_at = date('Y-m-d H:i:s');
 
-            $user->question += 1;
-            if (!$user->save()) {
-                throw new Exception(current($user->errors)[0]);
-            }
+        //         if (!$cari->save()) {
+        //             throw new Exception(current($cari->errors)[0]);
+        //         }
+        //     }
 
-            $message = "";
+        //     $user->question += 1;
+        //     if (!$user->save()) {
+        //         throw new Exception(current($user->errors)[0]);
+        //     }
 
-            $nextQuestion = Yii::$app->db->createCommand("SELECT * FROM question
-            INNER JOIN section ON question.section_id = section.id
-            INNER JOIN service ON section.service_id = service.id
-            INNER JOIN `channel` ON service.channel_id = `channel`.id
-            WHERE `channel`.id = :channel_id
-            AND service.id = :service_id
-            AND question.`order` = :question_order
-            ORDER BY question.`order` 
-            LIMIT 1;")
-                ->bindValue(':channel_id', $user->channel, PDO::PARAM_INT)
-                ->bindValue(':service_id', $user->service, PDO::PARAM_INT)
-                ->bindValue(':question_order', $user->question, PDO::PARAM_INT)
-                ->queryOne();
+        //     $message = "";
 
-            $this->reply("Terima kasih, data anda telah kami terima");
+        //     $nextQuestion = Yii::$app->db->createCommand("SELECT * FROM question
+        //     INNER JOIN section ON question.section_id = section.id
+        //     INNER JOIN service ON section.service_id = service.id
+        //     INNER JOIN `channel` ON service.channel_id = `channel`.id
+        //     WHERE `channel`.id = :channel_id
+        //     AND service.id = :service_id
+        //     AND question.`order` = :question_order
+        //     ORDER BY question.`order` 
+        //     LIMIT 1;")
+        //         ->bindValue(':channel_id', $user->channel, PDO::PARAM_INT)
+        //         ->bindValue(':service_id', $user->service, PDO::PARAM_INT)
+        //         ->bindValue(':question_order', $user->question, PDO::PARAM_INT)
+        //         ->queryOne();
 
-            if ($nextQuestion) {
-                $message = $nextQuestion['question'] . "\n";
-                $message .= "Balas dengan formmat : <pre>/" . $nextQuestion['keyword'] . " &lt;spasi&gt;&lt;jawaban&gt;</pre>";
+        //     $this->reply("Terima kasih, data anda telah kami terima");
 
-                $this->reply($message);
-            }
-        } else {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Perintah tidak dikenal'], $this->chat_id);
-        }
+        //     if ($nextQuestion) {
+        //         $message = $nextQuestion['question'] . "\n";
+        //         $message .= "Balas dengan formmat : <pre>/" . $nextQuestion['keyword'] . " &lt;spasi&gt;&lt;jawaban&gt;</pre>";
+
+        //         $this->reply($message);
+        //     }
+        // } else {
+        //     return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Perintah tidak dikenal'], $this->chat_id);
+        // }
     }
 }
