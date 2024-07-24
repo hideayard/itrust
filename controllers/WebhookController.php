@@ -494,7 +494,7 @@ class WebhookController extends Controller
                 $this->notifLog('check', 'check', $message_id, $chat_id, $from_id, $from_username);
             }
 
-            TelegramHelper::sendMessage(['text' => "check -" . $message . " - from_username : " .$from_username ], $message_id);
+            TelegramHelper::sendMessage(['text' => "check -" . $message . " - from_username : " .$from_username ], $chat_id);
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
