@@ -346,9 +346,9 @@ class WebhookController extends Controller
             //         $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
             //         $this->matchCommand($match['command'], $params);
             //     }
-            // } else {
-            //     return "invalid request";
-            // }
+            } else {
+                return "invalid request";
+            }
         } catch (Throwable $e) {
             TelegramHelper::sendMessage(['text' => $e->getMessage()],  -1002149598297);
             return $e->getMessage();
