@@ -643,13 +643,16 @@ class WebhookController extends Controller
             $from_username = $this->from_username ?? "";
             $from_id = $this->from_id ?? "";
             $chat_id = $this->chat_id ?? "";
-
+            $message = "no callbackQuery";
             if ($callbackQuery) {
                 $message_id = $callbackQuery['id'];
                 $from_username = $callbackQuery['from']['username'] ?? " _username_ ";
                 $from_id = $callbackQuery['from']['id'] ?? " _id_ ";
                 $chat_id = $callbackQuery['message']['chat']['id'];
+                $message = "callbackQuery";
             }
+
+            TelegramHelper::sendMessage(['text' => "2-".$message], $message_id);
 
             $this->notifLog('outlook', 'outlook', $message_id, $chat_id, $from_id, $from_username);
 
