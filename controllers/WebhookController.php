@@ -36,6 +36,7 @@ use app\helpers\SecurityHelper;
 use app\helpers\TelegramHelper;
 use app\models\VendorTeamMapping;
 use Google\Cloud\Firestore\FirestoreClient;
+
 $baseImageUrl = Url::base() . '/images';
 
 class WebhookController extends Controller
@@ -372,7 +373,8 @@ class WebhookController extends Controller
                 return $this->chatId();
                 break;
             case "gif";
-                return $this->gif();
+                $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+                return $this->sendGif($gifUrl);
                 break;
             case "menu";
                 return $this->menu();
@@ -410,19 +412,16 @@ class WebhookController extends Controller
         }
     }
 
-    private function gif()
+    private function sendGif($gifUrl)
     {
-        $gifUrl = 'https://itrust-care.com/'.Url::base() . '/images/no.gif';//'https://giphy.com/embed/15aGGXfSlat2dP6ohs';
-
-        TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id ." - " . $gifUrl ], $this->chat_id);
-        // TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
-        //https://i.giphy.com/15aGGXfSlat2dP6ohs.webp
-        // <div style="width:100%;height:0;padding-bottom:57%;position:relative;"><iframe src="https://giphy.com/embed/15aGGXfSlat2dP6ohs" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/reaction-mood-15aGGXfSlat2dP6ohs">via GIPHY</a></p>
-            
+        if (!$gifUrl) {
+            $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+        }
+        // TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id ." - " . $gifUrl ], $this->chat_id);
         $data = [
             'chat_id' => $this->chat_id,
             'animation' => $gifUrl,
-            'caption' => "Here is your GIF!".$gifUrl
+            'caption' => "Nope!"
         ];
         TelegramHelper::sendTelegramRequest('sendAnimation', $data);
     }
