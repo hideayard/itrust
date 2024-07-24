@@ -275,7 +275,7 @@ class WebhookController extends Controller
                             TelegramHelper::sendMessage(
                                 [
                                     'reply_to_message_id' => $update['callback_query']['id'],
-                                    'text' => "MASUK ELSE 1"
+                                    'text' => "MASUK ELSE 1". $update['callback_query']['data']
                                 ],
                                 $update['callback_query']['message']['chat']['id']
                             );
@@ -290,7 +290,7 @@ class WebhookController extends Controller
 
                             TelegramHelper::answerCallbackQuery([
                                 'callback_query_id' => $update['callback_query']['id'],
-                                'text' => 'Ga boleh nakal',
+                                'text' => 'Ga boleh nakal 293 ',
                                 'show_alert' => true
                             ]);
                         }
@@ -298,7 +298,7 @@ class WebhookController extends Controller
                 } else {
                     return TelegramHelper::answerCallbackQuery([
                         'callback_query_id' => $update['callback_query']['id'],
-                        'text' => 'Ga boleh nakal',
+                        'text' => 'Ga boleh nakal 301',
                         'show_alert' => true
                     ]);
                 }
