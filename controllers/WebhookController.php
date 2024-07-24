@@ -531,7 +531,9 @@ class WebhookController extends Controller
                     TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
                 }
             } else {
-                TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
+                TelegramHelper::sendMessage(['text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
+
+                // TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
             }
         } catch (\Exception $ex) {
             TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
