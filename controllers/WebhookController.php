@@ -412,7 +412,7 @@ class WebhookController extends Controller
 
     private function gif()
     {
-        $gifUrl = Url::base() . '/images/no.gif';//'https://giphy.com/embed/15aGGXfSlat2dP6ohs';
+        $gifUrl = 'https://itrust-care.com/'.Url::base() . '/images/no.gif';//'https://giphy.com/embed/15aGGXfSlat2dP6ohs';
 
         TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id ." - " . $gifUrl ], $this->chat_id);
         // TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
