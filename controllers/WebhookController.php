@@ -10,6 +10,7 @@ use Throwable;
 use app\models\Pc;
 use ErrorException;
 use app\jobs\McaJob;
+use yii\helpers\Url;
 use app\models\Group;
 use app\models\Notif;
 use app\models\Users;
@@ -35,6 +36,7 @@ use app\helpers\SecurityHelper;
 use app\helpers\TelegramHelper;
 use app\models\VendorTeamMapping;
 use Google\Cloud\Firestore\FirestoreClient;
+$baseImageUrl = Url::base() . '/images';
 
 class WebhookController extends Controller
 {
@@ -413,7 +415,8 @@ class WebhookController extends Controller
         TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id], $this->chat_id);
         // TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
         //https://i.giphy.com/15aGGXfSlat2dP6ohs.webp
-        $gifUrl = 'https://i.giphy.com/15aGGXfSlat2dP6ohs.webp';
+        // <div style="width:100%;height:0;padding-bottom:57%;position:relative;"><iframe src="https://giphy.com/embed/15aGGXfSlat2dP6ohs" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/reaction-mood-15aGGXfSlat2dP6ohs">via GIPHY</a></p>
+        $gifUrl = $this->baseImageUrl.'/no.gif';//'https://giphy.com/embed/15aGGXfSlat2dP6ohs';
         $data = [
             'chat_id' => $this->chat_id,
             'animation' => $gifUrl,
