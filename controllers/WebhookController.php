@@ -120,9 +120,9 @@ class WebhookController extends Controller
             $text                   = ArrayHelper::getValue($update, "message.text", null);
 
             if (isset($update['callback_query'])) {
-                if ($update['callback_query']) {
-                    $this->handleCallbackQuery($update['callback_query']);
-                }
+
+                $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
+
                 if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
                     $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
 
@@ -136,38 +136,219 @@ class WebhookController extends Controller
                         ];
 
                         $response = 'no message';
-                        if ($update['callback_query']['data']) {
-                            $response = $update['callback_query']['data'];
+                        // if ($update['callback_query']['data'] == 'ptnw.net') {
+                        //     chdir("/var/www/pg_ptnw.net");
+                        //     $response = shell_exec("sudo git pull");
+                        // } elseif ($update['callback_query']['data'] == 'beta.ptnw.net') {
+                        //     chdir("/var/www/beta_ptnw.net");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // } elseif ($update['callback_query']['data'] == 'api.ptnw.net') {
+                        //     chdir("/var/www/api_ptnw.net");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // } elseif ($update['callback_query']['data'] == 'tsel.nexwaveindonesia.com') {
+                        //     $response = file_get_contents('https://tsel.nexwaveindonesia.com/pull.php', false, stream_context_create($contextOptions));
+                        // } elseif ($update['callback_query']['data'] == 'apitsel.nexwaveindonesia.com') {
+                        //     $response = file_get_contents('http://apitsel.nexwaveindonesia.com/pull.php', false, stream_context_create($contextOptions));
+                        // } elseif ($update['callback_query']['data'] == 'beta.ptnw.net/bod') {
+                        //     chdir("/var/www/beta_ptnw.net/bod");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // } elseif ($update['callback_query']['data'] == 'cs.ptnw.net') {
+                        //     chdir("/var/www/cs_ptnw.net");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // } elseif ($update['callback_query']['data'] == 'doc.ptnw.net') {
+                        //     chdir("/var/www/doc_ptnw.net");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // } elseif ($update['callback_query']['data'] == 'training.ptnw.net') {
+                        //     chdir("/var/www/training_ptnw.net");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // } elseif ($update['callback_query']['data'] == 'payment.ptnw.net') {
+                        //     chdir("/var/www/payment_ptnw.net");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // } elseif ($update['callback_query']['data'] == 'pmo.ptnw.net') {
+                        //     chdir("/var/www/pmo_ptnw.net");
+                        //     $response = shell_exec("sudo git pull origin master");
+                        // }
+
+                        $response = "You (@" . $callbackQuery['from']['username'] . ") choose " . $update['callback_query']['data'];
+
+                        $encodedKeyboard = json_encode([
+                            'inline_keyboard' => [[]]
+                        ]);
+
+                        return TelegramHelper::editMessageText([
+                            'chat_id' => $update['callback_query']['message']['chat']['id'],
+                            'message_id' => $update['callback_query']['message']['message_id'],
+                            'parse_mode' => 'html',
+                            'text' => "<pre>$response</pre>",
+                            'reply_markup' => $encodedKeyboard
+                        ]);
+                    } elseif (preg_match('/^\/build(.*)$/', $callback_reply_to_message)) {
+
+                        $matches = [];
+                        if (preg_match('/^(?<project_name>[\w_]+)\\|(?<server>[\w_]+)$/', $update['callback_query']['data'], $matches)) {
+
+                            $projectName = $matches['project_name'];
+                            $server = $matches['server'];
+
+                            if ($matches['server'] == 'no_server') {
+
+                                $projectName = $matches['project_name'];
+
+                                // Yii::error("1st step: " . $update['callback_query']['data']);
+                                // Yii::error("1st step: " . $projectName . " (parsed)");
+
+                                $encodedKeyboard = json_encode([
+                                    'inline_keyboard' => [
+                                        [
+                                            ['text' => 'Server G', 'callback_data' => "$projectName|server_g"],
+                                            ['text' => 'Server I', 'callback_data' => "$projectName|server_i"],
+                                        ],
+                                    ]
+                                ]);
+
+                                TelegramHelper::editMessageText([
+                                    'chat_id' => $update['callback_query']['message']['chat']['id'],
+                                    'message_id' => $update['callback_query']['message']['message_id'],
+                                    'text' => 'Server yang mana?',
+                                    'reply_markup' => $encodedKeyboard
+                                ]);
+                            } else {
+
+                                // Yii::error("2nd step: " . $update['callback_query']['data']);
+                                // Yii::error("2nd step: " . $matches['project_name'] . " (parsed)");
+
+                                $url = '';
+                                $host = ($server == 'server_g') ? '139.99.8.31' : '194.233.75.76';
+
+                                if ($projectName == 'ptnw') {
+                                    $url = "http://$host:9090/job/ptnw-3.0/build?token=5ug10n0";
+                                } elseif ($projectName == "tsel") {
+                                    $url = "http://$host:9090/job/dashboard-oss-v2-frontend/build?token=5ug10n0";
+                                } elseif ($projectName == "bod") {
+                                    $url = "http://$host:9090/job/bod-frontend/build?token=73ho5tdf73";
+                                } elseif ($projectName == "cs") {
+                                    $url = "http://$host:9090/job/ptnw-3.0-cs/build?token=237ydn3cfj";
+                                } elseif ($projectName == "doc") {
+                                    $url = "http://$host:9090/job/ptnw-3.0-doc/build?token=943ncihrci3o3";
+                                } elseif ($projectName == "training") {
+                                    $url = "http://$host:9090/job/ptnw-3.0-training/build?token=34gb39g3tetjew";
+                                } elseif ($projectName == "payment") {
+                                    $url = "http://$host:9090/job/ptnw-3.0-payment/build?token=8dHl27X84d8";
+                                } elseif ($projectName == "pmo") {
+                                    $url = "http://$host:9090/job/ptnw-3.0-pmo/build?token=347cn83engcfy3ns";
+                                } elseif ($projectName == "fakturonline") {
+                                    $url = "http://$host:9090/job/fakturonline/build?token=459y5tv54hvtmo3i";
+                                } 
+
+                                $encodedKeyboard = json_encode([
+                                    'inline_keyboard' => [[]]
+                                ]);
+
+                                TelegramHelper::editMessageText([
+                                    'chat_id' => $update['callback_query']['message']['chat']['id'],
+                                    'message_id' => $update['callback_query']['message']['message_id'],
+                                    'text' => 'Sedang diproses',
+                                    'reply_markup' => $encodedKeyboard
+                                ]);
+
+                                $arrContextOptions = [
+                                    "ssl" => [
+                                        "verify_peer"      => false,
+                                        "verify_peer_name" => false,
+                                    ],
+                                ];
+
+                                return file_get_contents($url, false, stream_context_create($arrContextOptions));
+                            }
+                        } else {
+                            $encodedKeyboard = json_encode([
+                                'inline_keyboard' => [[]]
+                            ]);
+
+                            TelegramHelper::editMessageText([
+                                'chat_id' => $update['callback_query']['message']['chat']['id'],
+                                'message_id' => $update['callback_query']['message']['message_id'],
+                                'text' => 'Invalid callback data',
+                                'reply_markup' => $encodedKeyboard
+                            ]);
+                        }
+                    } elseif (preg_match('/^\/restart(.*)$/', $callback_reply_to_message)) {
+                        $response = 'Invalid callback data';
+
+                        if ($update['callback_query']['data'] == 'wa_cowok') {
+                            $response = shell_exec("/var/scriptsh/restart_wa_cowok.sh > /dev/null 2>/dev/null &");
+                        } elseif ($update['callback_query']['data'] == 'wa_cewek') {
+                            $response = shell_exec("/var/scriptsh/restart_wa_cewek.sh > /dev/null 2>/dev/null &");
                         }
 
                         $encodedKeyboard = json_encode([
                             'inline_keyboard' => [[]]
                         ]);
 
-                        // return TelegramHelper::editMessageText([
-                        //     'chat_id' => $update['callback_query']['message']['chat']['id'],
-                        //     'message_id' => $update['callback_query']['message']['message_id'],
-                        //     'parse_mode' => 'html',
-                        //     'text' => "<pre>$response</pre>",
-                        //     'reply_markup' => $encodedKeyboard
-                        // ]);
-                        return TelegramHelper::sendMessage([
-                            'reply_to_message_id' => $update['callback_query']['message']['message_id'],
-                            'text' => $response
-                        ], $update['callback_query']['message']['chat']['id']);
+                        return TelegramHelper::editMessageText([
+                            'chat_id' => $update['callback_query']['message']['chat']['id'],
+                            'message_id' => $update['callback_query']['message']['message_id'],
+                            'parse_mode' => 'html',
+                            'text' => "Selesai",
+                            'reply_markup' => $encodedKeyboard
+                        ]);
                     }
+                } else {
+                    return TelegramHelper::answerCallbackQuery([
+                        'callback_query_id' => $update['callback_query']['id'],
+                        'text' => 'Ga boleh nakal',
+                        'show_alert' => true
+                    ]);
                 }
-            } else if (isset($update['message'])) {
-                if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
 
-                    $command = ArrayHelper::getValue($match, 'command', "");
-                    $this->command = $command;;
-                    $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
-                    $this->matchCommand($match['command'], $params);
-                }
-            } else {
-                return "invalid request";
-            }
+            //     if ($update['callback_query']) {
+            //         $this->handleCallbackQuery($update['callback_query']);
+            //     }
+            //     if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
+            //         $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
+
+            //         if (preg_match('/^\/pull(.*)$/', $callback_reply_to_message)) {
+
+            //             $contextOptions = [
+            //                 "ssl" => [
+            //                     "verify_peer" => false,
+            //                     "verify_peer_name" => false,
+            //                 ],
+            //             ];
+
+            //             $response = 'no message';
+            //             if ($update['callback_query']['data']) {
+            //                 $response = $update['callback_query']['data'];
+            //             }
+
+            //             $encodedKeyboard = json_encode([
+            //                 'inline_keyboard' => [[]]
+            //             ]);
+
+            //             // return TelegramHelper::editMessageText([
+            //             //     'chat_id' => $update['callback_query']['message']['chat']['id'],
+            //             //     'message_id' => $update['callback_query']['message']['message_id'],
+            //             //     'parse_mode' => 'html',
+            //             //     'text' => "<pre>$response</pre>",
+            //             //     'reply_markup' => $encodedKeyboard
+            //             // ]);
+            //             return TelegramHelper::sendMessage([
+            //                 'reply_to_message_id' => $update['callback_query']['message']['message_id'],
+            //                 'text' => $response
+            //             ], $update['callback_query']['message']['chat']['id']);
+            //         }
+            //     }
+            // } else if (isset($update['message'])) {
+            //     if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
+
+            //         $command = ArrayHelper::getValue($match, 'command', "");
+            //         $this->command = $command;;
+            //         $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
+            //         $this->matchCommand($match['command'], $params);
+            //     }
+            // } else {
+            //     return "invalid request";
+            // }
         } catch (Throwable $e) {
             TelegramHelper::sendMessage(['text' => $e->getMessage()],  -1002149598297);
             return $e->getMessage();
@@ -237,9 +418,9 @@ class WebhookController extends Controller
         $message_id = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
-        $log[] = $callbackQuery['id'];
-        $log[] = $callbackQuery['from']['id'];
-        $log[] = $callbackQuery['from']['username'];
+        $log[] = "callbackId".$callbackQuery['id'];
+        $log[] = "callbackfromID".$callbackQuery['from']['id'];
+        $log[] = "callbackfromUsername".$callbackQuery['from']['username'];
         $log_string = implode(", ", $log);
         $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
