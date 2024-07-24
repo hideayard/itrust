@@ -233,8 +233,8 @@ class WebhookController extends Controller
 
     protected function handleCallbackQuery($callbackQuery)
     {
-        $message_id = $callbackQuery['id'];
-        $chat_id = $callbackQuery['message']['chat']['id'];
+        $chat_id = $callbackQuery['id'];
+        $message_id = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
         $log[] = $callbackQuery['id'];
@@ -243,7 +243,7 @@ class WebhookController extends Controller
         $log_string = implode(", ", $log);
         $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
-        
+
         // TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chatId);
         TelegramHelper::editMessageText([
             'chat_id' => $chat_id,
