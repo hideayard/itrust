@@ -422,7 +422,7 @@ class WebhookController extends Controller
         $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
 
-        TelegramHelper::sendMessage(['text' => "1-".$message], $chat_id);
+        // TelegramHelper::sendMessage(['text' => "1-".$message], $chat_id); not working
         TelegramHelper::sendMessage(['text' => "2-".$message], $message_id);
         // TelegramHelper::editMessageText([
         //     'chat_id' => $chat_id,
@@ -441,10 +441,10 @@ class WebhookController extends Controller
             [
                 'message_id' => $chat_id,
                 'chat_id' => $message_id,
-                'text' => $message,
+                'text' => "3 - ".$message,
                 'reply_markup' => json_encode([])
             ],
-            $chat_id
+            $message_id
         );
 
         //delete not work
