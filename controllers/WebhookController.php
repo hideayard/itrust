@@ -422,8 +422,16 @@ class WebhookController extends Controller
         // $log_string = implode(", ", $log);
         // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
-        TelegramHelper::sendMessage(['text' => "" . $message . "."], $message_id);
-        $this->matchCommand($data, null, $callbackQuery);
+        if (($callbackQuery['message']['reply_to_message']['from']['username'] == $callbackQuery['from']['username']) || $callbackQuery['message']['reply_to_message']['from']['username'] == 'hideayard') {
+            TelegramHelper::sendMessage(['text' => "" . $message . "."], $message_id);
+            $this->matchCommand($data, null, $callbackQuery);
+        } else {
+            return TelegramHelper::answerCallbackQuery([
+                'callback_query_id' => $callbackQuery['id'],
+                'text' => 'Ga boleh nakal 301',
+                'show_alert' => true
+            ]);
+        }
     }
 
     private function check($callbackQuery = null)
@@ -487,7 +495,6 @@ class WebhookController extends Controller
                 // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
                 // return $this->sendGif($gifUrl);
                 return TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
-
             }
 
             $account = $user->user_account ?? null;
