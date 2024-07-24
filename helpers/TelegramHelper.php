@@ -199,20 +199,18 @@ class TelegramHelper
     // Function to send a request to the Telegram API
     public static function sendTelegramRequest($method, $data)
     {
-        global $botToken;
+        $botToken = Yii::$app->params['telegramBotToken'];
         $url = "https://api.telegram.org/bot$botToken/$method";
 
-        $options = [
-            'http' => [
-                'header'  => "Content-Type: application/json\r\n",
-                'method'  => 'POST',
-                'content' => json_encode($data),
-            ],
-        ];
-
-        $context  = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
-
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+        $result = curl_exec($ch);
+        curl_close($ch);
+    
         return $result;
     }
 }
