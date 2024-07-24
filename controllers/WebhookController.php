@@ -127,7 +127,7 @@ class WebhookController extends Controller
 
                 $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
 
-                if ( ( $update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username'] ) || $this->bot_admin) {
+                if (($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) || $this->bot_admin) {
                     $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
                     $response = "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data'];
 
@@ -340,7 +340,8 @@ class WebhookController extends Controller
                 return $this->chatId();
                 break;
             case "gif";
-                $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+                // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+                $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
                 return $this->sendGif($gifUrl);
                 break;
             case "menu";
@@ -381,16 +382,18 @@ class WebhookController extends Controller
 
     private function sendGif($gifUrl)
     {
+        //https://api.telegram.org/bot<token>/sendVideo?chat_id=<chat_id>&video=http://i.giphy.com/13IC4LVeP5NGNi.gif
+
         if (!$gifUrl) {
             $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
         }
         // TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id ." - " . $gifUrl ], $this->chat_id);
         $data = [
             'chat_id' => $this->chat_id,
-            'animation' => $gifUrl,
+            'video' => $gifUrl,
             'caption' => "Nope!"
         ];
-        TelegramHelper::sendTelegramRequest('sendAnimation', $data);
+        TelegramHelper::sendTelegramRequest('sendVideo', $data);
     }
 
     private function notifLog($from, $title, $callbackQueryId, $chatId, $data, $log_string)
