@@ -120,9 +120,9 @@ class TelegramHelper
         return self::send('editMessageReplyMarkup', $params);
     }
 
-    public static function deleteMessage($params)
+    public static function deleteMessage(int $chat_id, int $message_id)
     {
-        return self::send('deleteMessage', $params);
+        return self::send('deleteMessage', $chat_id, $message_id);
     }
 
     public static function editMessageText($params, $botToken = null)
