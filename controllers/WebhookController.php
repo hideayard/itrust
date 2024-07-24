@@ -255,12 +255,10 @@ class WebhookController extends Controller
         //     $chatId
         // );
 
-        TelegramHelper::editMessageReplyMarkup(
+        TelegramHelper::deleteMessage(
                 [
                     'message_id' => $callbackQueryId,
-                    'chat_id' => $chatId,
-                    // 'reply_markup' => json_encode(array('remove_keyboard' => true))
-                    'reply_markup' => json_encode([])
+                    'chat_id' => $chatId
                 ]
             );
         $this->matchCommand($data, null);
