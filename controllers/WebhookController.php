@@ -264,7 +264,7 @@ class WebhookController extends Controller
                         ]);
                     } else {
                         $this->handleCallbackQuery($update['callback_query']);
-                        
+
                         // if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
                         //     // $this->matchCommand('check', $params);
                         //     // $this->check();
@@ -424,7 +424,7 @@ class WebhookController extends Controller
         //logs to notif
 
         // TelegramHelper::sendMessage(['text' => "1-".$message], $chat_id); not working
-        TelegramHelper::sendMessage(['text' => "2-".$message], $message_id);
+        TelegramHelper::sendMessage(['text' => "2-" . $message], $message_id);
         // TelegramHelper::editMessageText([
         //     'chat_id' => $chat_id,
         //     'message_id' => $message_id,
@@ -494,7 +494,7 @@ class WebhookController extends Controller
                 $this->notifLog('check', 'check', $message_id, $chat_id, $from_id, $from_username);
             }
 
-            TelegramHelper::sendMessage(['text' => "check-".$message], $chat_id);
+            TelegramHelper::sendMessage(['text' => "check -" . $message . " - from_username : " .$from_username ], $message_id);
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
@@ -666,7 +666,7 @@ class WebhookController extends Controller
                 $message = "callbackQuery";
             }
 
-            TelegramHelper::sendMessage(['text' => "outlook-".$message], $chat_id);
+            TelegramHelper::sendMessage(['text' => "outlook-" . $message], $chat_id);
 
             $this->notifLog('outlook', 'outlook', $message_id, $chat_id, $from_id, $from_username);
 
