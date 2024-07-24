@@ -233,21 +233,21 @@ class WebhookController extends Controller
 
     protected function handleCallbackQuery($callbackQuery)
     {
-        $callbackQueryId = $callbackQuery['id'];
-        $chatId = $callbackQuery['message']['chat']['id'];
+        $message_id = $callbackQuery['id'];
+        $chat_id = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
-        // $log[] = $callbackQuery['id'];
-        // $log[] = $callbackQuery['from']['id'];
-        // $log[] = $callbackQuery['from']['username'];
-        // $log_string = implode(", ", $log);
-        // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $callbackQueryId, $chatId, $data, $log_string);
-
+        $log[] = $callbackQuery['id'];
+        $log[] = $callbackQuery['from']['id'];
+        $log[] = $callbackQuery['from']['username'];
+        $log_string = implode(", ", $log);
+        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
+        
         // TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chatId);
         TelegramHelper::editMessageText([
-            'chat_id' => $chatId,
-            'message_id' => $callbackQueryId,
+            'chat_id' => $chat_id,
+            'message_id' => $message_id,
             'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
             'reply_markup' => json_encode(['inline_keyboard' => [[]]])
         ]);
