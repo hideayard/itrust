@@ -238,7 +238,7 @@ class WebhookController extends Controller
                                     $url = "http://$host:9090/job/ptnw-3.0-pmo/build?token=347cn83engcfy3ns";
                                 } elseif ($projectName == "fakturonline") {
                                     $url = "http://$host:9090/job/fakturonline/build?token=459y5tv54hvtmo3i";
-                                } 
+                                }
 
                                 $encodedKeyboard = json_encode([
                                     'inline_keyboard' => [[]]
@@ -301,51 +301,59 @@ class WebhookController extends Controller
                     ]);
                 }
 
-            //     if ($update['callback_query']) {
-            //         $this->handleCallbackQuery($update['callback_query']);
-            //     }
-            //     if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
-            //         $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
+                //     if ($update['callback_query']) {
+                //         $this->handleCallbackQuery($update['callback_query']);
+                //     }
+                //     if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
+                //         $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
 
-            //         if (preg_match('/^\/pull(.*)$/', $callback_reply_to_message)) {
+                //         if (preg_match('/^\/pull(.*)$/', $callback_reply_to_message)) {
 
-            //             $contextOptions = [
-            //                 "ssl" => [
-            //                     "verify_peer" => false,
-            //                     "verify_peer_name" => false,
-            //                 ],
-            //             ];
+                //             $contextOptions = [
+                //                 "ssl" => [
+                //                     "verify_peer" => false,
+                //                     "verify_peer_name" => false,
+                //                 ],
+                //             ];
 
-            //             $response = 'no message';
-            //             if ($update['callback_query']['data']) {
-            //                 $response = $update['callback_query']['data'];
-            //             }
+                //             $response = 'no message';
+                //             if ($update['callback_query']['data']) {
+                //                 $response = $update['callback_query']['data'];
+                //             }
 
-            //             $encodedKeyboard = json_encode([
-            //                 'inline_keyboard' => [[]]
-            //             ]);
+                //             $encodedKeyboard = json_encode([
+                //                 'inline_keyboard' => [[]]
+                //             ]);
 
-            //             // return TelegramHelper::editMessageText([
-            //             //     'chat_id' => $update['callback_query']['message']['chat']['id'],
-            //             //     'message_id' => $update['callback_query']['message']['message_id'],
-            //             //     'parse_mode' => 'html',
-            //             //     'text' => "<pre>$response</pre>",
-            //             //     'reply_markup' => $encodedKeyboard
-            //             // ]);
-            //             return TelegramHelper::sendMessage([
-            //                 'reply_to_message_id' => $update['callback_query']['message']['message_id'],
-            //                 'text' => $response
-            //             ], $update['callback_query']['message']['chat']['id']);
-            //         }
-            //     }
-            // } else if (isset($update['message'])) {
-            //     if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
+                //             // return TelegramHelper::editMessageText([
+                //             //     'chat_id' => $update['callback_query']['message']['chat']['id'],
+                //             //     'message_id' => $update['callback_query']['message']['message_id'],
+                //             //     'parse_mode' => 'html',
+                //             //     'text' => "<pre>$response</pre>",
+                //             //     'reply_markup' => $encodedKeyboard
+                //             // ]);
+                //             return TelegramHelper::sendMessage([
+                //                 'reply_to_message_id' => $update['callback_query']['message']['message_id'],
+                //                 'text' => $response
+                //             ], $update['callback_query']['message']['chat']['id']);
+                //         }
+                //     }
+                // } else if (isset($update['message'])) {
+                //     if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
 
-            //         $command = ArrayHelper::getValue($match, 'command', "");
-            //         $this->command = $command;;
-            //         $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
-            //         $this->matchCommand($match['command'], $params);
-            //     }
+                //         $command = ArrayHelper::getValue($match, 'command', "");
+                //         $this->command = $command;;
+                //         $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
+                //         $this->matchCommand($match['command'], $params);
+                //     }
+            } else if (isset($update['message'])) {
+                if (preg_match('/^\/(?<command>[\w-]+)(?<username>@' . $this->bot_username . '+)?(((?:\s{1}(?<param>.*))))?$/', $text, $match)) {
+
+                    $command = ArrayHelper::getValue($match, 'command', "");
+                    $this->command = $command;;
+                    $params  = (isset($match['param']) && !empty(trim($match['param']))) ? explode(" ", trim($match['param'])) : [];
+                    $this->matchCommand($match['command'], $params);
+                }
             } else {
                 return "invalid request";
             }
@@ -418,9 +426,9 @@ class WebhookController extends Controller
         $message_id = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
-        $log[] = "callbackId".$callbackQuery['id'];
-        $log[] = "callbackfromID".$callbackQuery['from']['id'];
-        $log[] = "callbackfromUsername".$callbackQuery['from']['username'];
+        $log[] = "callbackId" . $callbackQuery['id'];
+        $log[] = "callbackfromID" . $callbackQuery['from']['id'];
+        $log[] = "callbackfromUsername" . $callbackQuery['from']['username'];
         $log_string = implode(", ", $log);
         $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
