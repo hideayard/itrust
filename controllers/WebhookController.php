@@ -127,7 +127,7 @@ class WebhookController extends Controller
 
                 $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
 
-                if ($update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username']) {
+                if ( ( $update['callback_query']['message']['reply_to_message']['from']['username'] == $update['callback_query']['from']['username'] ) || $this->bot_admin) {
                     $callback_reply_to_message = $update['callback_query']['message']['reply_to_message']['text'];
                     $response = "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data'];
 
