@@ -497,41 +497,41 @@ class WebhookController extends Controller
 
                 if ($callbackQuery) {
                     if (!$order->save()) {
-                        TelegramHelper::editMessageText([
-                            'chat_id' => $chat_id,
-                            'message_id' => $message_id,
-                            'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")",
-                            'reply_markup' => $emptyKeyboard
-                        ]);
-                        return TelegramHelper::sendMessage([
+                        // TelegramHelper::editMessageText([
+                        //     'chat_id' => $chat_id,
+                        //     'message_id' => $message_id,
+                        //     'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")",
+                        //     'reply_markup' => $emptyKeyboard
+                        // ]);
+                        TelegramHelper::sendMessage([
                             'reply_to_message_id' => $message_id, 
                             'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"
                         ], $chat_id);
 
                     }
-                    TelegramHelper::editMessageText([
-                        'chat_id' => $chat_id,
-                        'message_id' => $message_id,
-                        'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")",
-                        'reply_markup' => $emptyKeyboard
-                    ]);
-                    return TelegramHelper::sendMessage([
+                    // TelegramHelper::editMessageText([
+                    //     'chat_id' => $chat_id,
+                    //     'message_id' => $message_id,
+                    //     'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")",
+                    //     'reply_markup' => $emptyKeyboard
+                    // ]);
+                    TelegramHelper::sendMessage([
                         'reply_to_message_id' => $message_id, 
                         'text' => "Outlook command <bSent</b>. @" . $from_username . "(" . $from_id . ")"
                     ], $chat_id);
 
                 } else {
                     if (!$order->save()) {
-                        return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"], $chat_id);
+                        TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"], $chat_id);
                     }
                     // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> for user " . $account], $chat_id);
-                    return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
+                    TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <bSent</b> @" . $from_username . "(" . $from_id . ")"], $chat_id);
                 }
             } else {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
+                TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "<b>Failed</b> to send command for user  @" . $from_username . "(" . $from_id . ")"], $chat_id);
             }
         } catch (\Exception $ex) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
+            TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
     }
 
