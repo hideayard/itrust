@@ -420,11 +420,12 @@ class WebhookController extends Controller
         $data = $callbackQuery['data'];
 
         $message = "You (@" . $callbackQuery['from']['username'] . ") choose " . $data;
-        $output = array_map(function ($object) {
-            return $object->name;
-        }, $callbackQuery);
-        $log_string = implode(', ', $output);
+        // $output = array_map(function ($object) {
+        //     return $object->name;
+        // }, $callbackQuery);
+        // $log_string = implode(', ', $output);
 
+        $log_string = json_encode($callbackQuery);
         // $log[] = "callbackId=" . $callbackQuery['id'];
         // $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
         // $log[] = "callbackfromUsername=" . $callbackQuery['from']['username'];
