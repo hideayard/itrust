@@ -494,13 +494,13 @@ class WebhookController extends Controller
                 $this->notifLog('check', 'check', $message_id, $chat_id, $from_id, $from_username);
             }
 
-            TelegramHelper::sendMessage(['text' => "check -" . $message . " - from_username : " .$from_username ], $chat_id);
+            TelegramHelper::sendMessage(['text' => "check -" . $message . " - from_id : " .$from_id. " - from_username : " .$from_username ], $chat_id);
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
             }
-            return TelegramHelper::sendMessage(['text' => "User " . $this->from_username . "(" . $this->from_id . ")" . " <b>Terdaftar</b>"], $this->chat_id);
+            return TelegramHelper::sendMessage(['text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Terdaftar</b>"], $chat_id);
         } catch (\Exception $ex) {
             return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "ERROR - " . $ex->getMessage()], $chat_id);
         }
