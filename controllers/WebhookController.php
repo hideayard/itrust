@@ -437,7 +437,7 @@ class WebhookController extends Controller
         // ];
         // TelegramHelper::editMessageReplyMarkup($data);
 
-        TelegramHelper::editMessageReplyMarkup(
+        TelegramHelper::editMessageText(
             [
                 'message_id' => $chat_id,
                 'chat_id' => $message_id,
@@ -445,6 +445,15 @@ class WebhookController extends Controller
                 'reply_markup' => json_encode([])
             ],
             $message_id
+        );
+
+        TelegramHelper::editMessageText(
+            [
+                'message_id' => $chat_id,
+                'chat_id' => $message_id,
+                'text' => "4 - ".$message,
+                'reply_markup' => json_encode([])
+            ]
         );
 
         //delete not work
