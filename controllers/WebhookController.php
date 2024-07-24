@@ -252,16 +252,16 @@ class WebhookController extends Controller
             'message_id' => $callbackQueryId,
             'reply_markup' => json_encode([])
         ];
-        TelegramHelper::editMessageReplyMarkup($data);
+        // TelegramHelper::editMessageReplyMarkup($data);
 
-        // TelegramHelper::editMessageReplyMarkup(
-        //     [
-        //         'message_id' => $callbackQueryId,
-        //         // 'reply_markup' => json_encode(array('remove_keyboard' => true))
-        //         'reply_markup' => json_encode([])
-        //     ],
-        //     $chatId
-        // );
+        TelegramHelper::editMessageReplyMarkup(
+            [
+                'message_id' => $callbackQueryId,
+                'chat_id' => $chatId,
+                'reply_markup' => json_encode([])
+            ],
+            $chatId
+        );
 
         //delete not work
         // TelegramHelper::deleteMessage(
