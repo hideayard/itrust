@@ -247,21 +247,21 @@ class WebhookController extends Controller
         //logs to notif
         TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chatId);
 
-        $data = [
-            'chat_id' => $chatId,
-            'message_id' => $callbackQueryId,
-            'reply_markup' => json_encode([])
-        ];
+        // $data = [
+        //     'chat_id' => $chatId,
+        //     'message_id' => $callbackQueryId,
+        //     'reply_markup' => json_encode([])
+        // ];
         // TelegramHelper::editMessageReplyMarkup($data);
 
-        TelegramHelper::editMessageReplyMarkup(
-            [
-                'message_id' => $callbackQueryId,
-                'chat_id' => $chatId,
-                'reply_markup' => json_encode([])
-            ],
-            $chatId
-        );
+        // TelegramHelper::editMessageReplyMarkup(
+        //     [
+        //         'message_id' => $callbackQueryId,
+        //         'chat_id' => $chatId,
+        //         'reply_markup' => json_encode([])
+        //     ],
+        //     $chatId
+        // );
 
         //delete not work
         // TelegramHelper::deleteMessage(
