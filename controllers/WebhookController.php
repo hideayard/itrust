@@ -415,55 +415,14 @@ class WebhookController extends Controller
         $data = $callbackQuery['data'];
 
         $message = "You (@" . $callbackQuery['from']['username'] . ") choose " . $data;
-        $log[] = "callbackId=" . $callbackQuery['id'];
-        $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
-        $log[] = "callbackfromUsername=" . $callbackQuery['from']['username'];
-        $log[] = "message=" . $message;
-        $log_string = implode(", ", $log);
-        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
+        // $log[] = "callbackId=" . $callbackQuery['id'];
+        // $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
+        // $log[] = "callbackfromUsername=" . $callbackQuery['from']['username'];
+        // $log[] = "message=" . $message;
+        // $log_string = implode(", ", $log);
+        // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
-
-        // TelegramHelper::sendMessage(['text' => "1-".$message], $chat_id); not working
-        TelegramHelper::sendMessage(['text' => "2-" . $message], $message_id);
-        // TelegramHelper::editMessageText([
-        //     'chat_id' => $chat_id,
-        //     'message_id' => $message_id,
-        //     'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
-        //     'reply_markup' => json_encode(['inline_keyboard' => [[]]])
-        // ]);
-        // $data = [
-        //     'chat_id' => $chatId,
-        //     'message_id' => $callbackQueryId,
-        //     'reply_markup' => json_encode([])
-        // ];
-        // TelegramHelper::editMessageReplyMarkup($data);
-
-        // TelegramHelper::editMessageText(
-        //     [
-        //         'message_id' => $chat_id,
-        //         'chat_id' => $message_id,
-        //         'text' => "3 - ".$message,
-        //         'reply_markup' => json_encode([])
-        //     ],
-        //     $message_id
-        // ); not working
-
-        // TelegramHelper::editMessageText(
-        //     [
-        //         'message_id' => $chat_id,
-        //         'chat_id' => $message_id,
-        //         'text' => "4 - ".$message,
-        //         'reply_markup' => json_encode([])
-        //     ]
-        // ); not working
-
-        //delete not work
-        // TelegramHelper::deleteMessage(
-        //     [
-        //         'chat_id' => $chatId,
-        //         'message_id' => $callbackQueryId
-        //     ],
-        // );
+        TelegramHelper::sendMessage(['text' => "" . $message."."], $message_id);
         $this->matchCommand($data, null, $callbackQuery);
     }
 
