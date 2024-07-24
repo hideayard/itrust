@@ -197,7 +197,7 @@ class TelegramHelper
     }
 
     // Function to send a request to the Telegram API
-    function sendTelegramRequest($method, $data)
+    public static function sendTelegramRequest($method, $data)
     {
         global $botToken;
         $url = "https://api.telegram.org/bot$botToken/$method";
