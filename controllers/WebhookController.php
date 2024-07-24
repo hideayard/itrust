@@ -262,38 +262,39 @@ class WebhookController extends Controller
                             'reply_markup' => $encodedKeyboard
                         ]);
                     } else {
-                        // $this->handleCallbackQuery($update['callback_query']);
-                        if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
-                            // $this->matchCommand('check', $params);
-                            // $this->check();
-                            // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
-                            // $this->sendGif($gifUrl);
-                            TelegramHelper::sendMessage(['text' => "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data']], $update['callback_query']['id']);
-                        } else {
-                            // $chat_id = $update['callback_query']['id'];
-                            // $message_id = $update['callback_query']['message']['chat']['id'];
-                            TelegramHelper::sendMessage(
-                                [
-                                    'reply_to_message_id' => $update['callback_query']['id'],
-                                    'text' => "MASUK ELSE 1". $update['callback_query']['data']
-                                ],
-                                $update['callback_query']['message']['chat']['id']
-                            );
+                        $this->handleCallbackQuery($update['callback_query']);
+                        
+                        // if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
+                        //     // $this->matchCommand('check', $params);
+                        //     // $this->check();
+                        //     // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+                        //     // $this->sendGif($gifUrl);
+                        //     TelegramHelper::sendMessage(['text' => "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data']], $update['callback_query']['id']);
+                        // } else {
+                        //     // $chat_id = $update['callback_query']['id'];
+                        //     // $message_id = $update['callback_query']['message']['chat']['id'];
+                        //     TelegramHelper::sendMessage(
+                        //         [
+                        //             'reply_to_message_id' => $update['callback_query']['id'],
+                        //             'text' => "MASUK ELSE 1". $update['callback_query']['data']
+                        //         ],
+                        //         $update['callback_query']['message']['chat']['id']
+                        //     );
 
-                            TelegramHelper::sendMessage(
-                                [
-                                    'reply_to_message_id' => $update['callback_query']['message']['chat']['id'],
-                                    'text' => "MASUK ELSE 2"
-                                ],
-                                $update['callback_query']['id']
-                            );
+                        //     TelegramHelper::sendMessage(
+                        //         [
+                        //             'reply_to_message_id' => $update['callback_query']['message']['chat']['id'],
+                        //             'text' => "MASUK ELSE 2"
+                        //         ],
+                        //         $update['callback_query']['id']
+                        //     );
 
-                            TelegramHelper::answerCallbackQuery([
-                                'callback_query_id' => $update['callback_query']['id'],
-                                'text' => 'Ga boleh nakal 293 ',
-                                'show_alert' => true
-                            ]);
-                        }
+                        //     TelegramHelper::answerCallbackQuery([
+                        //         'callback_query_id' => $update['callback_query']['id'],
+                        //         'text' => 'Ga boleh nakal 293 ',
+                        //         'show_alert' => true
+                        //     ]);
+                        // }
                     }
                 } else {
                     return TelegramHelper::answerCallbackQuery([
@@ -406,7 +407,7 @@ class WebhookController extends Controller
         }
     }
 
-    protected function handleCallbackQuery($callbackQuery = null)
+    protected function handleCallbackQuery($callbackQuery)
     {
         $chat_id = $callbackQuery['id'];
         $message_id = $callbackQuery['message']['chat']['id'];
