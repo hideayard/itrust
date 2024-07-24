@@ -255,7 +255,12 @@ class WebhookController extends Controller
         //     $chatId
         // );
 
-        TelegramHelper::deleteMessage($chatId,$callbackQueryId);
+        TelegramHelper::deleteMessage(
+            [
+                'chat_id' => $chatId,
+                'message_id' => $callbackQueryId
+            ],
+        );
         $this->matchCommand($data, null);
     }
 
