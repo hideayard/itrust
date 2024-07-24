@@ -476,7 +476,7 @@ class WebhookController extends Controller
             }
 
              $debug = "outlook -" . $message . " - from_id : " . $from_id . " - from_username : " . $from_username . " - chat_id : " . $chat_id . " - message_id : " . $message_id;
-            TelegramHelper::sendMessage(['text' => $debug], $this->defaultChatId);
+            TelegramHelper::sendMessage(['text' => $debug], $this->chat_id);
             // TelegramHelper::sendMessage(['text' => "outlook-" . $message], $chat_id);
 
             $this->notifLog('outlook', 'outlook', $message_id, $chat_id, $from_id, $from_username);
