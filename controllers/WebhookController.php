@@ -422,7 +422,7 @@ class WebhookController extends Controller
         // $log_string = implode(", ", $log);
         // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
-        TelegramHelper::sendMessage(['text' => "" . $message."."], $message_id);
+        TelegramHelper::sendMessage(['text' => "" . $message . "."], $message_id);
         $this->matchCommand($data, null, $callbackQuery);
     }
 
@@ -475,15 +475,17 @@ class WebhookController extends Controller
                 $message = "callbackQuery";
             }
 
-             $debug = "outlook -" . $message . " - from_id : " . $from_id . " - from_username : " . $from_username . " - chat_id : " . $chat_id . " - message_id : " . $message_id;
-            TelegramHelper::sendMessage(['text' => $debug], $this->chat_id);
+            //  $debug = "outlook -" . $message . " - from_id : " . $from_id . " - from_username : " . $from_username . " - chat_id : " . $chat_id . " - message_id : " . $message_id;
+            // TelegramHelper::sendMessage(['text' => $debug], $this->chat_id);
             // TelegramHelper::sendMessage(['text' => "outlook-" . $message], $chat_id);
 
             $this->notifLog('outlook', 'outlook', $message_id, $chat_id, $from_id, $from_username);
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+                return $this->sendGif($gifUrl);
             }
 
             $account = $user->user_account ?? null;
@@ -505,10 +507,9 @@ class WebhookController extends Controller
                         // ]);
 
                         TelegramHelper::sendMessage([
-                            'reply_to_message_id' => $message_id, 
+                            'reply_to_message_id' => $message_id,
                             'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"
                         ], $chat_id);
-
                     }
                     TelegramHelper::sendMessage(['text' => "Outlook command <bSent</b>. @" . $from_username . "(" . $from_id . ")"], $chat_id);
 
@@ -519,10 +520,9 @@ class WebhookController extends Controller
                     //     'reply_markup' => $emptyKeyboard
                     // ]);
                     TelegramHelper::sendMessage([
-                        'reply_to_message_id' => $chat_id, 
+                        'reply_to_message_id' => $chat_id,
                         'text' => "Outlook command <bSent</b>. @" . $from_username . "(" . $from_id . ")"
-                    ], $message_id );
-
+                    ], $message_id);
                 } else {
                     if (!$order->save()) {
                         TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"], $chat_id);
