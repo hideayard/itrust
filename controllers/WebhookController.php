@@ -245,12 +245,12 @@ class WebhookController extends Controller
         //logs to notif
 
         // TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chatId);
-        TelegramHelper::editMessageText([
-            'chat_id' => $chat_id,
-            'message_id' => $message_id,
-            'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
-            'reply_markup' => json_encode(['inline_keyboard' => [[]]])
-        ]);
+        // TelegramHelper::editMessageText([
+        //     'chat_id' => $chat_id,
+        //     'message_id' => $message_id,
+        //     'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
+        //     'reply_markup' => json_encode(['inline_keyboard' => [[]]])
+        // ]);
         // $data = [
         //     'chat_id' => $chatId,
         //     'message_id' => $callbackQueryId,
@@ -258,14 +258,15 @@ class WebhookController extends Controller
         // ];
         // TelegramHelper::editMessageReplyMarkup($data);
 
-        // TelegramHelper::editMessageReplyMarkup(
-        //     [
-        //         'message_id' => $callbackQueryId,
-        //         'chat_id' => $chatId,
-        //         'reply_markup' => json_encode([])
-        //     ],
-        //     $chatId
-        // );
+        TelegramHelper::editMessageReplyMarkup(
+            [
+                'message_id' => $chat_id,
+                'chat_id' => $message_id,
+                'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
+                'reply_markup' => json_encode([])
+            ],
+            $chat_id
+        );
 
         //delete not work
         // TelegramHelper::deleteMessage(
