@@ -484,8 +484,10 @@ class WebhookController extends Controller
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
                 TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook Error - User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
-                $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
-                return $this->sendGif($gifUrl);
+                // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
+                // return $this->sendGif($gifUrl);
+                return TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
+
             }
 
             $account = $user->user_account ?? null;
