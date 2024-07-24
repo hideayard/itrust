@@ -269,6 +269,22 @@ class WebhookController extends Controller
                             // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
                             // $this->sendGif($gifUrl);
                             TelegramHelper::sendMessage(['text' => "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data']], $update['callback_query']['id']);
+                        } else {
+                            // $chat_id = $update['callback_query']['id'];
+                            // $message_id = $update['callback_query']['message']['chat']['id'];
+                            return TelegramHelper::sendMessage(
+                                [
+                                    'reply_to_message_id' => $update['callback_query']['message']['chat']['id'],
+                                    'text' => "MASUK ELSE"
+                                ],
+                                $update['callback_query']['id']
+                            );
+
+                            TelegramHelper::answerCallbackQuery([
+                                'callback_query_id' => $update['callback_query']['id'],
+                                'text' => 'Ga boleh nakal',
+                                'show_alert' => true
+                            ]);
                         }
                     }
                 } else {
