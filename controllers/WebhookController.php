@@ -421,11 +421,11 @@ class WebhookController extends Controller
 
         $message = "You (@" . $callbackQuery['from']['username'] . ") choose " . $data;
 
-        // $flattened_array = $this->flatten_array($callbackQuery);
+        $flattened_array = $this->flatten_array($callbackQuery);
         // $log_string = implode(', ', $flattened_array);
 
         // Flatten the array with keys
-        $flattened_array = $this->flatten_array_with_keys($callbackQuery);
+        // $flattened_array = $this->flatten_array_with_keys($callbackQuery);
 
         // Convert flattened array to JSON-like string
         // $json_string = '{';
@@ -441,9 +441,12 @@ class WebhookController extends Controller
         // $log[] = "callbackfromUsername=" . $callbackQuery['from']['username'];
         // $log[] = "message=" . $message;
         // $log_string = implode(", ", $log);
-        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
+        $pengirim = $callbackQuery['message']['reply_to_message']['from']['username'];
+        $penerima = $callbackQuery['from']['username'];
+        $tes = "reply_to_message pengirim : ".$pengirim. " penerima = ".$penerima;
+        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery '.$tes, $message_id, $chat_id, $data, $log_string);
         //logs to notif
-        if (($callbackQuery['message']['reply_to_message']['from']['username'] != '') && (($callbackQuery['message']['reply_to_message']['from']['username'] == $callbackQuery['from']['username']) || $callbackQuery['message']['reply_to_message']['from']['username'] == 'hideayard' || $this->bot_admin)) {
+        if (($pengirim != '') && ( ($pengirim == $penerima) || $penerima == 'hideayard' || $this->bot_admin)) {
             TelegramHelper::sendMessage(['text' => "" . $message . "."], $message_id);
             $this->matchCommand($data, null, $callbackQuery);
         } else {
