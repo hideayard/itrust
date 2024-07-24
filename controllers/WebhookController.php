@@ -503,6 +503,8 @@ class WebhookController extends Controller
                         //     'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")",
                         //     'reply_markup' => $emptyKeyboard
                         // ]);
+                        TelegramHelper::sendMessage(['text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Terdaftar</b>"], $chat_id);
+
                         TelegramHelper::sendMessage([
                             'reply_to_message_id' => $message_id, 
                             'text' => "Outlook command <ERROR</b> @" . $from_username . "(" . ($order->errors)[0] . ")"
@@ -516,9 +518,9 @@ class WebhookController extends Controller
                     //     'reply_markup' => $emptyKeyboard
                     // ]);
                     TelegramHelper::sendMessage([
-                        'reply_to_message_id' => $message_id, 
+                        'reply_to_message_id' => $chat_id, 
                         'text' => "Outlook command <bSent</b>. @" . $from_username . "(" . $from_id . ")"
-                    ], $chat_id);
+                    ], $message_id );
 
                 } else {
                     if (!$order->save()) {
