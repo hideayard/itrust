@@ -423,7 +423,8 @@ class WebhookController extends Controller
         // $output = array_map(function ($object) {
         //     return  implode('.', $object);
         // }, $callbackQuery);
-        $log_string = implode(', ', $callbackQuery);
+        $flattened_array = $this->flatten_array($callbackQuery);
+        $log_string = implode(', ', $flattened_array);
 
         // $log[] = "callbackId=" . $callbackQuery['id'];
         // $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
@@ -444,6 +445,19 @@ class WebhookController extends Controller
             //     'show_alert' => true
             // ]);
         }
+    }
+
+    private function flatten_array($array)
+    {
+        $result = array();
+        foreach ($array as $element) {
+            if (is_array($element)) {
+                $result = array_merge($result, $this->flatten_array($element));
+            } else {
+                $result[] = $element;
+            }
+        }
+        return $result;
     }
 
     private function check($callbackQuery = null)
