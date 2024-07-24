@@ -470,7 +470,9 @@ class WebhookController extends Controller
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+                return $this->sendGif($gifUrl, "gak boleh ya!\nUser " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>");
             }
             return TelegramHelper::sendMessage(['text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Terdaftar</b>"], $chat_id);
         } catch (\Exception $ex) {
@@ -503,10 +505,9 @@ class WebhookController extends Controller
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
-                TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook Error - User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
-                // $gifUrl = 'https://itrust-care.com/' . Url::base() . '/images/no.gif';
-                // return $this->sendGif($gifUrl);
-                return TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
+                // TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "Outlook Error - User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $this->chat_id);
+                $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+                return $this->sendGif($gifUrl, "gak boleh ya!\nUser " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>");
             }
 
             $account = $user->user_account ?? null;
@@ -580,7 +581,9 @@ class WebhookController extends Controller
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+                return $this->sendGif($gifUrl, "gak boleh ya!\nUser " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>");
             }
             $account = $user->user_account ?? null;
 
@@ -622,12 +625,14 @@ class WebhookController extends Controller
 
                 $user = $this->getUser($from_id, $from_username);
                 if (!$user) {
-                    TelegramHelper::editMessageText([
-                        'chat_id' => $chat_id,
-                        'message_id' => $message_id,
-                        'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>",
-                        'reply_markup' => json_encode(['inline_keyboard' => [[]]])
-                    ]);
+                    // TelegramHelper::editMessageText([
+                    //     'chat_id' => $chat_id,
+                    //     'message_id' => $message_id,
+                    //     'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>",
+                    //     'reply_markup' => json_encode(['inline_keyboard' => [[]]])
+                    // ]);
+                    $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+                    return $this->sendGif($gifUrl, "gak boleh ya!\nUser " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>");
                 }
 
                 TelegramHelper::editMessageText([
@@ -641,7 +646,9 @@ class WebhookController extends Controller
 
                 $user = $this->getUser($from_id, $from_username);
                 if (!$user) {
-                    return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                    // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                    $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+                    return $this->sendGif($gifUrl, "gak boleh ya!\nUser " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>");
                 }
 
                 return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => $message], $chat_id);
@@ -676,7 +683,9 @@ class WebhookController extends Controller
 
             $user = $this->getUser($from_id, $from_username);
             if (!$user) {
-                return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                // return TelegramHelper::sendMessage(['reply_to_message_id' => $message_id, 'text' => "User " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>"], $chat_id);
+                $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
+                return $this->sendGif($gifUrl, "gak boleh ya!\nUser " . $from_username . "(" . $from_id . ")" . " <b>Belum Terdaftar</b>");
             }
             $maxop = trim($params[0]);
 
