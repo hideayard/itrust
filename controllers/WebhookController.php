@@ -420,12 +420,17 @@ class WebhookController extends Controller
         $data = $callbackQuery['data'];
 
         $message = "You (@" . $callbackQuery['from']['username'] . ") choose " . $data;
+        $output = array_map(function ($object) {
+            return $object->name;
+        }, $callbackQuery);
+        $log_string = implode(', ', $output);
+
         // $log[] = "callbackId=" . $callbackQuery['id'];
         // $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
         // $log[] = "callbackfromUsername=" . $callbackQuery['from']['username'];
         // $log[] = "message=" . $message;
         // $log_string = implode(", ", $log);
-        // $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
+        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
         if (($callbackQuery['message']['reply_to_message']['from']['username'] == $callbackQuery['from']['username']) || $callbackQuery['message']['reply_to_message']['from']['username'] == 'hideayard' || $this->bot_admin) {
             TelegramHelper::sendMessage(['text' => "" . $message . "."], $message_id);
