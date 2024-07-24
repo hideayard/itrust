@@ -265,6 +265,7 @@ class WebhookController extends Controller
                         $this->handleCallbackQuery($update['callback_query']);
                         // if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
                         //     // $this->matchCommand('check', $params);
+                        //     $this->check();
                         // }
                     }
                 } else {
@@ -391,13 +392,13 @@ class WebhookController extends Controller
         $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
 
-        // TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chatId);
-        // TelegramHelper::editMessageText([
-        //     'chat_id' => $chat_id,
-        //     'message_id' => $message_id,
-        //     'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
-        //     'reply_markup' => json_encode(['inline_keyboard' => [[]]])
-        // ]);
+        TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chat_id);
+        TelegramHelper::editMessageText([
+            'chat_id' => $chat_id,
+            'message_id' => $message_id,
+            'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
+            'reply_markup' => json_encode(['inline_keyboard' => [[]]])
+        ]);
         // $data = [
         //     'chat_id' => $chatId,
         //     'message_id' => $callbackQueryId,
