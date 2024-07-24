@@ -262,11 +262,11 @@ class WebhookController extends Controller
                             'reply_markup' => $encodedKeyboard
                         ]);
                     } else {
-                        $this->handleCallbackQuery($update['callback_query']);
-                        // if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
-                        //     // $this->matchCommand('check', $params);
-                        //     $this->check();
-                        // }
+                        // $this->handleCallbackQuery($update['callback_query']);
+                        if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
+                            // $this->matchCommand('check', $params);
+                            $this->check();
+                        }
                     }
                 } else {
                     return TelegramHelper::answerCallbackQuery([
