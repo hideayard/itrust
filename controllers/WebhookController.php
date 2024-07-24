@@ -300,7 +300,7 @@ class WebhookController extends Controller
                 } else {
                     return TelegramHelper::answerCallbackQuery([
                         'callback_query_id' => $update['callback_query']['id'],
-                        'text' => ' ya! 301',
+                        'text' => 'gak boleh ya!',
                         'show_alert' => true
                     ]);
                 }
