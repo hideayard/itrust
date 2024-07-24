@@ -262,11 +262,11 @@ class WebhookController extends Controller
                             'reply_markup' => $encodedKeyboard
                         ]);
                     } else {
-                        // $this->handleCallbackQuery($update['callback_query']);
-                        if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
-                            // $this->matchCommand('check', $params);
-                            $this->check();
-                        }
+                        $this->handleCallbackQuery($update['callback_query']);
+                        // if (preg_match('/^\/check(.*)$/', $callback_reply_to_message)) {
+                        //     // $this->matchCommand('check', $params);
+                        //     $this->check();
+                        // }
                     }
                 } else {
                     return TelegramHelper::answerCallbackQuery([
@@ -375,30 +375,30 @@ class WebhookController extends Controller
         $notif->notif_text = "text " . $callbackQueryId . " | chatID=" . $chatId . " | data=" . $data . " | log=" . $log_string;
 
         if (!$notif->save()) {
-            return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR handleCallbackQuery" . $notif->errors], $chatId);
+            return TelegramHelper::sendMessage(['reply_to_message_id' => $callbackQueryId, 'text' => "ERROR notifLog" . $notif->errors], $chatId);
         }
     }
 
-    protected function handleCallbackQuery($callbackQuery)
+    protected function handleCallbackQuery($callbackQuery = null)
     {
         $chat_id = $callbackQuery['id'];
         $message_id = $callbackQuery['message']['chat']['id'];
         $data = $callbackQuery['data'];
 
-        $log[] = "callbackId" . $callbackQuery['id'];
-        $log[] = "callbackfromID" . $callbackQuery['from']['id'];
-        $log[] = "callbackfromUsername" . $callbackQuery['from']['username'];
+        $log[] = "callbackId=" . $callbackQuery['id'];
+        $log[] = "callbackfromID=" . $callbackQuery['from']['id'];
+        $log[] = "callbackfromUsername=" . $callbackQuery['from']['username'];
         $log_string = implode(", ", $log);
         $this->notifLog('handleCallbackQuery', 'handleCallbackQuery', $message_id, $chat_id, $data, $log_string);
         //logs to notif
 
         TelegramHelper::sendMessage(['text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data], $chat_id);
-        TelegramHelper::editMessageText([
-            'chat_id' => $chat_id,
-            'message_id' => $message_id,
-            'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
-            'reply_markup' => json_encode(['inline_keyboard' => [[]]])
-        ]);
+        // TelegramHelper::editMessageText([
+        //     'chat_id' => $chat_id,
+        //     'message_id' => $message_id,
+        //     'text' => "You (@" . $callbackQuery['from']['username'] . ") choose " . $data,
+        //     'reply_markup' => json_encode(['inline_keyboard' => [[]]])
+        // ]);
         // $data = [
         //     'chat_id' => $chatId,
         //     'message_id' => $callbackQueryId,
