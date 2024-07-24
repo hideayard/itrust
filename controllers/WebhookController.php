@@ -349,7 +349,7 @@ class WebhookController extends Controller
                 return $this->start();
                 break;
             case "outlook";
-                return $this->outlook();
+                return $this->outlook($callbackQuery);
                 break;
             case "maxop";
                 return $this->maxop();
@@ -437,24 +437,24 @@ class WebhookController extends Controller
         // ];
         // TelegramHelper::editMessageReplyMarkup($data);
 
-        TelegramHelper::editMessageText(
-            [
-                'message_id' => $chat_id,
-                'chat_id' => $message_id,
-                'text' => "3 - ".$message,
-                'reply_markup' => json_encode([])
-            ],
-            $message_id
-        );
+        // TelegramHelper::editMessageText(
+        //     [
+        //         'message_id' => $chat_id,
+        //         'chat_id' => $message_id,
+        //         'text' => "3 - ".$message,
+        //         'reply_markup' => json_encode([])
+        //     ],
+        //     $message_id
+        // ); not working
 
-        TelegramHelper::editMessageText(
-            [
-                'message_id' => $chat_id,
-                'chat_id' => $message_id,
-                'text' => "4 - ".$message,
-                'reply_markup' => json_encode([])
-            ]
-        );
+        // TelegramHelper::editMessageText(
+        //     [
+        //         'message_id' => $chat_id,
+        //         'chat_id' => $message_id,
+        //         'text' => "4 - ".$message,
+        //         'reply_markup' => json_encode([])
+        //     ]
+        // ); not working
 
         //delete not work
         // TelegramHelper::deleteMessage(
@@ -636,11 +636,9 @@ class WebhookController extends Controller
     }
 
 
-    private function outlook()
+    private function outlook($callbackQuery = null)
     {
         try {
-            $callbackQuery  = $this->callback_query;
-
             $message_id = $this->message_id ?? "";
             $from_username = $this->from_username ?? "";
             $from_id = $this->from_id ?? "";
