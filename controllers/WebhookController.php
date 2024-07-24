@@ -540,21 +540,14 @@ class WebhookController extends Controller
             'selective' => true,
         ]);
 
-        TelegramHelper::editMessageText([
-            'chat_id' => $this->chat_id, //$update['callback_query']['message']['chat']['id'],
-            'message_id' => $this->message_id, //$update['callback_query']['message']['message_id'],
-            'text' => 'Server yang mana?',
-            'reply_markup' => $encodedKeyboard
-        ]);
-
-        // return TelegramHelper::sendMessage(
-        //     [
-        //         'reply_to_message_id' => $this->message_id,
-        //         'text' => 'Hallo ' . $this->from_name . ', Silahkan pilih menu berikut',
-        //         'reply_markup' => $encodedKeyboard
-        //     ],
-        //     $this->chat_id
-        // );
+        return TelegramHelper::sendMessage(
+            [
+                'reply_to_message_id' => $this->message_id,
+                'text' => 'halo ' . $this->from_name . ', Silahkan pilih menu berikut',
+                'reply_markup' => $encodedKeyboard
+            ],
+            $this->chat_id
+        );
 
         // return TelegramHelper::editMessageText([
         //     'chat_id' => $this->chat_id, 
@@ -580,12 +573,12 @@ class WebhookController extends Controller
 
     private function start()
     {
-        $message = "Hallo @" . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/link &lt;nomor lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
+        $message = "halo @" . $this->from_name . "\nSelamat datang di layanan iTrust Trading Bot\nSilahkan ketik lisensi dengan format <pre>/link &lt;nomor lisensi&gt;</pre>\nUntuk menampilkan menu, silahkan ketik /menu";
 
         $user = $this->getUser($this->from_id, $this->from_name);
 
         if ($user) {
-            $message = "Hallo @" . $this->from_username . " (" . $user->user_nama . "|" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
+            $message = "halo @" . $this->from_username . " (" . $user->user_nama . "|" . $user->user_license . ") " . "\nSelamat datang di layanan iTrust Trading Bot" . "\nUntuk menampilkan menu, silahkan ketik /menu";
         }
 
         // if (!$user) {
