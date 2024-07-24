@@ -391,6 +391,7 @@ class WebhookController extends Controller
         }
         // TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id ." - " . $gifUrl ], $this->chat_id);
         $data = [
+            'parse_mode'=>'html',
             'chat_id' => $chat_id ?? $this->chat_id,
             'video' => $gifUrl,
             'caption' => $msg //"Nope!"
