@@ -412,17 +412,17 @@ class WebhookController extends Controller
 
     private function gif()
     {
-        TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id], $this->chat_id);
+        $gifUrl = Url::base() . '/images/no.gif';//'https://giphy.com/embed/15aGGXfSlat2dP6ohs';
+
+        TelegramHelper::sendMessage(['text' => "You choose gif : " . $this->message_id ." - " . $gifUrl ], $this->chat_id);
         // TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
         //https://i.giphy.com/15aGGXfSlat2dP6ohs.webp
         // <div style="width:100%;height:0;padding-bottom:57%;position:relative;"><iframe src="https://giphy.com/embed/15aGGXfSlat2dP6ohs" width="100%" height="100%" style="position:absolute" frameBorder="0" class="giphy-embed" allowFullScreen></iframe></div><p><a href="https://giphy.com/gifs/reaction-mood-15aGGXfSlat2dP6ohs">via GIPHY</a></p>
-        $baseImageUrl = Url::base() . '/images';
-        $gifUrl = $baseImageUrl.'/no.gif';//'https://giphy.com/embed/15aGGXfSlat2dP6ohs';
             
         $data = [
             'chat_id' => $this->chat_id,
             'animation' => $gifUrl,
-            'caption' => "Here is your GIF!"
+            'caption' => "Here is your GIF!".$gifUrl
         ];
         TelegramHelper::sendTelegramRequest('sendAnimation', $data);
     }
