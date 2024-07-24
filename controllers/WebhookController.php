@@ -369,6 +369,9 @@ class WebhookController extends Controller
             case "id";
                 return $this->chatId();
                 break;
+            case "gif";
+                return $this->gif();
+                break;
             case "menu";
                 return $this->menu();
                 break;
@@ -403,6 +406,11 @@ class WebhookController extends Controller
                 return $this->defaultAction($params);
                 break;
         }
+    }
+
+    private function gif()
+    {
+        return TelegramHelper::sendDocument(['reply_to_message_id' => $this->message_id, 'document' => Yii::$app->params['webhookTelegramGif']], $this->chat_id);
     }
 
     private function notifLog($from, $title, $callbackQueryId, $chatId, $data, $log_string)
@@ -702,6 +710,7 @@ class WebhookController extends Controller
 
     private function menu()
     {
+
         $keyboard = [
             ['7', '8', '9'],
             ['4', '5', '6'],
