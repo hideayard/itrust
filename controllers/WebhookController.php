@@ -304,7 +304,7 @@ class WebhookController extends Controller
         }
     }
 
-    private function matchCommand($val, $params)
+    private function matchCommand($val, $params, $callbackQuery = null)
     {
         switch ($val) {
             case "id";
@@ -343,7 +343,7 @@ class WebhookController extends Controller
             case "pilih";
                 return $this->pilih($params);
             case "check";
-                return $this->check();
+                return $this->check($callbackQuery);
             default;
                 return $this->defaultAction($params);
                 break;
@@ -423,7 +423,7 @@ class WebhookController extends Controller
         //         'message_id' => $callbackQueryId
         //     ],
         // );
-        $this->matchCommand($data, null);
+        $this->matchCommand($data, null, $callbackQuery);
     }
 
     private function check($callbackQuery = null)
