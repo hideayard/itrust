@@ -169,7 +169,7 @@ class WebhookController extends Controller
                         //     $response = shell_exec("sudo git pull origin master");
                         // }
 
-                        $response = "You (@" . $callbackQuery['from']['username'] . ") choose " . $update['callback_query']['data'];
+                        $response = "You (@" . $update['callback_query']['from']['username'] . ") choose " . $update['callback_query']['data'];
 
                         $encodedKeyboard = json_encode([
                             'inline_keyboard' => [[]]
