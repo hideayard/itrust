@@ -421,7 +421,7 @@ class WebhookController extends Controller
 
         $message = "You (@" . $callbackQuery['from']['username'] . ") choose " . $data;
         $output = array_map(function ($object) {
-            return  implode(' - ', $object);
+            return  implode('.', $object);
         }, $callbackQuery);
         $log_string = implode(', ', $output);
 
