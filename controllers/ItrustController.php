@@ -101,6 +101,10 @@ class ItrustController extends Controller
             if ($order !== null) {
                 if ($order->order_cmd == "outlook") {
                     return 1;
+                } else if ($order->order_cmd == "cr_off") {
+                    return 10;
+                } else if ($order->order_cmd == "cr_on") {
+                    return 11;
                 } else if ($order->order_cmd == "close_all") {
                     return 99;
                 } else if (str_contains($order->order_cmd, 'OP')) {
