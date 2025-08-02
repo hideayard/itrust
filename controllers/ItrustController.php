@@ -160,7 +160,7 @@ class ItrustController extends Controller
         $account = Yii::$app->request->post('id');
         $license = Yii::$app->request->post('license');
         $currentDate = new DateTime();
-        $result = -1;//$account ." - " . $license;
+        $result = -1; //$account ." - " . $license;
         $user = Users::find()
             ->where(['user_account' => "$account"])
             ->andWhere(['user_license' => "$license"])
@@ -183,7 +183,7 @@ class ItrustController extends Controller
     {
         $license = Yii::$app->request->post('license');
         $currentDate = new DateTime();
-        $result = -1;//$account ." - " . $license;
+        $result = -1; //$account ." - " . $license;
         $user = Users::findOne(['user_license' => "$license"]);
 
         if ($user) {
@@ -198,6 +198,17 @@ class ItrustController extends Controller
         }
     }
 
+
+    public function actionCheckLicenseTime()
+    {
+        $license = Yii::$app->request->post('license');
+        $user = Users::findOne(['user_license' => "$license"]);
+        if ($user) {
+            return $user->user_license_expired;
+        } else {
+            return 0;
+        }
+    }
     private function generateLicenseNumber($uniqueId)
     {
         $salt = 'B15m1ll4#'; // Use a secret salt for added security
