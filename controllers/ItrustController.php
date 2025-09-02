@@ -209,6 +209,7 @@ class ItrustController extends Controller
             return 0;
         }
     }
+    
     private function generateLicenseNumber($uniqueId)
     {
         $salt = 'B15m1ll4#'; // Use a secret salt for added security
