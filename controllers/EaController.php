@@ -16,8 +16,10 @@ class EaController extends Controller
 
     public function actionIndex()
     {
-        echo "Working";
+        Yii::debug('debug message'); // Use Yii's logging
+        return $this->render('index');
     }
+
 
     public function actionClose()
     {
@@ -209,7 +211,7 @@ class EaController extends Controller
             return 0;
         }
     }
-    
+
     private function generateLicenseNumber($uniqueId)
     {
         $salt = 'B15m1ll4#'; // Use a secret salt for added security
