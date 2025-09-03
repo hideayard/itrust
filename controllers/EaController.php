@@ -17,7 +17,7 @@ class EaController extends Controller
     public function actionIndex()
     {
         Yii::debug('debug message'); // Use Yii's logging
-        return $this->render('index');
+        return 'index';
     }
 
 
