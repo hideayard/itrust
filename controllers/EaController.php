@@ -204,9 +204,16 @@ class EaController extends Controller
     public function actionCheckLicenseTime()
     {
         $license = Yii::$app->request->post('license');
-        $user = Users::findOne(['user_license' => "$license"]);
-        if ($user) {
-            return $user->user_license_expired;
+        $user = Users::findOne(['user_license' => $license]);
+
+        if ($user && $user->user_license_expired) {
+            // Calculate seconds remaining from current time
+            $currentTime = time();
+            $expiryTime = strtotime($user->user_license_expired);
+            $secondsRemaining = $expiryTime - $currentTime;
+
+            // Return only positive values, 0 if expired
+            return $secondsRemaining > 0 ? $secondsRemaining : 0;
         } else {
             return 0;
         }
