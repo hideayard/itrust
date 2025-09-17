@@ -5,6 +5,8 @@ namespace app\controllers;
 use Yii;
 use DateTime;
 use app\models\Users;
+use app\models\Drawdown;
+use app\models\Withdraw;
 
 use yii\web\Response;
 use yii\web\Controller;
@@ -250,5 +252,255 @@ class EaController extends Controller
 
         // Return JSON response using Yii's method
         return $this->asJson($response);
+    }
+
+
+    /**
+     * Save or update trade DD data
+     * @return array
+     */
+    public function actionSaveDd()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->post('license');
+            $account = Yii::$app->request->post('account');
+            $wk_dd = Yii::$app->request->post('wk_dd', 0);
+            $wk_percentage_dd = Yii::$app->request->post('wk_percentage_dd', 0);
+            $wk_date = Yii::$app->request->post('wk_date');
+            $wk_equity = Yii::$app->request->post('wk_equity', 0);
+            $all_dd = Yii::$app->request->post('all_dd', 0);
+            $all_percentage_dd = Yii::$app->request->post('all_percentage_dd', 0);
+            $all_date = Yii::$app->request->post('all_date');
+            $all_equity = Yii::$app->request->post('all_equity', 0);
+
+            // Validate required parameters
+            if (empty($license) || empty($account)) {
+                throw new \yii\web\BadRequestHttpException('License and account are required');
+            }
+
+            // Find user by license
+            $user = Users::findOne(['user_license' => $license]);
+            if (!$user) {
+                throw new \yii\web\NotFoundHttpException('User not found for the provided license');
+            }
+
+            // Check if record already exists for this account and license
+            $tradeDd = Drawdown::find()
+                ->where(['account' => $account, 'license' => $license])
+                ->one();
+
+            if (!$tradeDd) {
+                // Create new record
+                $tradeDd = new Drawdown();
+                $tradeDd->user_id = $user->id;
+                $tradeDd->license = $license;
+                $tradeDd->account = $account;
+            }
+
+            // Update values
+            $tradeDd->wk_dd = $wk_dd;
+            $tradeDd->wk_percentage_dd = $wk_percentage_dd;
+            $tradeDd->wk_date = $wk_date ? date('Y-m-d H:i:s', strtotime($wk_date)) : null;
+            $tradeDd->wk_equity = $wk_equity;
+            $tradeDd->all_dd = $all_dd;
+            $tradeDd->all_percentage_dd = $all_percentage_dd;
+            $tradeDd->all_date = $all_date ? date('Y-m-d H:i:s', strtotime($all_date)) : null;
+            $tradeDd->all_equity = $all_equity;
+
+            if ($tradeDd->save()) {
+                return [
+                    'status' => 'success',
+                    'message' => 'Trade DD data saved successfully',
+                    'data' => [
+                        'id' => $tradeDd->id,
+                        'account' => $tradeDd->account
+                    ]
+                ];
+            } else {
+                Yii::error('Failed to save trade DD data: ' . json_encode($tradeDd->errors));
+                throw new \yii\web\ServerErrorHttpException('Failed to save trade DD data: ' . json_encode($tradeDd->errors));
+            }
+        } catch (\Exception $e) {
+            Yii::error('Error in actionSaveDd: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get trade DD data by license
+     * @return array
+     */
+    public function actionGetDd()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->get('license');
+
+            // Validate required parameter
+            if (empty($license)) {
+                throw new \yii\web\BadRequestHttpException('License is required');
+            }
+
+            // Find all records for this license
+            $tradeDdRecords = Drawdown::find()
+                ->where(['license' => $license])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            if (empty($tradeDdRecords)) {
+                return [
+                    'status' => 'success',
+                    'message' => 'No DD records found for this license',
+                    'data' => []
+                ];
+            }
+
+            // Format response data
+            $data = [];
+            foreach ($tradeDdRecords as $record) {
+                $data[] = [
+                    'id' => $record->id,
+                    'account' => $record->account,
+                    'wk_dd' => (float)$record->wk_dd,
+                    'wk_percentage_dd' => (float)$record->wk_percentage_dd,
+                    'wk_date' => $record->wk_date,
+                    'wk_equity' => (float)$record->wk_equity,
+                    'all_dd' => (float)$record->all_dd,
+                    'all_percentage_dd' => (float)$record->all_percentage_dd,
+                    'all_date' => $record->all_date,
+                    'all_equity' => (float)$record->all_equity,
+                    'created_at' => $record->created_at
+                ];
+            }
+
+            return [
+                'status' => 'success',
+                'message' => 'DD records retrieved successfully',
+                'data' => $data
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetDd: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionSaveWd()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->post('license');
+            $account = Yii::$app->request->post('account');
+            $wd_value = Yii::$app->request->post('wd_value');
+
+            // Validate required parameters
+            if (empty($license) || empty($account) || empty($wd_value)) {
+                throw new \yii\web\BadRequestHttpException('License, account, and withdraw value are required');
+            }
+
+            // Validate wd_value is numeric and positive
+            if (!is_numeric($wd_value) || $wd_value <= 0) {
+                throw new \yii\web\BadRequestHttpException('Withdraw value must be a positive number');
+            }
+
+            // Find user by license
+            $user = Users::findOne(['user_license' => $license]);
+            if (!$user) {
+                throw new \yii\web\NotFoundHttpException('User not found for the provided license');
+            }
+
+            // Create new withdraw record
+            $withdraw = new Withdraw();
+            $withdraw->user_id = $user->id;
+            $withdraw->license = $license;
+            $withdraw->account = $account;
+            $withdraw->wd_value = $wd_value;
+
+            if ($withdraw->save()) {
+                return [
+                    'status' => 'success',
+                    'message' => 'Withdraw data saved successfully',
+                    'data' => [
+                        'id' => $withdraw->id,
+                        'account' => $withdraw->account,
+                        'wd_value' => $withdraw->wd_value,
+                        'created_at' => $withdraw->created_at
+                    ]
+                ];
+            } else {
+                Yii::error('Failed to save withdraw data: ' . json_encode($withdraw->errors));
+                throw new \yii\web\ServerErrorHttpException('Failed to save withdraw data: ' . json_encode($withdraw->errors));
+            }
+        } catch (\Exception $e) {
+            Yii::error('Error in actionSaveWd: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get withdraw data by license
+     * @return array
+     */
+    public function actionGetWd()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->get('license');
+
+            // Validate required parameter
+            if (empty($license)) {
+                throw new \yii\web\BadRequestHttpException('License is required');
+            }
+
+            // Find all withdraw records for this license
+            $withdrawRecords = Withdraw::find()
+                ->where(['license' => $license])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            if (empty($withdrawRecords)) {
+                return [
+                    'status' => 'success',
+                    'message' => 'No withdraw records found for this license',
+                    'data' => []
+                ];
+            }
+
+            // Format response data
+            $data = [];
+            foreach ($withdrawRecords as $record) {
+                $data[] = [
+                    'id' => $record->id,
+                    'account' => $record->account,
+                    'wd_value' => (float)$record->wd_value,
+                    'created_at' => $record->created_at
+                ];
+            }
+
+            return [
+                'status' => 'success',
+                'message' => 'Withdraw records retrieved successfully',
+                'data' => $data
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetWd: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
     }
 }
