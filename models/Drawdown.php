@@ -45,7 +45,7 @@ class Drawdown extends \yii\db\ActiveRecord
             [['wk_date', 'all_date', 'created_at'], 'safe'],
             [['license'], 'string', 'max' => 255],
             [['account'], 'string', 'max' => 100],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::className(), 'targetAttribute' => ['user_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::className(), 'targetAttribute' => ['user_id' => 'user_id']],
         ];
     }
 
@@ -78,6 +78,6 @@ class Drawdown extends \yii\db\ActiveRecord
      */
     public function getUser()
     {
-        return $this->hasOne(Users::className(), ['id' => 'user_id']);
+        return $this->hasOne(Users::className(), ['user_id' => 'user_id']);
     }
 }
