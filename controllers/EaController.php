@@ -503,4 +503,45 @@ class EaController extends Controller
             ];
         }
     }
+
+    /**
+     * Get total withdraw value by license
+     * @return array
+     */
+    public function actionGetTotalWd()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->get('license');
+
+            // Validate required parameter
+            if (empty($license)) {
+                throw new \yii\web\BadRequestHttpException('License is required');
+            }
+
+            // Calculate total withdraw value for this license
+            $totalWithdraw = Withdraw::find()
+                ->where(['license' => $license])
+                ->sum('wd_value');
+
+            // If no records found, total will be null, convert to 0
+            $totalWithdraw = $totalWithdraw ? (float)$totalWithdraw : 0.0;
+
+            return [
+                'status' => 'success',
+                'message' => 'Total withdraw value retrieved successfully',
+                'data' => [
+                    'license' => $license,
+                    'total_wd_value' => $totalWithdraw
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetTotalWd: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
 }

@@ -38,7 +38,7 @@ class Withdraw extends \yii\db\ActiveRecord
             [['created_at'], 'safe'],
             [['license'], 'string', 'max' => 255],
             [['account'], 'string', 'max' => 100],
-            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::className(), 'targetAttribute' => ['user_id' => 'id']],
+            [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::className(), 'targetAttribute' => ['user_id' => 'user_id']],
         ];
     }
 
