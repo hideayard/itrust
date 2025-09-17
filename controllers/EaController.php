@@ -225,4 +225,30 @@ class EaController extends Controller
         $hash = md5($uniqueId . $salt); // You can use other hashing algorithms like sha256
         return hexdec(substr($hash, 0, 8)); // Convert hash to a number and return the first 8 digits
     }
+
+    public function actionCheckLicenseTimeV2()
+    {
+        $license = Yii::$app->request->post('license');
+        $user = Users::findOne(['user_license' => $license]);
+
+        $response = [
+            'license' => $license,
+            'remaining_time' => 0,
+            'expired_date' => null
+        ];
+
+        if ($user && $user->user_license_expired) {
+            // Calculate seconds remaining from current time
+            $currentTime = time();
+            $expiryTime = strtotime($user->user_license_expired);
+            $secondsRemaining = $expiryTime - $currentTime;
+
+            // Ensure non-negative remaining time
+            $response['remaining_time'] = $secondsRemaining > 0 ? $secondsRemaining : 0;
+            $response['expired_date'] = $user->user_license_expired;
+        }
+
+        // Return JSON response using Yii's method
+        return $this->asJson($response);
+    }
 }
