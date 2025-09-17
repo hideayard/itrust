@@ -340,7 +340,7 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $license = Yii::$app->request->get('license');
+            $license = Yii::$app->request->post('license');
 
             // Validate required parameter
             if (empty($license)) {
@@ -458,7 +458,7 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $license = Yii::$app->request->get('license');
+            $license = Yii::$app->request->post('license');
 
             // Validate required parameter
             if (empty($license)) {
@@ -513,7 +513,7 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $license = Yii::$app->request->get('license');
+            $license = Yii::$app->request->post('license');
 
             // Validate required parameter
             if (empty($license)) {
