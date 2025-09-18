@@ -230,7 +230,8 @@ class EaController extends Controller
 
     public function actionCheckLicenseTimeV2()
     {
-        $license = Yii::$app->request->post('license');
+        $request = Yii::$app->request;
+        $license = $request->post('license', $request->get('license'));
         $user = Users::findOne(['user_license' => $license]);
 
         $response = [
@@ -340,7 +341,8 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $license = Yii::$app->request->post('license');
+            $request = Yii::$app->request;
+            $license = $request->post('license', $request->get('license'));
 
             // Validate required parameter
             if (empty($license)) {
@@ -458,7 +460,8 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $license = Yii::$app->request->post('license');
+            $request = Yii::$app->request;
+            $license = $request->post('license', $request->get('license'));
 
             // Validate required parameter
             if (empty($license)) {
