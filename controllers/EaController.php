@@ -300,15 +300,40 @@ class EaController extends Controller
                 $tradeDd->account = $account;
             }
 
+            // Function to convert date format from Y.m.d HH:MM to Y-m-d H:i:s
+            $convertDate = function ($dateString) {
+                if (empty($dateString)) {
+                    return null;
+                }
+
+                // Replace dots with dashes and ensure proper format
+                $converted = str_replace('.', '-', $dateString);
+
+                // Create DateTime object from the converted format
+                $dateTime = DateTime::createFromFormat('Y-m-d H:i', $converted);
+
+                if ($dateTime === false) {
+                    // If first format fails, try alternative parsing
+                    try {
+                        $dateTime = new DateTime($converted);
+                    } catch (\Exception $e) {
+                        Yii::warning("Failed to parse date: $dateString. Error: " . $e->getMessage());
+                        return null;
+                    }
+                }
+
+                return $dateTime ? $dateTime->format('Y-m-d H:i:s') : null;
+            };
+
             // Update values
-            $tradeDd->wk_dd = $wk_dd;
-            $tradeDd->wk_percentage_dd = $wk_percentage_dd;
-            $tradeDd->wk_date = $wk_date ? date('Y-m-d H:i:s', strtotime($wk_date)) : null;
-            $tradeDd->wk_equity = $wk_equity;
-            $tradeDd->all_dd = $all_dd;
-            $tradeDd->all_percentage_dd = $all_percentage_dd;
-            $tradeDd->all_date = $all_date ? date('Y-m-d H:i:s', strtotime($all_date)) : null;
-            $tradeDd->all_equity = $all_equity;
+            $tradeDd->wk_dd = (float)$wk_dd;
+            $tradeDd->wk_percentage_dd = (float)$wk_percentage_dd;
+            $tradeDd->wk_date = $convertDate($wk_date);
+            $tradeDd->wk_equity = (float)$wk_equity;
+            $tradeDd->all_dd = (float)$all_dd;
+            $tradeDd->all_percentage_dd = (float)$all_percentage_dd;
+            $tradeDd->all_date = $convertDate($all_date);
+            $tradeDd->all_equity = (float)$all_equity;
 
             if ($tradeDd->save()) {
                 return [
@@ -316,7 +341,9 @@ class EaController extends Controller
                     'message' => 'Trade DD data saved successfully',
                     'data' => [
                         'id' => $tradeDd->id,
-                        'account' => $tradeDd->account
+                        'account' => $tradeDd->account,
+                        'wk_date' => $tradeDd->wk_date,
+                        'all_date' => $tradeDd->all_date
                     ]
                 ];
             } else {
