@@ -396,14 +396,14 @@ class EaController extends Controller
                 $data[] = [
                     'id' => $record->id,
                     'account' => $record->account,
-                    'wk_dd' => (float)$record->wk_dd,
-                    'wk_percentage_dd' => (float)$record->wk_percentage_dd,
+                    'wk_dd' => $record->wk_dd,
+                    'wk_percentage_dd' => $record->wk_percentage_dd,
                     'wk_date' => $record->wk_date,
-                    'wk_equity' => (float)$record->wk_equity,
-                    'all_dd' => (float)$record->all_dd,
-                    'all_percentage_dd' => (float)$record->all_percentage_dd,
+                    'wk_equity' => $record->wk_equity,
+                    'all_dd' => $record->all_dd,
+                    'all_percentage_dd' => $record->all_percentage_dd,
                     'all_date' => $record->all_date,
-                    'all_equity' => (float)$record->all_equity,
+                    'all_equity' => $record->all_equity,
                     'created_at' => $record->created_at
                 ];
             }
