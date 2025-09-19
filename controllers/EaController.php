@@ -543,7 +543,8 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            $license = Yii::$app->request->post('license');
+            $request = Yii::$app->request;
+            $license = $request->post('license', $request->get('license'));
 
             // Validate required parameter
             if (empty($license)) {
