@@ -462,6 +462,7 @@ class EaController extends Controller
                         'id' => $withdraw->id,
                         'account' => $withdraw->account,
                         'wd_value' => $withdraw->wd_value,
+                        'wd_date' => $withdraw->wd_date,
                         'created_at' => $withdraw->created_at
                     ]
                 ];
