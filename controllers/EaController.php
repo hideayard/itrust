@@ -547,4 +547,13 @@ class EaController extends Controller
             ];
         }
     }
+
+    public function actionTestPost()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $request = Yii::$app->request;
+
+        $data = $request->getBodyParams(); //Yii::$app->request->post('data');
+        return $data;
+    }
 }
