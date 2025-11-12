@@ -9,6 +9,8 @@ use app\models\forms\LoginForm;
 class MobileController extends Controller
 {
 
+    public $enableCsrfValidation = false; // Disable CSRF validation for this controller
+
     public function beforeAction($action)
     {
         // Disable CSRF for mobile API actions
@@ -19,9 +21,10 @@ class MobileController extends Controller
         return parent::beforeAction($action);
     }
 
-    public function index()
+    public function actionIndex()
     {
-        return "index mobile controller";
+        Yii::debug('debug index mobile controller'); // Use Yii's logging
+        return 'index';
     }
 
     public function actionLogin()
