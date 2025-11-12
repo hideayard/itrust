@@ -22,7 +22,8 @@
         "kartik-v/yii2-grid": "@dev",
         "warrence/yii2-kartikgii": "dev-master",
         "2amigos/yii2-ckeditor-widget": "^2.2",
-        "kartik-v/yii2-widget-rating": "dev-master"
+        "kartik-v/yii2-widget-rating": "dev-master",
+        "firebase/php-jwt": "dev-main"
     },
     "require-dev": {
         "yiisoft/yii2-debug": "~2.1.0",

@@ -37,7 +37,7 @@ $config = [
             'class' => 'yii\swiftmailer\Mailer',
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'mail.rochat.id',//smtp.gmail.com',
+                'host' => 'mail.itrust-tech.id', //smtp.gmail.com',
                 'username' => 'admin@rochat.id',
                 'password' => 'Bismillah@2021',
                 'port' => '587',
@@ -62,6 +62,9 @@ $config = [
                 'enroll/<id:\d+>/<id_section:\d+>' => 'site/enroll',
                 'courses/sections/<id:\d+>' => 'courses/sections',
                 'bot/webhook' => 'bot/webhook',
+                'mobile/login' => 'mobile/login',
+                'mobile/validate-token' => 'mobile/validate-token',
+
                 // 'confirm/<email:\s+>/<token:\s+>' => 'site/confirm',
             ],
         ],
