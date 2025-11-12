@@ -8,6 +8,12 @@ use app\models\forms\LoginForm;
 
 class MobileController extends Controller
 {
+
+    public function index()
+    {
+        return "index mobile controller";
+    }
+
     public function actionLogin()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -36,13 +42,13 @@ class MobileController extends Controller
             if ($model->login()) {
                 // Get the logged-in user
                 $user = Yii::$app->user->identity;
-                
+
                 // Generate JWT token
                 $token = $this->generateJwtToken($user);
-                
+
                 // Log the login activity
                 $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
-                
+
                 \app\helpers\TelegramHelper::sendMessage(
                     [
                         'text' => "Mobile User Login : " . $model->user_name . "\nFrom : " . $clientIp,
@@ -68,7 +74,6 @@ class MobileController extends Controller
                     'token' => null
                 ];
             }
-
         } catch (\Exception $e) {
             Yii::error('Mobile login error: ' . $e->getMessage());
             return [
@@ -87,7 +92,7 @@ class MobileController extends Controller
         $secret = Yii::$app->params['jwtSecret'] ?? 'your-jwt-secret-key-here';
         $issuedAt = time();
         $expire = $issuedAt + (60 * 60 * 24 * 7); // Token valid for 7 days
-        
+
         $payload = [
             'iss' => Yii::$app->name, // Issuer
             'aud' => Yii::$app->name, // Audience
@@ -103,7 +108,7 @@ class MobileController extends Controller
         if (class_exists('\Firebase\JWT\JWT')) {
             return \Firebase\JWT\JWT::encode($payload, $secret, 'HS256');
         }
-        
+
         // Alternative: Manual JWT generation
         return $this->manualJwtEncode($payload, $secret);
     }
@@ -117,15 +122,15 @@ class MobileController extends Controller
             'alg' => 'HS256',
             'typ' => 'JWT'
         ];
-        
+
         // Encode header and payload
         $headerEncoded = base64_encode(json_encode($header));
         $payloadEncoded = base64_encode(json_encode($payload));
-        
+
         // Create signature
         $signature = hash_hmac('sha256', "$headerEncoded.$payloadEncoded", $secret, true);
         $signatureEncoded = base64_encode($signature);
-        
+
         return "$headerEncoded.$payloadEncoded.$signatureEncoded";
     }
 
@@ -152,7 +157,6 @@ class MobileController extends Controller
                 'valid' => $isValid,
                 'message' => $isValid ? 'Token is valid' : 'Token is invalid or expired'
             ];
-
         } catch (\Exception $e) {
             Yii::error('Token validation error: ' . $e->getMessage());
             return [
@@ -169,34 +173,33 @@ class MobileController extends Controller
     private function validateJwtToken($token)
     {
         $secret = Yii::$app->params['jwtSecret'] ?? 'your-jwt-secret-key-here';
-        
+
         try {
             // If using firebase/php-jwt
             if (class_exists('\Firebase\JWT\JWT')) {
                 $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($secret, 'HS256'));
                 return time() < $decoded->exp;
             }
-            
+
             // Manual validation
             $parts = explode('.', $token);
             if (count($parts) !== 3) {
                 return false;
             }
-            
+
             list($headerEncoded, $payloadEncoded, $signatureEncoded) = $parts;
-            
+
             // Verify signature
             $signature = base64_decode($signatureEncoded);
             $expectedSignature = hash_hmac('sha256', "$headerEncoded.$payloadEncoded", $secret, true);
-            
+
             if (!hash_equals($signature, $expectedSignature)) {
                 return false;
             }
-            
+
             // Check expiration
             $payload = json_decode(base64_decode($payloadEncoded), true);
             return time() < $payload['exp'];
-            
         } catch (\Exception $e) {
             Yii::error('JWT validation error: ' . $e->getMessage());
             return false;
