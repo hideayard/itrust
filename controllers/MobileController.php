@@ -9,6 +9,16 @@ use app\models\forms\LoginForm;
 class MobileController extends Controller
 {
 
+    public function beforeAction($action)
+    {
+        // Disable CSRF for mobile API actions
+        if (in_array($action->id, ['login', 'validate-token'])) {
+            $this->enableCsrfValidation = false;
+        }
+
+        return parent::beforeAction($action);
+    }
+
     public function index()
     {
         return "index mobile controller";
