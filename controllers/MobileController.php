@@ -6,6 +6,7 @@ use Yii;
 use yii\web\Controller;
 use app\models\forms\LoginForm;
 use app\helpers\TelegramHelper;
+use app\helpers\JwtHelper;
 
 class MobileController extends Controller
 {
@@ -42,7 +43,6 @@ class MobileController extends Controller
             $model = new LoginForm();
             $model->user_name = $username;
             $model->user_pass = $password;
-            // $model->enableAutoLogin = true;
 
             // var_dump($model);die;
 
@@ -50,15 +50,12 @@ class MobileController extends Controller
             if ($model->login()) {
                 // Get the logged-in user
                 $user = Yii::$app->user->identity;
-                // var_dump($user);die;
 
                 // Generate JWT token
                 $token = $this->generateJwtToken($user);
-                // var_dump($token);die;
 
                 // Log the login activity
                 $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
-                // var_dump($clientIp);die;
 
                 TelegramHelper::sendMessage(
                     [
@@ -68,8 +65,6 @@ class MobileController extends Controller
                     Yii::$app->params['group_id']
                 );
 
-                // var_dump($user);die;
-
                 return [
                     'success' => true,
                     'message' => 'Login successful',
@@ -77,8 +72,8 @@ class MobileController extends Controller
                     'user' => [
                         'id' => $user->user_id,
                         'username' => $user->user_name,
-                        'user_tipe' => $user->user_tipe, 
-                        'user_email' => $user->user_email, 
+                        'user_tipe' => $user->user_tipe,
+                        'user_email' => $user->user_email,
                     ]
                 ];
             } else {
@@ -118,35 +113,11 @@ class MobileController extends Controller
             ]
         ];
 
-        $token = $this->manualJwtEncode($payload, $secret);
+        // $token = $this->manualJwtEncode($payload, $secret);
+        $token = JwtHelper::encode($payload, $secret);
         return $token;
     }
 
-    /**
-     * Manual JWT encoding (fallback if JWT library not available)
-     */
-    private function manualJwtEncode($payload, $secret)
-    {
-        $header = [
-            'alg' => 'HS256',
-            'typ' => 'JWT'
-        ];
-
-        // Helper function for base64url encoding
-        $base64url = function ($data) {
-            return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-        };
-
-        // Encode header and payload
-        $headerEncoded = $base64url(json_encode($header));
-        $payloadEncoded = $base64url(json_encode($payload));
-
-        // Create signature
-        $signature = hash_hmac('sha256', "$headerEncoded.$payloadEncoded", $secret, true);
-        $signatureEncoded = $base64url($signature);
-
-        return "$headerEncoded.$payloadEncoded.$signatureEncoded";
-    }
 
     public function actionValidateToken()
     {
@@ -188,33 +159,11 @@ class MobileController extends Controller
     {
         $secret = Yii::$app->params['jwtSecret'] ?? 'Ju5TS0m3!2@nd0M';
 
+        // Validate token
         try {
-            // If using firebase/php-jwt
-            if (class_exists('\Firebase\JWT\JWT')) {
-                $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($secret, 'HS256'));
-                return time() < $decoded->exp;
-            }
-
-            // Manual validation
-            $parts = explode('.', $token);
-            if (count($parts) !== 3) {
-                return false;
-            }
-
-            list($headerEncoded, $payloadEncoded, $signatureEncoded) = $parts;
-
-            // Verify signature
-            $signature = base64_decode($signatureEncoded);
-            $expectedSignature = hash_hmac('sha256', "$headerEncoded.$payloadEncoded", $secret, true);
-
-            if (!hash_equals($signature, $expectedSignature)) {
-                return false;
-            }
-
-            // Check expiration
-            $payload = json_decode(base64_decode($payloadEncoded), true);
-            return time() < $payload['exp'];
-        } catch (\Exception $e) {
+            $decodedPayload = JwtHelper::validate($token, $secret);
+            return time() < $decodedPayload['exp'];
+        } catch (Exception $e) {
             Yii::error('JWT validation error: ' . $e->getMessage());
             return false;
         }
