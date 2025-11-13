@@ -5,21 +5,13 @@ namespace app\controllers;
 use Yii;
 use yii\web\Controller;
 use app\models\forms\LoginForm;
+use app\helpers\TelegramHelper;
 
 class MobileController extends Controller
 {
 
     public $enableCsrfValidation = false; // Disable CSRF validation for this controller
 
-    public function beforeAction($action)
-    {
-        // Disable CSRF for mobile API actions
-        if (in_array($action->id, ['login', 'validate-token'])) {
-            $this->enableCsrfValidation = false;
-        }
-
-        return parent::beforeAction($action);
-    }
 
     public function actionIndex()
     {
@@ -50,19 +42,25 @@ class MobileController extends Controller
             $model = new LoginForm();
             $model->user_name = $username;
             $model->user_pass = $password;
+            // $model->enableAutoLogin = true;
+
+            // var_dump($model);die;
 
             // Attempt login
             if ($model->login()) {
                 // Get the logged-in user
                 $user = Yii::$app->user->identity;
+                // var_dump($user);die;
 
                 // Generate JWT token
                 $token = $this->generateJwtToken($user);
+                // var_dump($token);die;
 
                 // Log the login activity
                 $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+                // var_dump($clientIp);die;
 
-                \app\helpers\TelegramHelper::sendMessage(
+                TelegramHelper::sendMessage(
                     [
                         'text' => "Mobile User Login : " . $model->user_name . "\nFrom : " . $clientIp,
                         'parse_mode' => 'html'
@@ -70,14 +68,17 @@ class MobileController extends Controller
                     Yii::$app->params['group_id']
                 );
 
+                // var_dump($user);die;
+
                 return [
                     'success' => true,
                     'message' => 'Login successful',
                     'token' => $token,
                     'user' => [
-                        'id' => $user->id,
+                        'id' => $user->user_id,
                         'username' => $user->user_name,
-                        'email' => $user->email, // Adjust based on your user model
+                        'user_tipe' => $user->user_tipe, 
+                        'user_email' => $user->user_email, 
                     ]
                 ];
             } else {
@@ -102,13 +103,13 @@ class MobileController extends Controller
      */
     private function generateJwtToken($user)
     {
-        $secret = Yii::$app->params['jwtSecret'] ?? 'your-jwt-secret-key-here';
+        $secret = Yii::$app->params['jwtSecret'] ?? 'Ju5TS0m3!2@nd0M';
         $issuedAt = time();
         $expire = $issuedAt + (60 * 60 * 24 * 7); // Token valid for 7 days
 
         $payload = [
-            'iss' => Yii::$app->name, // Issuer
-            'aud' => Yii::$app->name, // Audience
+            'iss' => 'IskandarMudaGreen', // Issuer
+            'aud' => 'Johor Bahru', // Audience
             'iat' => $issuedAt, // Issued at
             'exp' => $expire, // Expire time
             'data' => [
@@ -117,13 +118,8 @@ class MobileController extends Controller
             ]
         ];
 
-        // If you have firebase/php-jwt package installed
-        if (class_exists('\Firebase\JWT\JWT')) {
-            return \Firebase\JWT\JWT::encode($payload, $secret, 'HS256');
-        }
-
-        // Alternative: Manual JWT generation
-        return $this->manualJwtEncode($payload, $secret);
+        $token = $this->manualJwtEncode($payload, $secret);
+        return $token;
     }
 
     /**
@@ -136,13 +132,18 @@ class MobileController extends Controller
             'typ' => 'JWT'
         ];
 
+        // Helper function for base64url encoding
+        $base64url = function ($data) {
+            return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+        };
+
         // Encode header and payload
-        $headerEncoded = base64_encode(json_encode($header));
-        $payloadEncoded = base64_encode(json_encode($payload));
+        $headerEncoded = $base64url(json_encode($header));
+        $payloadEncoded = $base64url(json_encode($payload));
 
         // Create signature
         $signature = hash_hmac('sha256', "$headerEncoded.$payloadEncoded", $secret, true);
-        $signatureEncoded = base64_encode($signature);
+        $signatureEncoded = $base64url($signature);
 
         return "$headerEncoded.$payloadEncoded.$signatureEncoded";
     }
@@ -185,7 +186,7 @@ class MobileController extends Controller
      */
     private function validateJwtToken($token)
     {
-        $secret = Yii::$app->params['jwtSecret'] ?? 'your-jwt-secret-key-here';
+        $secret = Yii::$app->params['jwtSecret'] ?? 'Ju5TS0m3!2@nd0M';
 
         try {
             // If using firebase/php-jwt
