@@ -71,9 +71,11 @@ class MobileController extends Controller
                     'token' => $token,
                     'user' => [
                         'id' => $user->user_id,
+                        'name' => $user->user_nama,
                         'username' => $user->user_name,
                         'user_tipe' => $user->user_tipe,
                         'user_email' => $user->user_email,
+                        'photo' => $user->user_foto,
                     ]
                 ];
             } else {
