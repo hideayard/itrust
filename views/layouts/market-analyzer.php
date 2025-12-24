@@ -769,7 +769,7 @@
             }
         }
 
-        @media (max-width: 768px) {
+        /* @media (max-width: 768px) {
             .container {
                 padding: 12px;
             }
@@ -786,6 +786,451 @@
             .watchlist-tabs {
                 width: 100%;
                 justify-content: center;
+            }
+        } */
+
+        /* Mobile Responsive Design */
+        @media (max-width: 768px) {
+
+            /* Overall container */
+            .container {
+                padding: 8px;
+                height: auto;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
+            /* Header */
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                padding: 15px;
+                margin-bottom: 15px;
+                border-radius: 12px;
+            }
+
+            .header-left h1 {
+                font-size: 1.6rem;
+                margin-bottom: 8px;
+            }
+
+            .header-left p {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                width: 100%;
+            }
+
+            .control-group {
+                min-width: 100%;
+                margin-bottom: 5px;
+            }
+
+            select,
+            button {
+                width: 100%;
+                height: 44px;
+                font-size: 1rem;
+            }
+
+            /* Main Layout - Stack everything vertically on mobile */
+            .dashboard-layout {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                height: auto;
+                min-height: 0;
+                overflow: visible;
+            }
+
+            /* Sidebars - Full width on mobile */
+            .sidebar {
+                width: 100%;
+                height: 400px;
+                /* Fixed height for mobile */
+                min-height: 400px;
+                position: relative;
+            }
+
+            .sidebar-left {
+                order: 2;
+                /* Move news below main content */
+            }
+
+            .sidebar-right {
+                order: 3;
+                /* Move calendar below news */
+            }
+
+            /* Main Content - Full width on mobile */
+            .main-content-scrollable {
+                width: 100%;
+                height: auto;
+                min-height: 0;
+                overflow: visible;
+                order: 1;
+                /* Chart comes first on mobile */
+            }
+
+            .main-content-wrapper {
+                overflow-y: visible;
+                padding-right: 0;
+                min-height: 0;
+                gap: 15px;
+            }
+
+            /* Chart Section */
+            .chart-section {
+                min-height: 400px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+                padding: 15px;
+            }
+
+            .chart-title h2 {
+                font-size: 1.3rem;
+            }
+
+            .chart-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .chart-controls {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+
+            .status-indicator {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .refresh-btn,
+            .fullscreen-btn {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .chart-container {
+                min-height: 300px;
+            }
+
+            /* Lower Dashboard */
+            .lower-dashboard {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin-bottom: 15px;
+                min-height: auto;
+            }
+
+            .widget.full-width {
+                min-height: 350px;
+            }
+
+            .widget {
+                border-radius: 12px;
+                margin-bottom: 15px;
+            }
+
+            .widget-header {
+                padding: 15px;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .watchlist-controls {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .watchlist-tabs {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .tab-btn {
+                flex: 1;
+                min-width: 80px;
+                font-size: 0.8rem;
+                padding: 6px 8px;
+            }
+
+            /* Watchlist Container */
+            .watchlist-container {
+                height: 300px;
+                padding: 10px;
+            }
+
+            /* Analysis */
+            .analysis-placeholder {
+                grid-template-columns: 1fr;
+                height: auto;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .analysis-item {
+                padding: 15px;
+            }
+
+            .analysis-item h3 {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .indicator-row {
+                font-size: 0.9rem;
+            }
+
+            /* Detailed Analysis */
+            .detailed-analysis {
+                height: auto;
+                padding: 15px;
+                gap: 12px;
+            }
+
+            .analysis-card {
+                padding: 12px;
+            }
+
+            .analysis-card h4 {
+                font-size: 0.95rem;
+            }
+
+            .analysis-card p {
+                font-size: 0.85rem;
+            }
+
+            /* TradingView Widgets - Ensure they work on mobile */
+            .tradingview-widget-container {
+                height: 350px;
+                /* Fixed height for mobile widgets */
+            }
+
+            /* Body overflow fix for mobile */
+            body {
+                overflow-x: hidden;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+                -webkit-overflow-scrolling: touch;
+                /* Smooth scrolling on iOS */
+            }
+
+            /* Remove sticky header on mobile */
+            .dashboard-header {
+                position: relative;
+            }
+
+            /* Fix viewport for mobile */
+            @viewport {
+                width: device-width;
+                zoom: 1.0;
+            }
+        }
+
+        /* Small Mobile Devices */
+        @media (max-width: 480px) {
+            .container {
+                padding: 5px;
+            }
+
+            .dashboard-header {
+                padding: 12px;
+            }
+
+            .header-left h1 {
+                font-size: 1.4rem;
+            }
+
+            .header-left p {
+                font-size: 0.85rem;
+            }
+
+            .chart-section {
+                min-height: 350px;
+            }
+
+            .chart-container {
+                min-height: 250px;
+            }
+
+            .sidebar {
+                height: 350px;
+                min-height: 350px;
+            }
+
+            .widget.full-width {
+                min-height: 300px;
+            }
+
+            .watchlist-container {
+                height: 250px;
+            }
+
+            .analysis-placeholder {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .analysis-item {
+                padding: 12px;
+            }
+        }
+
+        /* Tablet View */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .container {
+                padding: 15px;
+            }
+
+            .dashboard-layout {
+                grid-template-columns: 20% 1fr 20%;
+            }
+
+            .sidebar {
+                height: calc(100vh - 160px);
+            }
+
+            .widget.full-width {
+                min-height: 400px;
+            }
+
+            .watchlist-container {
+                height: 350px;
+            }
+
+            .chart-section {
+                min-height: 500px;
+            }
+
+            .chart-container {
+                min-height: 400px;
+            }
+        }
+
+        /* Landscape Mode Fixes */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .container {
+                height: auto;
+                min-height: 100vh;
+            }
+
+            .dashboard-layout {
+                height: auto;
+            }
+
+            .sidebar {
+                height: 300px;
+                min-height: 300px;
+            }
+
+            .chart-section {
+                min-height: 300px;
+            }
+
+            .chart-container {
+                min-height: 250px;
+            }
+
+            .widget.full-width {
+                min-height: 250px;
+            }
+
+            .watchlist-container {
+                height: 200px;
+            }
+        }
+
+        /* iOS Safari specific fixes */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                height: -webkit-fill-available;
+            }
+
+            .container {
+                min-height: -webkit-fill-available;
+            }
+
+            .main-content-wrapper {
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* Prevent horizontal scroll */
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* Ensure proper touch scrolling on all mobile devices */
+        @media (hover: none) and (pointer: coarse) {
+            .main-content-wrapper {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+
+            .watchlist-container {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .detailed-analysis {
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* Fix for Chrome mobile address bar */
+        @media (max-width: 768px) {
+            .dashboard-layout {
+                min-height: calc(100vh - 150px);
+            }
+        }
+
+        /* Loading spinner mobile fix */
+        @media (max-width: 768px) {
+            .loading-spinner {
+                width: 30px;
+                height: 30px;
+            }
+
+            .chart-loading p {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Fullscreen mode mobile fix */
+        @media (max-width: 768px) {
+            .chart-section.fullscreen {
+                position: fixed;
+                z-index: 9999;
+                border-radius: 0;
+                margin: 0;
+                padding: 0;
+            }
+
+            .chart-section.fullscreen .chart-container {
+                min-height: calc(100vh - 100px);
             }
         }
 
