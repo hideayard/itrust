@@ -44,7 +44,7 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         .container {
@@ -89,7 +89,7 @@
             color: var(--text-secondary);
             font-size: 0.95rem;
             line-height: 1.5;
-            max-width: 600px;
+            max-width: 500px;
         }
 
         .controls {
@@ -289,7 +289,7 @@
             display: flex;
             flex-direction: column;
             box-shadow: var(--shadow-md);
-            min-height: 600px;
+            min-height: 550px;
             flex-shrink: 0;
         }
 
@@ -406,7 +406,7 @@
 
         .chart-container {
             flex: 1;
-            min-height: 600px;
+            min-height: 0;
             position: relative;
             background: var(--bg-widget);
         }
@@ -425,10 +425,12 @@
             grid-template-columns: 2fr 1fr;
             gap: 20px;
             margin-bottom: 20px;
+            min-height: 700px;
         }
 
         .widget.full-width {
             grid-column: 1 / -1;
+            min-height: 500px;
         }
 
         /* Watchlist Controls */
@@ -487,13 +489,20 @@
             font-weight: 600;
         }
 
+        /* Watchlist Container */
+        .watchlist-container {
+            height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
         /* Analysis Widget */
         .analysis-placeholder {
             padding: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            height: 100%;
+            height: 300px;
         }
 
         .analysis-item {
@@ -570,7 +579,8 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            height: 100%;
+            height: 300px;
+            overflow-y: auto;
         }
 
         .analysis-card {
@@ -678,956 +688,6 @@
             font-weight: 600;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1400px) {
-            .dashboard-layout {
-                grid-template-columns: 18% 1fr 18%;
-            }
-
-            .lower-dashboard {
-                grid-template-columns: 1fr;
-            }
-
-            .analysis-placeholder {
-                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            }
-        }
-
-        @media (max-width: 1200px) {
-            .dashboard-layout {
-                grid-template-columns: 1fr;
-                grid-template-rows: auto;
-                height: auto;
-            }
-
-            .sidebar {
-                height: 500px;
-                position: static;
-            }
-
-            .sidebar-left {
-                grid-row: 2;
-                grid-column: 1;
-            }
-
-            .sidebar-right {
-                grid-row: 3;
-                grid-column: 1;
-            }
-
-            .main-content-scrollable {
-                grid-row: 1;
-                grid-column: 1;
-                height: auto;
-            }
-
-            .main-content-wrapper {
-                overflow-y: visible;
-                padding-right: 0;
-            }
-        }
-
-        @media (max-width: 992px) {
-            .analysis-placeholder {
-                grid-template-columns: 1fr;
-            }
-
-            .dashboard-header {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .control-group {
-                min-width: 100%;
-            }
-
-            select,
-            button {
-                width: 100%;
-            }
-
-            .chart-header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .chart-controls {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .refresh-btn,
-            .fullscreen-btn {
-                width: 100%;
-            }
-        }
-
-
-
-        /* Mobile Responsive Design */
-        @media (max-width: 768px) {
-
-            /* Overall container */
-            .container {
-                padding: 8px;
-                height: auto;
-                min-height: 100vh;
-                overflow-x: hidden;
-            }
-
-            /* Header */
-            .dashboard-header {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-                padding: 15px;
-                margin-bottom: 15px;
-                border-radius: 12px;
-            }
-
-            .header-left h1 {
-                font-size: 1.6rem;
-                margin-bottom: 8px;
-            }
-
-            .header-left p {
-                font-size: 0.9rem;
-                margin-bottom: 15px;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-                width: 100%;
-            }
-
-            .control-group {
-                min-width: 100%;
-                margin-bottom: 5px;
-            }
-
-            select,
-            button {
-                width: 100%;
-                height: 44px;
-                font-size: 1rem;
-            }
-
-            /* Main Layout - Stack everything vertically on mobile */
-            .dashboard-layout {
-                display: flex;
-                flex-direction: column;
-                gap: 15px;
-                height: auto;
-                min-height: 0;
-                overflow: visible;
-            }
-
-            /* Sidebars - Full width on mobile */
-            .sidebar {
-                width: 100%;
-                height: 400px;
-                /* Fixed height for mobile */
-                min-height: 400px;
-                position: relative;
-            }
-
-            .sidebar-left {
-                order: 2;
-                /* Move news below main content */
-            }
-
-            .sidebar-right {
-                order: 3;
-                /* Move calendar below news */
-            }
-
-            /* Main Content - Full width on mobile */
-            .main-content-scrollable {
-                width: 100%;
-                height: auto;
-                min-height: 0;
-                overflow: visible;
-                order: 1;
-                /* Chart comes first on mobile */
-            }
-
-            .main-content-wrapper {
-                overflow-y: visible;
-                padding-right: 0;
-                min-height: 0;
-                gap: 15px;
-            }
-
-            /* Chart Section */
-            .chart-section {
-                min-height: 400px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-            }
-
-            .chart-header {
-                flex-direction: column;
-                gap: 12px;
-                text-align: center;
-                padding: 15px;
-            }
-
-            .chart-title h2 {
-                font-size: 1.3rem;
-            }
-
-            .chart-meta {
-                flex-direction: column;
-                gap: 5px;
-            }
-
-            .chart-controls {
-                flex-direction: column;
-                width: 100%;
-                gap: 10px;
-            }
-
-            .status-indicator {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .refresh-btn,
-            .fullscreen-btn {
-                width: 100%;
-                min-width: auto;
-            }
-
-            .chart-container {
-                min-height: 300px;
-            }
-
-            /* Lower Dashboard */
-            .lower-dashboard {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                margin-bottom: 15px;
-                min-height: auto;
-            }
-
-            .widget.full-width {
-                min-height: 350px;
-            }
-
-            .widget {
-                border-radius: 12px;
-                margin-bottom: 15px;
-            }
-
-            .widget-header {
-                padding: 15px;
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-
-            .watchlist-controls {
-                flex-direction: column;
-                gap: 10px;
-                width: 100%;
-            }
-
-            .watchlist-tabs {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-
-            .tab-btn {
-                flex: 1;
-                min-width: 80px;
-                font-size: 0.8rem;
-                padding: 6px 8px;
-            }
-
-            /* Watchlist Container */
-            .watchlist-container {
-                height: 300px;
-                padding: 10px;
-            }
-
-            /* Analysis */
-            .analysis-placeholder {
-                grid-template-columns: 1fr;
-                height: auto;
-                gap: 15px;
-                padding: 15px;
-            }
-
-            .analysis-item {
-                padding: 15px;
-            }
-
-            .analysis-item h3 {
-                font-size: 1rem;
-                margin-bottom: 12px;
-            }
-
-            .indicator-row {
-                font-size: 0.9rem;
-            }
-
-            /* Detailed Analysis */
-            .detailed-analysis {
-                height: auto;
-                padding: 15px;
-                gap: 12px;
-            }
-
-            .analysis-card {
-                padding: 12px;
-            }
-
-            .analysis-card h4 {
-                font-size: 0.95rem;
-            }
-
-            .analysis-card p {
-                font-size: 0.85rem;
-            }
-
-            /* TradingView Widgets - Ensure they work on mobile */
-            .tradingview-widget-container {
-                height: 350px;
-                /* Fixed height for mobile widgets */
-            }
-
-            /* Body overflow fix for mobile */
-            body {
-                overflow-x: hidden;
-                overflow-y: auto;
-                height: auto;
-                min-height: 100vh;
-                -webkit-overflow-scrolling: touch;
-                /* Smooth scrolling on iOS */
-            }
-
-            /* Remove sticky header on mobile */
-            .dashboard-header {
-                position: relative;
-            }
-
-            /* Fix viewport for mobile */
-            @viewport {
-                width: device-width;
-                zoom: 1.0;
-            }
-        }
-
-        /* Small Mobile Devices */
-        @media (max-width: 480px) {
-            .container {
-                padding: 5px;
-            }
-
-            .dashboard-header {
-                padding: 12px;
-            }
-
-            .header-left h1 {
-                font-size: 1.4rem;
-            }
-
-            .header-left p {
-                font-size: 0.85rem;
-            }
-
-            .chart-section {
-                min-height: 350px;
-            }
-
-            .chart-container {
-                min-height: 250px;
-            }
-
-            .sidebar {
-                height: 350px;
-                min-height: 350px;
-            }
-
-            .widget.full-width {
-                min-height: 300px;
-            }
-
-            .watchlist-container {
-                height: 250px;
-            }
-
-            .analysis-placeholder {
-                padding: 12px;
-                gap: 12px;
-            }
-
-            .analysis-item {
-                padding: 12px;
-            }
-        }
-
-        /* Tablet View */
-        @media (min-width: 769px) and (max-width: 1024px) {
-            .container {
-                padding: 15px;
-            }
-
-            .dashboard-layout {
-                grid-template-columns: 20% 1fr 20%;
-            }
-
-            .sidebar {
-                height: calc(100vh - 160px);
-            }
-
-            .widget.full-width {
-                min-height: 400px;
-            }
-
-            .watchlist-container {
-                height: 350px;
-            }
-
-            .chart-section {
-                min-height: 500px;
-            }
-
-            .chart-container {
-                min-height: 400px;
-            }
-        }
-
-        /* Landscape Mode Fixes */
-        @media (max-height: 600px) and (orientation: landscape) {
-            .container {
-                height: auto;
-                min-height: 100vh;
-            }
-
-            .dashboard-layout {
-                height: auto;
-            }
-
-            .sidebar {
-                height: 300px;
-                min-height: 300px;
-            }
-
-            .chart-section {
-                min-height: 300px;
-            }
-
-            .chart-container {
-                min-height: 250px;
-            }
-
-            .widget.full-width {
-                min-height: 250px;
-            }
-
-            .watchlist-container {
-                height: 200px;
-            }
-        }
-
-        /* iOS Safari specific fixes */
-        @supports (-webkit-touch-callout: none) {
-            body {
-                height: -webkit-fill-available;
-            }
-
-            .container {
-                min-height: -webkit-fill-available;
-            }
-
-            .main-content-wrapper {
-                -webkit-overflow-scrolling: touch;
-            }
-        }
-
-        /* Prevent horizontal scroll */
-        html,
-        body {
-            max-width: 100%;
-            overflow-x: hidden;
-        }
-
-        /* Ensure proper touch scrolling on all mobile devices */
-        @media (hover: none) and (pointer: coarse) {
-            .main-content-wrapper {
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-                scroll-behavior: smooth;
-            }
-
-            .watchlist-container {
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            .detailed-analysis {
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-        }
-
-        /* Fix for Chrome mobile address bar */
-        @media (max-width: 768px) {
-            .dashboard-layout {
-                min-height: calc(100vh - 150px);
-            }
-        }
-
-        /* Loading spinner mobile fix */
-        @media (max-width: 768px) {
-            .loading-spinner {
-                width: 30px;
-                height: 30px;
-            }
-
-            .chart-loading p {
-                font-size: 0.9rem;
-            }
-        }
-
-        /* Fullscreen mode mobile fix */
-        /* Tablet View - 768px to 1200px */
-        @media (min-width: 768px) and (max-width: 1200px) {
-
-            /* Overall container */
-            .container {
-                padding: 12px;
-                height: 100vh;
-                overflow: hidden;
-            }
-
-            /* Header */
-            .dashboard-header {
-                padding: 15px 20px;
-                flex-direction: row;
-                align-items: center;
-                margin-bottom: 15px;
-            }
-
-            .header-left h1 {
-                font-size: 1.8rem;
-            }
-
-            .header-left p {
-                font-size: 0.9rem;
-                max-width: 400px;
-            }
-
-            .controls {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: flex-end;
-            }
-
-            .control-group {
-                min-width: 140px;
-                margin-bottom: 0;
-            }
-
-            /* Main Layout for Tablets */
-            .dashboard-layout {
-                display: grid;
-                grid-template-columns: 25% 1fr 25%;
-                gap: 15px;
-                height: calc(100vh - 140px);
-                min-height: 0;
-            }
-
-            /* Sidebars - Tablets */
-            .sidebar {
-                height: 100%;
-                min-height: 0;
-                position: relative;
-            }
-
-            .sidebar-left {
-                grid-column: 1;
-            }
-
-            .sidebar-right {
-                grid-column: 3;
-            }
-
-            /* Main Content - Scrollable on tablets */
-            .main-content-scrollable {
-                grid-column: 2;
-                height: 100%;
-                min-height: 0;
-                overflow: hidden;
-            }
-
-            .main-content-wrapper {
-                height: 100%;
-                overflow-y: auto;
-                padding-right: 8px;
-                gap: 15px;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* Chart Section - Tablet */
-            .chart-section {
-                min-height: 450px;
-                flex-shrink: 0;
-            }
-
-            .chart-header {
-                padding: 15px 20px;
-                flex-direction: row;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .chart-title h2 {
-                font-size: 1.3rem;
-            }
-
-            .chart-controls {
-                flex-direction: row;
-                gap: 10px;
-                flex-wrap: wrap;
-                justify-content: flex-end;
-            }
-
-            .status-indicator {
-                width: auto;
-            }
-
-            .refresh-btn,
-            .fullscreen-btn {
-                min-width: 100px;
-                height: 36px;
-                padding: 8px 12px;
-                font-size: 0.85rem;
-            }
-
-            .chart-container {
-                min-height: 350px;
-            }
-
-            /* Lower Dashboard - Tablet */
-            .lower-dashboard {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                margin-bottom: 15px;
-                min-height: 600px;
-            }
-
-            /* Widgets - Tablet */
-            .widget {
-                min-height: 300px;
-            }
-
-            .widget.full-width {
-                min-height: 400px;
-            }
-
-            .widget-header {
-                padding: 15px;
-                flex-direction: row;
-                align-items: center;
-                text-align: left;
-            }
-
-            .widget-header h2 {
-                font-size: 1.1rem;
-            }
-
-            /* Watchlist - Tablet */
-            .watchlist-controls {
-                flex-direction: row;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 10px;
-            }
-
-            .watchlist-tabs {
-                gap: 5px;
-            }
-
-            .tab-btn {
-                min-width: 70px;
-                font-size: 0.8rem;
-                padding: 5px 8px;
-                height: 30px;
-            }
-
-            .watchlist-container {
-                height: 320px;
-                padding: 10px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* Analysis - Tablet */
-            .analysis-placeholder {
-                grid-template-columns: repeat(2, 1fr);
-                height: 280px;
-                gap: 15px;
-                padding: 15px;
-            }
-
-            .analysis-item {
-                padding: 15px;
-            }
-
-            /* Detailed Analysis - Tablet */
-            .detailed-analysis {
-                height: 280px;
-                padding: 15px;
-                gap: 12px;
-                overflow-y: auto;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* TradingView Widgets - Tablet */
-            .tradingview-widget-container {
-                height: 100%;
-            }
-
-            /* Force scrollbar to show */
-            ::-webkit-scrollbar {
-                width: 6px;
-            }
-
-            /* Ensure body scrolls on tablets */
-            body {
-                overflow: hidden;
-                height: 100vh;
-            }
-
-            /* Fix for Safari on iPad */
-            @supports (-webkit-touch-callout: none) {
-                .main-content-wrapper {
-                    overflow-y: scroll;
-                    -webkit-overflow-scrolling: touch;
-                }
-
-                .watchlist-container,
-                .detailed-analysis {
-                    overflow-y: scroll;
-                    -webkit-overflow-scrolling: touch;
-                }
-            }
-        }
-
-        /* Medium Tablets - 768px to 900px */
-        @media (min-width: 768px) and (max-width: 900px) {
-            .dashboard-layout {
-                grid-template-columns: 30% 1fr 30%;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .control-group {
-                min-width: 100%;
-            }
-
-            .analysis-placeholder {
-                grid-template-columns: 1fr;
-                height: auto;
-            }
-
-            .chart-header {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-
-            .chart-controls {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .refresh-btn,
-            .fullscreen-btn {
-                width: 100%;
-            }
-
-            .watchlist-controls {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .watchlist-tabs {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-
-        /* Large Tablets - 900px to 1200px */
-        @media (min-width: 900px) and (max-width: 1200px) {
-            .dashboard-layout {
-                grid-template-columns: 22% 1fr 22%;
-            }
-
-            .header-left {
-                flex: 1;
-            }
-
-            .controls {
-                flex: 1;
-                justify-content: flex-end;
-            }
-
-            .control-group {
-                min-width: 120px;
-            }
-
-            select,
-            button {
-                min-width: 100px;
-            }
-        }
-
-        /* iPad Pro and similar devices */
-        @media (min-width: 1024px) and (max-width: 1200px) and (orientation: portrait) {
-            .dashboard-layout {
-                grid-template-columns: 25% 1fr 25%;
-            }
-
-            .sidebar {
-                height: calc(100vh - 140px);
-            }
-
-            .widget.full-width {
-                min-height: 450px;
-            }
-
-            .watchlist-container {
-                height: 350px;
-            }
-        }
-
-        /* Landscape tablets */
-        @media (min-width: 768px) and (max-width: 1200px) and (orientation: landscape) {
-            .dashboard-layout {
-                height: calc(100vh - 120px);
-            }
-
-            .chart-section {
-                min-height: 350px;
-            }
-
-            .chart-container {
-                min-height: 280px;
-            }
-
-            .widget.full-width {
-                min-height: 350px;
-            }
-
-            .watchlist-container {
-                height: 250px;
-            }
-
-            .analysis-placeholder {
-                height: 220px;
-            }
-
-            .detailed-analysis {
-                height: 220px;
-            }
-        }
-
-        /* Specific fix for scroll issues on tablets */
-        @media (min-width: 768px) and (max-width: 1200px) {
-
-            /* Ensure scrolling works */
-            html,
-            body {
-                height: 100%;
-                overflow: hidden;
-            }
-
-            .container {
-                display: flex;
-                flex-direction: column;
-                height: 100vh;
-            }
-
-            .dashboard-layout {
-                flex: 1;
-                min-height: 0;
-            }
-
-            /* Fix for scrollbar appearing/disappearing */
-            .main-content-wrapper {
-                scrollbar-width: thin;
-                scrollbar-color: var(--border-color) var(--bg-secondary);
-            }
-
-            /* Prevent content from overflowing */
-            .widget-content {
-                max-height: 100%;
-            }
-
-            /* Make sure TradingView widgets don't break scrolling */
-            .tradingview-widget-container {
-                min-height: 100%;
-                max-height: 100%;
-            }
-        }
-
-        /* Fix for devices with notches */
-        @media (min-width: 768px) and (max-width: 1200px) {
-            @supports (padding: max(0px)) {
-                .container {
-                    padding-left: max(12px, env(safe-area-inset-left));
-                    padding-right: max(12px, env(safe-area-inset-right));
-                    padding-top: max(12px, env(safe-area-inset-top));
-                    padding-bottom: max(12px, env(safe-area-inset-bottom));
-                }
-            }
-        }
-
-        /* Ensure text remains readable on tablets */
-        @media (min-width: 768px) and (max-width: 1200px) {
-            body {
-                font-size: 15px;
-            }
-
-            select,
-            button {
-                font-size: 14px;
-            }
-
-            .widget-header h2 {
-                font-size: 1.05rem;
-            }
-        }
-
-        /* Prevent zoom on input focus for tablets */
-        @media (min-width: 768px) and (max-width: 1200px) {
-            select {
-                font-size: 16px;
-                /* Prevents iOS zoom */
-            }
-
-            input,
-            textarea {
-                font-size: 16px;
-            }
-        }
-
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
             width: 10px;
@@ -1693,6 +753,603 @@
         @keyframes spin {
             to {
                 transform: rotate(360deg);
+            }
+        }
+
+        /* =========================================== */
+        /* RESPONSIVE DESIGN - 769px to 1200px (Tablet) */
+        /* =========================================== */
+        @media (min-width: 769px) and (max-width: 1200px) {
+
+            /* Reset container for tablet */
+            .container {
+                padding: 15px;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* Adjust header for tablet */
+            .dashboard-header {
+                padding: 15px 20px;
+                margin-bottom: 15px;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .header-left h1 {
+                font-size: 1.8rem;
+            }
+
+            .header-left p {
+                font-size: 0.9rem;
+                max-width: 400px;
+            }
+
+            .controls {
+                flex-direction: row;
+                gap: 12px;
+            }
+
+            .control-group {
+                min-width: 130px;
+            }
+
+            select,
+            button {
+                height: 40px;
+                font-size: 0.9rem;
+            }
+
+            /* Tablet Layout - 20% 60% 20% */
+            .dashboard-layout {
+                grid-template-columns: 20% 1fr 20%;
+                gap: 15px;
+                height: calc(100vh - 130px);
+            }
+
+            /* Sidebars for tablet */
+            .sidebar {
+                height: 100%;
+                min-height: 0;
+            }
+
+            /* Main content area for tablet */
+            .main-content-scrollable {
+                height: 100%;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .main-content-wrapper {
+                height: 100%;
+                overflow-y: auto;
+                padding-right: 8px;
+                gap: 15px;
+            }
+
+            /* Chart section for tablet */
+            .chart-section {
+                min-height: 450px;
+            }
+
+            .chart-header {
+                padding: 15px 20px;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .chart-title h2 {
+                font-size: 1.3rem;
+            }
+
+            .chart-controls {
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .refresh-btn,
+            .fullscreen-btn {
+                min-width: 90px;
+                height: 34px;
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+
+            .chart-container {
+                min-height: 350px;
+            }
+
+            /* Lower dashboard for tablet */
+            .lower-dashboard {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                min-height: 650px;
+            }
+
+            /* Watchlist for tablet */
+            .widget.full-width {
+                min-height: 400px;
+            }
+
+            .watchlist-container {
+                height: 320px;
+            }
+
+            .watchlist-controls {
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 15px;
+            }
+
+            .watchlist-tabs {
+                gap: 6px;
+            }
+
+            .tab-btn {
+                min-width: 70px;
+                font-size: 0.8rem;
+                padding: 5px 8px;
+                height: 30px;
+            }
+
+            /* Analysis for tablet */
+            .analysis-placeholder {
+                grid-template-columns: repeat(2, 1fr);
+                height: 280px;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .analysis-item {
+                padding: 15px;
+            }
+
+            /* Detailed analysis for tablet */
+            .detailed-analysis {
+                height: 280px;
+                padding: 15px;
+            }
+
+            /* Fix scrolling on tablet */
+            html,
+            body {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            body {
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Ensure sidebars don't shrink */
+            .sidebar {
+                max-height: calc(100vh - 130px);
+            }
+        }
+
+        /* =========================================== */
+        /* 900px to 1200px (Larger Tablets) */
+        /* =========================================== */
+        @media (min-width: 900px) and (max-width: 1200px) {
+            .dashboard-layout {
+                grid-template-columns: 18% 1fr 18%;
+            }
+
+            .controls {
+                flex-wrap: nowrap;
+            }
+
+            .control-group {
+                min-width: 140px;
+            }
+
+            .analysis-placeholder {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* =========================================== */
+        /* 769px to 899px (Smaller Tablets) */
+        /* =========================================== */
+        @media (min-width: 769px) and (max-width: 899px) {
+            .controls {
+                flex-wrap: wrap;
+            }
+
+            .control-group {
+                min-width: calc(50% - 6px);
+            }
+
+            .analysis-placeholder {
+                grid-template-columns: 1fr;
+                height: auto;
+                min-height: 300px;
+            }
+
+            .detailed-analysis {
+                height: auto;
+                min-height: 250px;
+            }
+        }
+
+        /* =========================================== */
+        /* Tablet Landscape Mode */
+        /* =========================================== */
+        @media (min-width: 769px) and (max-width: 1200px) and (orientation: landscape) {
+            .dashboard-layout {
+                height: calc(100vh - 120px);
+            }
+
+            .chart-section {
+                min-height: 380px;
+            }
+
+            .chart-container {
+                min-height: 300px;
+            }
+
+            .widget.full-width {
+                min-height: 350px;
+            }
+
+            .watchlist-container {
+                height: 280px;
+            }
+
+            .analysis-placeholder,
+            .detailed-analysis {
+                height: 250px;
+            }
+        }
+
+        /* =========================================== */
+        /* MOBILE VIEW - 0px to 768px */
+        /* =========================================== */
+        @media (max-width: 768px) {
+
+            /* Overall container */
+            .container {
+                padding: 10px;
+                height: auto;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
+            /* Header - stacked on mobile */
+            .dashboard-header {
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                padding: 15px;
+                margin-bottom: 15px;
+                border-radius: 12px;
+                position: relative;
+            }
+
+            .header-left h1 {
+                font-size: 1.6rem;
+                margin-bottom: 8px;
+            }
+
+            .header-left p {
+                font-size: 0.9rem;
+                margin-bottom: 15px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+                width: 100%;
+            }
+
+            .control-group {
+                min-width: 100%;
+                margin-bottom: 5px;
+            }
+
+            select,
+            button {
+                width: 100%;
+                height: 44px;
+                font-size: 1rem;
+            }
+
+            /* Mobile Layout - stacked vertically */
+            .dashboard-layout {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+                height: auto;
+                min-height: 0;
+            }
+
+            /* Sidebars - full width on mobile */
+            .sidebar {
+                width: 100%;
+                height: 400px;
+                min-height: 400px;
+                position: relative;
+                order: 2;
+            }
+
+            .sidebar-right {
+                order: 3;
+            }
+
+            /* Main content - comes first on mobile */
+            .main-content-scrollable {
+                width: 100%;
+                height: auto;
+                min-height: 0;
+                overflow: visible;
+                order: 1;
+            }
+
+            .main-content-wrapper {
+                overflow-y: visible;
+                padding-right: 0;
+                min-height: 0;
+                gap: 15px;
+            }
+
+            /* Chart section for mobile */
+            .chart-section {
+                min-height: 400px;
+                border-radius: 12px;
+                margin-bottom: 15px;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                gap: 12px;
+                text-align: center;
+                padding: 15px;
+            }
+
+            .chart-title h2 {
+                font-size: 1.3rem;
+            }
+
+            .chart-meta {
+                flex-direction: column;
+                gap: 5px;
+            }
+
+            .chart-controls {
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+
+            .status-indicator {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .refresh-btn,
+            .fullscreen-btn {
+                width: 100%;
+                min-width: auto;
+            }
+
+            .chart-container {
+                min-height: 300px;
+            }
+
+            /* Lower dashboard for mobile */
+            .lower-dashboard {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin-bottom: 15px;
+                min-height: auto;
+            }
+
+            .widget.full-width {
+                min-height: 350px;
+            }
+
+            .widget {
+                border-radius: 12px;
+                margin-bottom: 15px;
+            }
+
+            .widget-header {
+                padding: 15px;
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .watchlist-controls {
+                flex-direction: column;
+                gap: 10px;
+                width: 100%;
+            }
+
+            .watchlist-tabs {
+                width: 100%;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .tab-btn {
+                flex: 1;
+                min-width: 80px;
+                font-size: 0.8rem;
+                padding: 6px 8px;
+            }
+
+            /* Watchlist container for mobile */
+            .watchlist-container {
+                height: 300px;
+                padding: 10px;
+            }
+
+            /* Analysis for mobile */
+            .analysis-placeholder {
+                grid-template-columns: 1fr;
+                height: auto;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .analysis-item {
+                padding: 15px;
+            }
+
+            .analysis-item h3 {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .indicator-row {
+                font-size: 0.9rem;
+            }
+
+            /* Detailed analysis for mobile */
+            .detailed-analysis {
+                height: auto;
+                padding: 15px;
+                gap: 12px;
+            }
+
+            .analysis-card {
+                padding: 12px;
+            }
+
+            .analysis-card h4 {
+                font-size: 0.95rem;
+            }
+
+            .analysis-card p {
+                font-size: 0.85rem;
+            }
+
+            /* TradingView widgets for mobile */
+            .tradingview-widget-container {
+                height: 350px;
+            }
+
+            /* Body fixes for mobile */
+            body {
+                overflow-x: hidden;
+                overflow-y: auto;
+                height: auto;
+                min-height: 100vh;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Remove sticky header on mobile */
+            .dashboard-header {
+                position: relative;
+            }
+        }
+
+        /* =========================================== */
+        /* Very Small Mobile Devices */
+        /* =========================================== */
+        @media (max-width: 480px) {
+            .container {
+                padding: 8px;
+            }
+
+            .dashboard-header {
+                padding: 12px;
+            }
+
+            .header-left h1 {
+                font-size: 1.4rem;
+            }
+
+            .header-left p {
+                font-size: 0.85rem;
+            }
+
+            .chart-section {
+                min-height: 350px;
+            }
+
+            .chart-container {
+                min-height: 250px;
+            }
+
+            .sidebar {
+                height: 350px;
+                min-height: 350px;
+            }
+
+            .widget.full-width {
+                min-height: 300px;
+            }
+
+            .watchlist-container {
+                height: 250px;
+            }
+
+            .analysis-placeholder {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .analysis-item {
+                padding: 12px;
+            }
+        }
+
+        /* =========================================== */
+        /* Prevent horizontal scroll on all devices */
+        /* =========================================== */
+        html,
+        body {
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        /* =========================================== */
+        /* iOS Safari specific fixes */
+        /* =========================================== */
+        @supports (-webkit-touch-callout: none) {
+            body {
+                height: -webkit-fill-available;
+            }
+
+            .container {
+                min-height: -webkit-fill-available;
+            }
+
+            .main-content-wrapper {
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+
+        /* =========================================== */
+        /* Touch device optimizations */
+        /* =========================================== */
+        @media (hover: none) and (pointer: coarse) {
+
+            .main-content-wrapper,
+            .watchlist-container,
+            .detailed-analysis {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+
+            button,
+            select {
+                min-height: 44px;
+                /* Better touch target */
+            }
+        }
+
+        /* =========================================== */
+        /* High DPI screens */
+        /* =========================================== */
+        @media (-webkit-min-device-pixel-ratio: 2),
+        (min-resolution: 192dpi) {
+            .widget {
+                border-width: 0.5px;
             }
         }
     </style>
