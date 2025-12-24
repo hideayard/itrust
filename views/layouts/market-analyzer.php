@@ -419,18 +419,38 @@
             left: 0;
         }
 
-        /* Lower Dashboard */
+        /* Lower Dashboard - FIXED HEIGHT ISSUE */
         .lower-dashboard {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 20px;
             margin-bottom: 20px;
-            min-height: 700px;
+            min-height: 600px;
+            /* Reduced from 700px */
+            height: auto;
         }
 
         .widget.full-width {
             grid-column: 1 / -1;
-            min-height: 500px;
+            min-height: 450px;
+            /* Reduced from 500px */
+            height: auto;
+        }
+
+        /* Right Column Widgets - FIXED HEIGHT */
+        .right-column-widgets {
+            display: grid;
+            grid-template-rows: auto auto;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .right-column-widgets .widget {
+            min-height: 280px;
+            /* Fixed minimum height */
+            height: auto;
+            max-height: 400px;
+            /* Maximum height to prevent cutting */
         }
 
         /* Watchlist Controls */
@@ -491,18 +511,32 @@
 
         /* Watchlist Container */
         .watchlist-container {
-            height: 400px;
+            height: 350px;
+            /* Reduced from 400px */
             overflow-y: auto;
             padding: 10px;
         }
 
-        /* Analysis Widget */
+        /* Market Analysis Widget - FIXED HEIGHT */
+        .market-analysis-widget {
+            min-height: 300px;
+            height: 100%;
+            max-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Analysis Widget - FIXED HEIGHT */
         .analysis-placeholder {
             padding: 20px;
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
-            height: 300px;
+            height: calc(100% - 60px);
+            /* Dynamic height based on container */
+            min-height: 200px;
+            max-height: 350px;
+            overflow-y: auto;
         }
 
         .analysis-item {
@@ -511,6 +545,10 @@
             padding: 20px;
             border: 1px solid var(--border-light);
             transition: var(--transition);
+            height: 100%;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
         }
 
         .analysis-item:hover {
@@ -526,6 +564,13 @@
             font-weight: 700;
             border-bottom: 1px solid var(--border-light);
             padding-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .analysis-content {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
         }
 
         .indicator-row {
@@ -534,6 +579,7 @@
             align-items: center;
             margin-bottom: 10px;
             font-size: 0.95rem;
+            flex-shrink: 0;
         }
 
         .indicator-row:last-child {
@@ -551,6 +597,7 @@
             border-radius: 3px;
             margin: 15px 0;
             overflow: hidden;
+            flex-shrink: 0;
         }
 
         .sentiment-fill {
@@ -571,15 +618,28 @@
             justify-content: space-between;
             font-size: 0.9rem;
             margin-bottom: 15px;
+            flex-shrink: 0;
         }
 
-        /* Detailed Analysis */
+        /* Detailed Analysis Widget - FIXED HEIGHT */
+        .detailed-analysis-widget {
+            min-height: 300px;
+            height: 100%;
+            max-height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Detailed Analysis Content - FIXED HEIGHT */
         .detailed-analysis {
             padding: 20px;
             display: flex;
             flex-direction: column;
             gap: 15px;
-            height: 300px;
+            height: calc(100% - 60px);
+            /* Dynamic height based on container */
+            min-height: 200px;
+            max-height: 350px;
             overflow-y: auto;
         }
 
@@ -588,6 +648,7 @@
             border-radius: var(--radius-md);
             padding: 16px;
             border: 1px solid var(--border-light);
+            flex-shrink: 0;
         }
 
         .analysis-card h4 {
@@ -690,8 +751,8 @@
 
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
         }
 
         ::-webkit-scrollbar-track {
@@ -829,7 +890,7 @@
 
             /* Chart section for tablet */
             .chart-section {
-                min-height: 450px;
+                min-height: 400px;
             }
 
             .chart-header {
@@ -839,12 +900,13 @@
             }
 
             .chart-title h2 {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
             }
 
             .chart-controls {
                 flex-direction: row;
                 gap: 10px;
+                flex-wrap: wrap;
             }
 
             .refresh-btn,
@@ -856,23 +918,35 @@
             }
 
             .chart-container {
-                min-height: 350px;
+                min-height: 300px;
             }
 
-            /* Lower dashboard for tablet */
+            /* Lower dashboard for tablet - FIXED */
             .lower-dashboard {
                 grid-template-columns: 1fr;
                 gap: 15px;
-                min-height: 650px;
+                min-height: 500px;
+                height: auto;
+            }
+
+            /* Right column widgets for tablet */
+            .right-column-widgets {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+
+            .right-column-widgets .widget {
+                min-height: 250px;
+                max-height: 350px;
             }
 
             /* Watchlist for tablet */
             .widget.full-width {
-                min-height: 400px;
+                min-height: 350px;
             }
 
             .watchlist-container {
-                height: 320px;
+                height: 280px;
             }
 
             .watchlist-controls {
@@ -893,21 +967,24 @@
                 height: 30px;
             }
 
-            /* Analysis for tablet */
+            /* Analysis for tablet - FIXED HEIGHT */
             .analysis-placeholder {
                 grid-template-columns: repeat(2, 1fr);
-                height: 280px;
+                height: 250px;
+                max-height: 300px;
                 gap: 15px;
                 padding: 15px;
             }
 
             .analysis-item {
                 padding: 15px;
+                min-height: 180px;
             }
 
-            /* Detailed analysis for tablet */
+            /* Detailed analysis for tablet - FIXED HEIGHT */
             .detailed-analysis {
-                height: 280px;
+                height: 250px;
+                max-height: 300px;
                 padding: 15px;
             }
 
@@ -944,8 +1021,18 @@
                 min-width: 140px;
             }
 
+            .lower-dashboard {
+                grid-template-columns: 2fr 1fr;
+            }
+
             .analysis-placeholder {
                 grid-template-columns: repeat(3, 1fr);
+                height: 280px;
+            }
+
+            .right-column-widgets {
+                grid-template-rows: auto auto;
+                grid-template-columns: 1fr;
             }
         }
 
@@ -961,15 +1048,25 @@
                 min-width: calc(50% - 6px);
             }
 
+            .lower-dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .right-column-widgets {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
             .analysis-placeholder {
                 grid-template-columns: 1fr;
                 height: auto;
-                min-height: 300px;
+                min-height: 200px;
+                max-height: none;
             }
 
             .detailed-analysis {
                 height: auto;
-                min-height: 250px;
+                min-height: 200px;
+                max-height: none;
             }
         }
 
@@ -982,24 +1079,106 @@
             }
 
             .chart-section {
-                min-height: 380px;
-            }
-
-            .chart-container {
-                min-height: 300px;
-            }
-
-            .widget.full-width {
                 min-height: 350px;
             }
 
+            .chart-container {
+                min-height: 250px;
+            }
+
+            .widget.full-width {
+                min-height: 300px;
+            }
+
             .watchlist-container {
-                height: 280px;
+                height: 230px;
+            }
+
+            .right-column-widgets .widget {
+                min-height: 200px;
+                max-height: 300px;
             }
 
             .analysis-placeholder,
             .detailed-analysis {
-                height: 250px;
+                height: 200px;
+                max-height: 250px;
+            }
+        }
+
+        /* =========================================== */
+        /* Desktop Large Screens - 1200px+ */
+        /* =========================================== */
+        @media (min-width: 1200px) {
+            .lower-dashboard {
+                min-height: 550px;
+            }
+
+            .right-column-widgets .widget {
+                min-height: 260px;
+            }
+
+            .analysis-placeholder {
+                height: 280px;
+                max-height: 320px;
+            }
+
+            .detailed-analysis {
+                height: 280px;
+                max-height: 320px;
+            }
+        }
+
+        /* =========================================== */
+        /* Desktop Extra Large Screens - 1400px+ */
+        /* =========================================== */
+        @media (min-width: 1400px) {
+            .lower-dashboard {
+                min-height: 600px;
+            }
+
+            .right-column-widgets .widget {
+                min-height: 280px;
+                max-height: 350px;
+            }
+
+            .analysis-placeholder {
+                height: 320px;
+                max-height: 380px;
+            }
+
+            .detailed-analysis {
+                height: 320px;
+                max-height: 380px;
+            }
+        }
+
+        /* =========================================== */
+        /* Desktop Ultra Large Screens - 1600px+ */
+        /* =========================================== */
+        @media (min-width: 1600px) {
+            .container {
+                max-width: 1600px;
+                margin: 0 auto;
+            }
+
+            .lower-dashboard {
+                min-height: 650px;
+            }
+
+            .right-column-widgets .widget {
+                min-height: 300px;
+                max-height: 400px;
+            }
+
+            .analysis-placeholder {
+                height: 350px;
+                max-height: 420px;
+            }
+
+            .detailed-analysis {
+                height: 350px;
+                max-height: 420px;
             }
         }
 
@@ -1068,8 +1247,8 @@
             /* Sidebars - full width on mobile */
             .sidebar {
                 width: 100%;
-                height: 400px;
-                min-height: 400px;
+                height: 350px;
+                min-height: 350px;
                 position: relative;
                 order: 2;
             }
@@ -1096,7 +1275,7 @@
 
             /* Chart section for mobile */
             .chart-section {
-                min-height: 400px;
+                min-height: 350px;
                 border-radius: 12px;
                 margin-bottom: 15px;
             }
@@ -1109,12 +1288,13 @@
             }
 
             .chart-title h2 {
-                font-size: 1.3rem;
+                font-size: 1.2rem;
             }
 
             .chart-meta {
                 flex-direction: column;
                 gap: 5px;
+                font-size: 0.8rem;
             }
 
             .chart-controls {
@@ -1135,7 +1315,7 @@
             }
 
             .chart-container {
-                min-height: 300px;
+                min-height: 250px;
             }
 
             /* Lower dashboard for mobile */
@@ -1146,8 +1326,18 @@
                 min-height: auto;
             }
 
+            .right-column-widgets {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
             .widget.full-width {
-                min-height: 350px;
+                min-height: 300px;
+            }
+
+            .right-column-widgets .widget {
+                min-height: 250px;
+                max-height: none;
             }
 
             .widget {
@@ -1176,14 +1366,15 @@
 
             .tab-btn {
                 flex: 1;
-                min-width: 80px;
-                font-size: 0.8rem;
-                padding: 6px 8px;
+                min-width: 70px;
+                font-size: 0.75rem;
+                padding: 5px 8px;
+                height: 28px;
             }
 
             /* Watchlist container for mobile */
             .watchlist-container {
-                height: 300px;
+                height: 250px;
                 padding: 10px;
             }
 
@@ -1191,12 +1382,15 @@
             .analysis-placeholder {
                 grid-template-columns: 1fr;
                 height: auto;
+                min-height: 200px;
+                max-height: none;
                 gap: 15px;
                 padding: 15px;
             }
 
             .analysis-item {
                 padding: 15px;
+                min-height: 180px;
             }
 
             .analysis-item h3 {
@@ -1211,6 +1405,8 @@
             /* Detailed analysis for mobile */
             .detailed-analysis {
                 height: auto;
+                min-height: 200px;
+                max-height: none;
                 padding: 15px;
                 gap: 12px;
             }
@@ -1229,7 +1425,7 @@
 
             /* TradingView widgets for mobile */
             .tradingview-widget-container {
-                height: 350px;
+                height: 300px;
             }
 
             /* Body fixes for mobile */
@@ -1268,24 +1464,28 @@
             }
 
             .chart-section {
-                min-height: 350px;
-            }
-
-            .chart-container {
-                min-height: 250px;
-            }
-
-            .sidebar {
-                height: 350px;
-                min-height: 350px;
-            }
-
-            .widget.full-width {
                 min-height: 300px;
             }
 
+            .chart-container {
+                min-height: 200px;
+            }
+
+            .sidebar {
+                height: 300px;
+                min-height: 300px;
+            }
+
+            .widget.full-width {
+                min-height: 250px;
+            }
+
+            .right-column-widgets .widget {
+                min-height: 220px;
+            }
+
             .watchlist-container {
-                height: 250px;
+                height: 200px;
             }
 
             .analysis-placeholder {
@@ -1294,6 +1494,11 @@
             }
 
             .analysis-item {
+                padding: 12px;
+                min-height: 160px;
+            }
+
+            .detailed-analysis {
                 padding: 12px;
             }
         }
@@ -1331,6 +1536,7 @@
 
             .main-content-wrapper,
             .watchlist-container,
+            .analysis-placeholder,
             .detailed-analysis {
                 -webkit-overflow-scrolling: touch;
                 scroll-behavior: smooth;
