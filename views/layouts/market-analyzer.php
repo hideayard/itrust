@@ -769,25 +769,7 @@
             }
         }
 
-        /* @media (max-width: 768px) {
-            .container {
-                padding: 12px;
-            }
 
-            .lower-dashboard {
-                grid-template-columns: 1fr;
-            }
-
-            .watchlist-controls {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .watchlist-tabs {
-                width: 100%;
-                justify-content: center;
-            }
-        } */
 
         /* Mobile Responsive Design */
         @media (max-width: 768px) {
@@ -1220,17 +1202,429 @@
         }
 
         /* Fullscreen mode mobile fix */
-        @media (max-width: 768px) {
-            .chart-section.fullscreen {
-                position: fixed;
-                z-index: 9999;
-                border-radius: 0;
-                margin: 0;
-                padding: 0;
+        /* Tablet View - 768px to 1200px */
+        @media (min-width: 768px) and (max-width: 1200px) {
+
+            /* Overall container */
+            .container {
+                padding: 12px;
+                height: 100vh;
+                overflow: hidden;
             }
 
-            .chart-section.fullscreen .chart-container {
-                min-height: calc(100vh - 100px);
+            /* Header */
+            .dashboard-header {
+                padding: 15px 20px;
+                flex-direction: row;
+                align-items: center;
+                margin-bottom: 15px;
+            }
+
+            .header-left h1 {
+                font-size: 1.8rem;
+            }
+
+            .header-left p {
+                font-size: 0.9rem;
+                max-width: 400px;
+            }
+
+            .controls {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .control-group {
+                min-width: 140px;
+                margin-bottom: 0;
+            }
+
+            /* Main Layout for Tablets */
+            .dashboard-layout {
+                display: grid;
+                grid-template-columns: 25% 1fr 25%;
+                gap: 15px;
+                height: calc(100vh - 140px);
+                min-height: 0;
+            }
+
+            /* Sidebars - Tablets */
+            .sidebar {
+                height: 100%;
+                min-height: 0;
+                position: relative;
+            }
+
+            .sidebar-left {
+                grid-column: 1;
+            }
+
+            .sidebar-right {
+                grid-column: 3;
+            }
+
+            /* Main Content - Scrollable on tablets */
+            .main-content-scrollable {
+                grid-column: 2;
+                height: 100%;
+                min-height: 0;
+                overflow: hidden;
+            }
+
+            .main-content-wrapper {
+                height: 100%;
+                overflow-y: auto;
+                padding-right: 8px;
+                gap: 15px;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Chart Section - Tablet */
+            .chart-section {
+                min-height: 450px;
+                flex-shrink: 0;
+            }
+
+            .chart-header {
+                padding: 15px 20px;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .chart-title h2 {
+                font-size: 1.3rem;
+            }
+
+            .chart-controls {
+                flex-direction: row;
+                gap: 10px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+
+            .status-indicator {
+                width: auto;
+            }
+
+            .refresh-btn,
+            .fullscreen-btn {
+                min-width: 100px;
+                height: 36px;
+                padding: 8px 12px;
+                font-size: 0.85rem;
+            }
+
+            .chart-container {
+                min-height: 350px;
+            }
+
+            /* Lower Dashboard - Tablet */
+            .lower-dashboard {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                margin-bottom: 15px;
+                min-height: 600px;
+            }
+
+            /* Widgets - Tablet */
+            .widget {
+                min-height: 300px;
+            }
+
+            .widget.full-width {
+                min-height: 400px;
+            }
+
+            .widget-header {
+                padding: 15px;
+                flex-direction: row;
+                align-items: center;
+                text-align: left;
+            }
+
+            .widget-header h2 {
+                font-size: 1.1rem;
+            }
+
+            /* Watchlist - Tablet */
+            .watchlist-controls {
+                flex-direction: row;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .watchlist-tabs {
+                gap: 5px;
+            }
+
+            .tab-btn {
+                min-width: 70px;
+                font-size: 0.8rem;
+                padding: 5px 8px;
+                height: 30px;
+            }
+
+            .watchlist-container {
+                height: 320px;
+                padding: 10px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* Analysis - Tablet */
+            .analysis-placeholder {
+                grid-template-columns: repeat(2, 1fr);
+                height: 280px;
+                gap: 15px;
+                padding: 15px;
+            }
+
+            .analysis-item {
+                padding: 15px;
+            }
+
+            /* Detailed Analysis - Tablet */
+            .detailed-analysis {
+                height: 280px;
+                padding: 15px;
+                gap: 12px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            /* TradingView Widgets - Tablet */
+            .tradingview-widget-container {
+                height: 100%;
+            }
+
+            /* Force scrollbar to show */
+            ::-webkit-scrollbar {
+                width: 6px;
+            }
+
+            /* Ensure body scrolls on tablets */
+            body {
+                overflow: hidden;
+                height: 100vh;
+            }
+
+            /* Fix for Safari on iPad */
+            @supports (-webkit-touch-callout: none) {
+                .main-content-wrapper {
+                    overflow-y: scroll;
+                    -webkit-overflow-scrolling: touch;
+                }
+
+                .watchlist-container,
+                .detailed-analysis {
+                    overflow-y: scroll;
+                    -webkit-overflow-scrolling: touch;
+                }
+            }
+        }
+
+        /* Medium Tablets - 768px to 900px */
+        @media (min-width: 768px) and (max-width: 900px) {
+            .dashboard-layout {
+                grid-template-columns: 30% 1fr 30%;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                min-width: 100%;
+            }
+
+            .analysis-placeholder {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+
+            .chart-header {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+
+            .chart-controls {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .refresh-btn,
+            .fullscreen-btn {
+                width: 100%;
+            }
+
+            .watchlist-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .watchlist-tabs {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Large Tablets - 900px to 1200px */
+        @media (min-width: 900px) and (max-width: 1200px) {
+            .dashboard-layout {
+                grid-template-columns: 22% 1fr 22%;
+            }
+
+            .header-left {
+                flex: 1;
+            }
+
+            .controls {
+                flex: 1;
+                justify-content: flex-end;
+            }
+
+            .control-group {
+                min-width: 120px;
+            }
+
+            select,
+            button {
+                min-width: 100px;
+            }
+        }
+
+        /* iPad Pro and similar devices */
+        @media (min-width: 1024px) and (max-width: 1200px) and (orientation: portrait) {
+            .dashboard-layout {
+                grid-template-columns: 25% 1fr 25%;
+            }
+
+            .sidebar {
+                height: calc(100vh - 140px);
+            }
+
+            .widget.full-width {
+                min-height: 450px;
+            }
+
+            .watchlist-container {
+                height: 350px;
+            }
+        }
+
+        /* Landscape tablets */
+        @media (min-width: 768px) and (max-width: 1200px) and (orientation: landscape) {
+            .dashboard-layout {
+                height: calc(100vh - 120px);
+            }
+
+            .chart-section {
+                min-height: 350px;
+            }
+
+            .chart-container {
+                min-height: 280px;
+            }
+
+            .widget.full-width {
+                min-height: 350px;
+            }
+
+            .watchlist-container {
+                height: 250px;
+            }
+
+            .analysis-placeholder {
+                height: 220px;
+            }
+
+            .detailed-analysis {
+                height: 220px;
+            }
+        }
+
+        /* Specific fix for scroll issues on tablets */
+        @media (min-width: 768px) and (max-width: 1200px) {
+
+            /* Ensure scrolling works */
+            html,
+            body {
+                height: 100%;
+                overflow: hidden;
+            }
+
+            .container {
+                display: flex;
+                flex-direction: column;
+                height: 100vh;
+            }
+
+            .dashboard-layout {
+                flex: 1;
+                min-height: 0;
+            }
+
+            /* Fix for scrollbar appearing/disappearing */
+            .main-content-wrapper {
+                scrollbar-width: thin;
+                scrollbar-color: var(--border-color) var(--bg-secondary);
+            }
+
+            /* Prevent content from overflowing */
+            .widget-content {
+                max-height: 100%;
+            }
+
+            /* Make sure TradingView widgets don't break scrolling */
+            .tradingview-widget-container {
+                min-height: 100%;
+                max-height: 100%;
+            }
+        }
+
+        /* Fix for devices with notches */
+        @media (min-width: 768px) and (max-width: 1200px) {
+            @supports (padding: max(0px)) {
+                .container {
+                    padding-left: max(12px, env(safe-area-inset-left));
+                    padding-right: max(12px, env(safe-area-inset-right));
+                    padding-top: max(12px, env(safe-area-inset-top));
+                    padding-bottom: max(12px, env(safe-area-inset-bottom));
+                }
+            }
+        }
+
+        /* Ensure text remains readable on tablets */
+        @media (min-width: 768px) and (max-width: 1200px) {
+            body {
+                font-size: 15px;
+            }
+
+            select,
+            button {
+                font-size: 14px;
+            }
+
+            .widget-header h2 {
+                font-size: 1.05rem;
+            }
+        }
+
+        /* Prevent zoom on input focus for tablets */
+        @media (min-width: 768px) and (max-width: 1200px) {
+            select {
+                font-size: 16px;
+                /* Prevents iOS zoom */
+            }
+
+            input,
+            textarea {
+                font-size: 16px;
             }
         }
 
