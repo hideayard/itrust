@@ -48,12 +48,14 @@
         }
 
         .container {
-            width: 100vw;
+            width: 100%;
+            max-width: 1920px;
             height: 100vh;
             padding: 20px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            margin: 0 auto;
         }
 
         /* Header */
@@ -419,38 +421,39 @@
             left: 0;
         }
 
-        /* Lower Dashboard - FIXED HEIGHT ISSUE */
+        /* Lower Dashboard */
         .lower-dashboard {
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 20px;
             margin-bottom: 20px;
-            min-height: 600px;
-            /* Reduced from 700px */
+            min-height: 500px;
             height: auto;
         }
 
         .widget.full-width {
             grid-column: 1 / -1;
-            min-height: 450px;
-            /* Reduced from 500px */
+            min-height: 400px;
             height: auto;
         }
 
-        /* Right Column Widgets - FIXED HEIGHT */
+        /* Right Column Widgets */
         .right-column-widgets {
-            display: grid;
-            grid-template-rows: auto auto;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
             height: 100%;
         }
 
         .right-column-widgets .widget {
-            min-height: 280px;
-            /* Fixed minimum height */
-            height: auto;
-            max-height: 400px;
-            /* Maximum height to prevent cutting */
+            min-height: 240px;
+            /* Fixed height for analysis widgets */
+            height: 240px;
+            /* Fixed height instead of auto */
+            max-height: 240px;
+            /* Fixed height to prevent growing */
+            flex: none;
+            /* Prevent flex growing */
         }
 
         /* Watchlist Controls */
@@ -511,42 +514,40 @@
 
         /* Watchlist Container */
         .watchlist-container {
-            height: 350px;
-            /* Reduced from 400px */
+            height: 320px;
             overflow-y: auto;
             padding: 10px;
         }
 
-        /* Market Analysis Widget - FIXED HEIGHT */
+        /* Market Analysis Widget */
         .market-analysis-widget {
-            min-height: 300px;
-            height: 100%;
-            max-height: 400px;
-            display: flex;
-            flex-direction: column;
+            height: 240px !important;
+            /* Force fixed height */
+            min-height: 240px !important;
+            max-height: 240px !important;
         }
 
-        /* Analysis Widget - FIXED HEIGHT */
+        /* Analysis Widget */
         .analysis-placeholder {
-            padding: 20px;
+            padding: 15px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            height: calc(100% - 60px);
-            /* Dynamic height based on container */
-            min-height: 200px;
-            max-height: 350px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            height: calc(240px - 60px);
+            /* Fixed calculation: widget height minus header */
+            min-height: 180px;
+            max-height: 180px;
             overflow-y: auto;
         }
 
         .analysis-item {
             background: linear-gradient(145deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
             border-radius: var(--radius-md);
-            padding: 20px;
+            padding: 15px;
             border: 1px solid var(--border-light);
             transition: var(--transition);
             height: 100%;
-            min-height: 200px;
+            min-height: 160px;
             display: flex;
             flex-direction: column;
         }
@@ -558,12 +559,12 @@
         }
 
         .analysis-item h3 {
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: var(--accent-blue);
-            margin-bottom: 18px;
+            margin-bottom: 12px;
             font-weight: 700;
             border-bottom: 1px solid var(--border-light);
-            padding-bottom: 10px;
+            padding-bottom: 8px;
             flex-shrink: 0;
         }
 
@@ -577,8 +578,8 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
             flex-shrink: 0;
         }
 
@@ -595,7 +596,7 @@
             height: 6px;
             background: var(--border-color);
             border-radius: 3px;
-            margin: 15px 0;
+            margin: 10px 0;
             overflow: hidden;
             flex-shrink: 0;
         }
@@ -616,65 +617,64 @@
         .sentiment-labels {
             display: flex;
             justify-content: space-between;
-            font-size: 0.9rem;
-            margin-bottom: 15px;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
             flex-shrink: 0;
         }
 
-        /* Detailed Analysis Widget - FIXED HEIGHT */
+        /* Detailed Analysis Widget */
         .detailed-analysis-widget {
-            min-height: 300px;
-            height: 100%;
-            max-height: 400px;
-            display: flex;
-            flex-direction: column;
+            height: 240px !important;
+            /* Force fixed height */
+            min-height: 240px !important;
+            max-height: 240px !important;
         }
 
-        /* Detailed Analysis Content - FIXED HEIGHT */
+        /* Detailed Analysis Content */
         .detailed-analysis {
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
-            height: calc(100% - 60px);
-            /* Dynamic height based on container */
-            min-height: 200px;
-            max-height: 350px;
+            gap: 12px;
+            height: calc(240px - 60px);
+            /* Fixed calculation: widget height minus header */
+            min-height: 180px;
+            max-height: 180px;
             overflow-y: auto;
         }
 
         .analysis-card {
             background: linear-gradient(145deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
             border-radius: var(--radius-md);
-            padding: 16px;
+            padding: 12px;
             border: 1px solid var(--border-light);
             flex-shrink: 0;
         }
 
         .analysis-card h4 {
             color: var(--accent-blue);
-            margin-bottom: 10px;
-            font-size: 1rem;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
             font-weight: 600;
         }
 
         .analysis-card p {
             color: var(--text-secondary);
-            font-size: 0.9rem;
-            line-height: 1.5;
-            margin-bottom: 12px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
         }
 
         .analysis-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
+            gap: 6px;
         }
 
         .tag {
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
             font-weight: 600;
         }
 
@@ -751,18 +751,18 @@
 
         /* Scrollbar Styling */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
             background: var(--bg-secondary);
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb {
             background: var(--border-color);
-            border-radius: 4px;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
@@ -814,6 +814,252 @@
         @keyframes spin {
             to {
                 transform: rotate(360deg);
+            }
+        }
+
+        /* =========================================== */
+        /* ULTRA-WIDE SCREENS - 1600px and above */
+        /* =========================================== */
+        @media (min-width: 1600px) {
+            .container {
+                max-width: 1920px;
+                padding: 30px;
+            }
+
+            /* Adjust grid for ultra-wide screens */
+            .dashboard-layout {
+                grid-template-columns: 12% 1fr 12%;
+                /* Narrower sidebars on ultra-wide */
+                gap: 25px;
+                height: calc(100vh - 160px);
+            }
+
+            /* Increase header and content sizes */
+            .dashboard-header {
+                padding: 22px 35px;
+                margin-bottom: 25px;
+            }
+
+            .header-left h1 {
+                font-size: 2.3rem;
+            }
+
+            .header-left p {
+                font-size: 1rem;
+                max-width: 600px;
+            }
+
+            .controls {
+                gap: 20px;
+            }
+
+            .control-group {
+                min-width: 160px;
+            }
+
+            select,
+            button {
+                height: 46px;
+                font-size: 1rem;
+            }
+
+            /* Increase chart height */
+            .chart-section {
+                min-height: 600px;
+            }
+
+            .chart-title h2 {
+                font-size: 1.5rem;
+            }
+
+            /* Increase watchlist height */
+            .widget.full-width {
+                min-height: 450px;
+            }
+
+            .watchlist-container {
+                height: 350px;
+            }
+
+            /* Increase analysis widgets height */
+            .right-column-widgets .widget {
+                min-height: 280px;
+                height: 280px;
+                max-height: 280px;
+            }
+
+            .market-analysis-widget,
+            .detailed-analysis-widget {
+                height: 280px !important;
+                min-height: 280px !important;
+                max-height: 280px !important;
+            }
+
+            .analysis-placeholder {
+                height: calc(280px - 60px);
+                min-height: 220px;
+                max-height: 220px;
+                padding: 20px;
+                gap: 20px;
+            }
+
+            .analysis-item {
+                padding: 18px;
+                min-height: 180px;
+            }
+
+            .analysis-item h3 {
+                font-size: 1.1rem;
+                margin-bottom: 15px;
+            }
+
+            .indicator-row {
+                font-size: 0.95rem;
+                margin-bottom: 10px;
+            }
+
+            .detailed-analysis {
+                height: calc(280px - 60px);
+                min-height: 220px;
+                max-height: 220px;
+                padding: 20px;
+                gap: 15px;
+            }
+
+            .analysis-card {
+                padding: 15px;
+            }
+
+            .analysis-card h4 {
+                font-size: 1rem;
+            }
+
+            .analysis-card p {
+                font-size: 0.9rem;
+            }
+
+            /* Adjust widget spacing */
+            .widget-header {
+                padding: 18px 24px;
+            }
+
+            .widget-header h2 {
+                font-size: 1.2rem;
+            }
+
+            /* Increase lower dashboard height */
+            .lower-dashboard {
+                min-height: 550px;
+                gap: 25px;
+            }
+        }
+
+        /* =========================================== */
+        /* EXTREME ULTRA-WIDE SCREENS - 1920px and above */
+        /* =========================================== */
+        @media (min-width: 1920px) {
+            .container {
+                max-width: 2400px;
+                padding: 40px;
+            }
+
+            .dashboard-layout {
+                grid-template-columns: 10% 1fr 10%;
+                /* Even narrower sidebars */
+                gap: 30px;
+                height: calc(100vh - 180px);
+            }
+
+            .dashboard-header {
+                padding: 25px 40px;
+                margin-bottom: 30px;
+            }
+
+            .header-left h1 {
+                font-size: 2.5rem;
+            }
+
+            .header-left p {
+                font-size: 1.05rem;
+                max-width: 700px;
+            }
+
+            .chart-section {
+                min-height: 650px;
+            }
+
+            .chart-title h2 {
+                font-size: 1.6rem;
+            }
+
+            .widget.full-width {
+                min-height: 500px;
+            }
+
+            .watchlist-container {
+                height: 380px;
+            }
+
+            /* Further increase analysis widgets height */
+            .right-column-widgets .widget {
+                min-height: 320px;
+                height: 320px;
+                max-height: 320px;
+            }
+
+            .market-analysis-widget,
+            .detailed-analysis-widget {
+                height: 320px !important;
+                min-height: 320px !important;
+                max-height: 320px !important;
+            }
+
+            .analysis-placeholder {
+                height: calc(320px - 60px);
+                min-height: 260px;
+                max-height: 260px;
+                padding: 25px;
+                gap: 25px;
+            }
+
+            .analysis-item {
+                padding: 20px;
+                min-height: 200px;
+            }
+
+            .analysis-item h3 {
+                font-size: 1.2rem;
+                margin-bottom: 20px;
+            }
+
+            .indicator-row {
+                font-size: 1rem;
+                margin-bottom: 12px;
+            }
+
+            .detailed-analysis {
+                height: calc(320px - 60px);
+                min-height: 260px;
+                max-height: 260px;
+                padding: 25px;
+                gap: 18px;
+            }
+
+            .analysis-card {
+                padding: 18px;
+            }
+
+            .analysis-card h4 {
+                font-size: 1.1rem;
+            }
+
+            .analysis-card p {
+                font-size: 0.95rem;
+            }
+
+            .lower-dashboard {
+                min-height: 600px;
+                gap: 30px;
             }
         }
 
@@ -921,264 +1167,71 @@
                 min-height: 300px;
             }
 
-            /* Lower dashboard for tablet - FIXED */
+            /* Lower dashboard for tablet */
             .lower-dashboard {
                 grid-template-columns: 1fr;
                 gap: 15px;
-                min-height: 500px;
+                min-height: 450px;
                 height: auto;
             }
 
             /* Right column widgets for tablet */
             .right-column-widgets {
                 grid-template-columns: repeat(2, 1fr);
+                display: grid;
                 gap: 15px;
             }
 
             .right-column-widgets .widget {
-                min-height: 250px;
-                max-height: 350px;
+                min-height: 220px;
+                height: 220px;
+                max-height: 220px;
             }
 
-            /* Watchlist for tablet */
-            .widget.full-width {
-                min-height: 350px;
-            }
-
-            .watchlist-container {
-                height: 280px;
-            }
-
-            .watchlist-controls {
-                flex-direction: row;
-                align-items: center;
-                flex-wrap: wrap;
-                gap: 15px;
-            }
-
-            .watchlist-tabs {
-                gap: 6px;
-            }
-
-            .tab-btn {
-                min-width: 70px;
-                font-size: 0.8rem;
-                padding: 5px 8px;
-                height: 30px;
-            }
-
-            /* Analysis for tablet - FIXED HEIGHT */
+            /* Analysis for tablet */
             .analysis-placeholder {
                 grid-template-columns: repeat(2, 1fr);
-                height: 250px;
-                max-height: 300px;
-                gap: 15px;
-                padding: 15px;
+                height: calc(220px - 60px);
+                min-height: 160px;
+                max-height: 160px;
+                gap: 12px;
+                padding: 12px;
             }
 
             .analysis-item {
-                padding: 15px;
-                min-height: 180px;
+                padding: 12px;
+                min-height: 140px;
             }
 
-            /* Detailed analysis for tablet - FIXED HEIGHT */
+            .analysis-item h3 {
+                font-size: 0.95rem;
+                margin-bottom: 10px;
+            }
+
+            .indicator-row {
+                font-size: 0.85rem;
+                margin-bottom: 6px;
+            }
+
+            /* Detailed analysis for tablet */
             .detailed-analysis {
-                height: 250px;
-                max-height: 300px;
-                padding: 15px;
+                height: calc(220px - 60px);
+                min-height: 160px;
+                max-height: 160px;
+                padding: 12px;
+                gap: 10px;
             }
 
-            /* Fix scrolling on tablet */
-            html,
-            body {
-                height: 100%;
-                overflow: hidden;
+            .analysis-card {
+                padding: 10px;
             }
 
-            body {
-                -webkit-overflow-scrolling: touch;
+            .analysis-card h4 {
+                font-size: 0.9rem;
             }
 
-            /* Ensure sidebars don't shrink */
-            .sidebar {
-                max-height: calc(100vh - 130px);
-            }
-        }
-
-        /* =========================================== */
-        /* 900px to 1200px (Larger Tablets) */
-        /* =========================================== */
-        @media (min-width: 900px) and (max-width: 1200px) {
-            .dashboard-layout {
-                grid-template-columns: 18% 1fr 18%;
-            }
-
-            .controls {
-                flex-wrap: nowrap;
-            }
-
-            .control-group {
-                min-width: 140px;
-            }
-
-            .lower-dashboard {
-                grid-template-columns: 2fr 1fr;
-            }
-
-            .analysis-placeholder {
-                grid-template-columns: repeat(3, 1fr);
-                height: 280px;
-            }
-
-            .right-column-widgets {
-                grid-template-rows: auto auto;
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* =========================================== */
-        /* 769px to 899px (Smaller Tablets) */
-        /* =========================================== */
-        @media (min-width: 769px) and (max-width: 899px) {
-            .controls {
-                flex-wrap: wrap;
-            }
-
-            .control-group {
-                min-width: calc(50% - 6px);
-            }
-
-            .lower-dashboard {
-                grid-template-columns: 1fr;
-            }
-
-            .right-column-widgets {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .analysis-placeholder {
-                grid-template-columns: 1fr;
-                height: auto;
-                min-height: 200px;
-                max-height: none;
-            }
-
-            .detailed-analysis {
-                height: auto;
-                min-height: 200px;
-                max-height: none;
-            }
-        }
-
-        /* =========================================== */
-        /* Tablet Landscape Mode */
-        /* =========================================== */
-        @media (min-width: 769px) and (max-width: 1200px) and (orientation: landscape) {
-            .dashboard-layout {
-                height: calc(100vh - 120px);
-            }
-
-            .chart-section {
-                min-height: 350px;
-            }
-
-            .chart-container {
-                min-height: 250px;
-            }
-
-            .widget.full-width {
-                min-height: 300px;
-            }
-
-            .watchlist-container {
-                height: 230px;
-            }
-
-            .right-column-widgets .widget {
-                min-height: 200px;
-                max-height: 300px;
-            }
-
-            .analysis-placeholder,
-            .detailed-analysis {
-                height: 200px;
-                max-height: 250px;
-            }
-        }
-
-        /* =========================================== */
-        /* Desktop Large Screens - 1200px+ */
-        /* =========================================== */
-        @media (min-width: 1200px) {
-            .lower-dashboard {
-                min-height: 550px;
-            }
-
-            .right-column-widgets .widget {
-                min-height: 260px;
-            }
-
-            .analysis-placeholder {
-                height: 280px;
-                max-height: 320px;
-            }
-
-            .detailed-analysis {
-                height: 280px;
-                max-height: 320px;
-            }
-        }
-
-        /* =========================================== */
-        /* Desktop Extra Large Screens - 1400px+ */
-        /* =========================================== */
-        @media (min-width: 1400px) {
-            .lower-dashboard {
-                min-height: 600px;
-            }
-
-            .right-column-widgets .widget {
-                min-height: 280px;
-                max-height: 350px;
-            }
-
-            .analysis-placeholder {
-                height: 320px;
-                max-height: 380px;
-            }
-
-            .detailed-analysis {
-                height: 320px;
-                max-height: 380px;
-            }
-        }
-
-        /* =========================================== */
-        /* Desktop Ultra Large Screens - 1600px+ */
-        /* =========================================== */
-        @media (min-width: 1600px) {
-            .container {
-                max-width: 1600px;
-                margin: 0 auto;
-            }
-
-            .lower-dashboard {
-                min-height: 650px;
-            }
-
-            .right-column-widgets .widget {
-                min-height: 300px;
-                max-height: 400px;
-            }
-
-            .analysis-placeholder {
-                height: 350px;
-                max-height: 420px;
-            }
-
-            .detailed-analysis {
-                height: 350px;
-                max-height: 420px;
+            .analysis-card p {
+                font-size: 0.8rem;
             }
         }
 
@@ -1193,46 +1246,7 @@
                 height: auto;
                 min-height: 100vh;
                 overflow-x: hidden;
-            }
-
-            /* Header - stacked on mobile */
-            .dashboard-header {
-                flex-direction: column;
-                align-items: stretch;
-                text-align: center;
-                padding: 15px;
-                margin-bottom: 15px;
-                border-radius: 12px;
-                position: relative;
-            }
-
-            .header-left h1 {
-                font-size: 1.6rem;
-                margin-bottom: 8px;
-            }
-
-            .header-left p {
-                font-size: 0.9rem;
-                margin-bottom: 15px;
-            }
-
-            .controls {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 12px;
-                width: 100%;
-            }
-
-            .control-group {
-                min-width: 100%;
-                margin-bottom: 5px;
-            }
-
-            select,
-            button {
-                width: 100%;
-                height: 44px;
-                font-size: 1rem;
+                max-width: 100%;
             }
 
             /* Mobile Layout - stacked vertically */
@@ -1244,262 +1258,31 @@
                 min-height: 0;
             }
 
-            /* Sidebars - full width on mobile */
-            .sidebar {
-                width: 100%;
-                height: 350px;
-                min-height: 350px;
-                position: relative;
-                order: 2;
-            }
-
-            .sidebar-right {
-                order: 3;
-            }
-
-            /* Main content - comes first on mobile */
-            .main-content-scrollable {
-                width: 100%;
-                height: auto;
-                min-height: 0;
-                overflow: visible;
-                order: 1;
-            }
-
-            .main-content-wrapper {
-                overflow-y: visible;
-                padding-right: 0;
-                min-height: 0;
-                gap: 15px;
-            }
-
-            /* Chart section for mobile */
-            .chart-section {
-                min-height: 350px;
-                border-radius: 12px;
-                margin-bottom: 15px;
-            }
-
-            .chart-header {
-                flex-direction: column;
-                gap: 12px;
-                text-align: center;
-                padding: 15px;
-            }
-
-            .chart-title h2 {
-                font-size: 1.2rem;
-            }
-
-            .chart-meta {
-                flex-direction: column;
-                gap: 5px;
-                font-size: 0.8rem;
-            }
-
-            .chart-controls {
-                flex-direction: column;
-                width: 100%;
-                gap: 10px;
-            }
-
-            .status-indicator {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .refresh-btn,
-            .fullscreen-btn {
-                width: 100%;
-                min-width: auto;
-            }
-
-            .chart-container {
-                min-height: 250px;
-            }
-
-            /* Lower dashboard for mobile */
-            .lower-dashboard {
-                grid-template-columns: 1fr;
-                gap: 15px;
-                margin-bottom: 15px;
-                min-height: auto;
-            }
-
-            .right-column-widgets {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-
-            .widget.full-width {
-                min-height: 300px;
-            }
-
+            /* Analysis widgets for mobile */
             .right-column-widgets .widget {
-                min-height: 250px;
-                max-height: none;
-            }
-
-            .widget {
-                border-radius: 12px;
-                margin-bottom: 15px;
-            }
-
-            .widget-header {
-                padding: 15px;
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-
-            .watchlist-controls {
-                flex-direction: column;
-                gap: 10px;
-                width: 100%;
-            }
-
-            .watchlist-tabs {
-                width: 100%;
-                justify-content: center;
-                flex-wrap: wrap;
-            }
-
-            .tab-btn {
-                flex: 1;
-                min-width: 70px;
-                font-size: 0.75rem;
-                padding: 5px 8px;
-                height: 28px;
-            }
-
-            /* Watchlist container for mobile */
-            .watchlist-container {
-                height: 250px;
-                padding: 10px;
-            }
-
-            /* Analysis for mobile */
-            .analysis-placeholder {
-                grid-template-columns: 1fr;
-                height: auto;
                 min-height: 200px;
+                height: auto;
                 max-height: none;
-                gap: 15px;
-                padding: 15px;
             }
 
-            .analysis-item {
-                padding: 15px;
+            .market-analysis-widget,
+            .detailed-analysis-widget {
+                height: auto !important;
+                min-height: 200px !important;
+                max-height: none !important;
+            }
+
+            .analysis-placeholder {
+                height: auto;
                 min-height: 180px;
-            }
-
-            .analysis-item h3 {
-                font-size: 1rem;
-                margin-bottom: 12px;
-            }
-
-            .indicator-row {
-                font-size: 0.9rem;
-            }
-
-            /* Detailed analysis for mobile */
-            .detailed-analysis {
-                height: auto;
-                min-height: 200px;
                 max-height: none;
-                padding: 15px;
-                gap: 12px;
-            }
-
-            .analysis-card {
-                padding: 12px;
-            }
-
-            .analysis-card h4 {
-                font-size: 0.95rem;
-            }
-
-            .analysis-card p {
-                font-size: 0.85rem;
-            }
-
-            /* TradingView widgets for mobile */
-            .tradingview-widget-container {
-                height: 300px;
-            }
-
-            /* Body fixes for mobile */
-            body {
-                overflow-x: hidden;
-                overflow-y: auto;
-                height: auto;
-                min-height: 100vh;
-                -webkit-overflow-scrolling: touch;
-            }
-
-            /* Remove sticky header on mobile */
-            .dashboard-header {
-                position: relative;
-            }
-        }
-
-        /* =========================================== */
-        /* Very Small Mobile Devices */
-        /* =========================================== */
-        @media (max-width: 480px) {
-            .container {
-                padding: 8px;
-            }
-
-            .dashboard-header {
-                padding: 12px;
-            }
-
-            .header-left h1 {
-                font-size: 1.4rem;
-            }
-
-            .header-left p {
-                font-size: 0.85rem;
-            }
-
-            .chart-section {
-                min-height: 300px;
-            }
-
-            .chart-container {
-                min-height: 200px;
-            }
-
-            .sidebar {
-                height: 300px;
-                min-height: 300px;
-            }
-
-            .widget.full-width {
-                min-height: 250px;
-            }
-
-            .right-column-widgets .widget {
-                min-height: 220px;
-            }
-
-            .watchlist-container {
-                height: 200px;
-            }
-
-            .analysis-placeholder {
-                padding: 12px;
-                gap: 12px;
-            }
-
-            .analysis-item {
-                padding: 12px;
-                min-height: 160px;
+                grid-template-columns: 1fr;
             }
 
             .detailed-analysis {
-                padding: 12px;
+                height: auto;
+                min-height: 180px;
+                max-height: none;
             }
         }
 
@@ -1510,53 +1293,6 @@
         body {
             max-width: 100%;
             overflow-x: hidden;
-        }
-
-        /* =========================================== */
-        /* iOS Safari specific fixes */
-        /* =========================================== */
-        @supports (-webkit-touch-callout: none) {
-            body {
-                height: -webkit-fill-available;
-            }
-
-            .container {
-                min-height: -webkit-fill-available;
-            }
-
-            .main-content-wrapper {
-                -webkit-overflow-scrolling: touch;
-            }
-        }
-
-        /* =========================================== */
-        /* Touch device optimizations */
-        /* =========================================== */
-        @media (hover: none) and (pointer: coarse) {
-
-            .main-content-wrapper,
-            .watchlist-container,
-            .analysis-placeholder,
-            .detailed-analysis {
-                -webkit-overflow-scrolling: touch;
-                scroll-behavior: smooth;
-            }
-
-            button,
-            select {
-                min-height: 44px;
-                /* Better touch target */
-            }
-        }
-
-        /* =========================================== */
-        /* High DPI screens */
-        /* =========================================== */
-        @media (-webkit-min-device-pixel-ratio: 2),
-        (min-resolution: 192dpi) {
-            .widget {
-                border-width: 0.5px;
-            }
         }
     </style>
 </head>
