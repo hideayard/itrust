@@ -248,6 +248,16 @@ class MobileController extends Controller
                 $postData = $request->post();
             }
 
+            // Get client info
+            $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+            $userAgent = $request->getUserAgent() ?? 'Unknown';
+
+            // Log incoming request
+            Yii::info('Averaged telemetry data received from IP: ' . $clientIp);
+
+            // Send Telegram notification about endpoint hit
+            $this->sendEndpointHitNotification($postData, $clientIp, $userAgent);
+
             // Validate required fields
             $requiredFields = ['device_id', 'device_name', 'data_timestamp', 'sample_count'];
             $missingFields = [];
@@ -259,6 +269,9 @@ class MobileController extends Controller
             }
 
             if (!empty($missingFields)) {
+                // Send Telegram notification for missing fields error
+                $this->sendErrorNotification($postData, $clientIp, 'Missing required fields: ' . implode(', ', $missingFields));
+
                 return [
                     'success' => false,
                     'message' => 'Missing required fields: ' . implode(', ', $missingFields),
@@ -270,9 +283,12 @@ class MobileController extends Controller
             $telemetryData = $this->extractTelemetryData($postData);
 
             // Save to database
-            $saveResult = $this->saveTelemetryData($postData, $telemetryData);
+            $saveResult = $this->saveTelemetryData($postData, $telemetryData, $clientIp);
 
             if ($saveResult === true) {
+                // Send success notification to Telegram
+                $this->sendSuccessNotification($postData, $telemetryData, $clientIp);
+
                 return [
                     'success' => true,
                     'message' => 'Telemetry data saved successfully',
@@ -286,14 +302,20 @@ class MobileController extends Controller
                     'code' => 200
                 ];
             } else {
-                // Database save failed - return the error message
+                // Database save failed - send error notification
+                $this->sendErrorNotification($postData, $clientIp, $saveResult);
+
                 return [
                     'success' => false,
-                    'message' => $saveResult, // Error message from saveTelemetryData
+                    'message' => $saveResult,
                     'code' => 500
                 ];
             }
         } catch (\Exception $e) {
+            // Send exception notification to Telegram
+            $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+            $this->sendExceptionNotification($e, $clientIp);
+
             return [
                 'success' => false,
                 'message' => 'Server error: ' . $e->getMessage(),
@@ -302,7 +324,178 @@ class MobileController extends Controller
         }
     }
 
-    private function saveTelemetryData($postData, $telemetryData)
+
+    /**
+     * Send notification when endpoint is hit
+     */
+    private function sendEndpointHitNotification($postData, $clientIp, $userAgent)
+    {
+        try {
+            $deviceId = $postData['device_id'] ?? 'Unknown';
+            $deviceName = $postData['device_name'] ?? 'Unknown Device';
+            $sampleCount = $postData['sample_count'] ?? 0;
+            $dataType = $postData['data_type'] ?? 'unknown';
+
+            $message = "📱 <b>Telemetry Endpoint Hit</b>\n\n";
+            $message .= "🔧 <b>Device:</b> " . htmlspecialchars($deviceName) . "\n";
+            $message .= "🆔 <b>ID:</b> " . htmlspecialchars($deviceId) . "\n";
+            $message .= "📊 <b>Samples:</b> " . $sampleCount . "\n";
+            $message .= "📝 <b>Type:</b> " . htmlspecialchars($dataType) . "\n";
+            $message .= "🌐 <b>From IP:</b> " . $clientIp . "\n";
+            $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n";
+
+            // Shorten user agent if too long
+            $shortAgent = strlen($userAgent) > 50 ? substr($userAgent, 0, 50) . '...' : $userAgent;
+            $message .= "🤖 <b>Agent:</b> " . htmlspecialchars($shortAgent) . "\n";
+
+            TelegramHelper::sendMessage(
+                [
+                    'text' => $message,
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
+
+            Yii::info('Telegram notification sent: Endpoint hit');
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Telegram endpoint notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send success notification to Telegram
+     */
+    private function sendSuccessNotification($postData, $telemetryData, $clientIp)
+    {
+        try {
+            $deviceId = $postData['device_id'];
+            $deviceName = $postData['device_name'];
+            $sampleCount = $postData['sample_count'];
+            $dataTimestamp = $postData['data_timestamp'];
+
+            // Format the timestamp nicely
+            $formattedTime = date('Y-m-d H:i:s', strtotime($dataTimestamp));
+
+            $message = "✅ <b>Telemetry Data Saved Successfully</b>\n\n";
+            $message .= "🔧 <b>Device:</b> " . htmlspecialchars($deviceName) . "\n";
+            $message .= "🆔 <b>ID:</b> " . htmlspecialchars($deviceId) . "\n";
+            $message .= "📊 <b>Samples:</b> " . $sampleCount . "\n";
+            $message .= "🕐 <b>Data Time:</b> " . $formattedTime . "\n";
+            $message .= "🌐 <b>From IP:</b> " . $clientIp . "\n";
+            $message .= "⏰ <b>Saved At:</b> " . date('Y-m-d H:i:s') . "\n\n";
+
+            // Add key measurements if available
+            if (isset($telemetryData['ac_v'])) {
+                $message .= "⚡ <b>AC Voltage:</b> " . $telemetryData['ac_v'] . "V\n";
+            }
+
+            if (isset($telemetryData['ac_p'])) {
+                $message .= "💡 <b>AC Power:</b> " . $telemetryData['ac_p'] . "W\n";
+            }
+
+            if (isset($telemetryData['dc_v'])) {
+                $message .= "🔋 <b>DC Voltage:</b> " . $telemetryData['dc_v'] . "V\n";
+            }
+
+            // Add GPS info if available
+            if (isset($telemetryData['gps_fixed']) && $telemetryData['gps_fixed']) {
+                $message .= "📍 <b>GPS:</b> Fixed\n";
+                if (isset($telemetryData['lat']) && isset($telemetryData['lng'])) {
+                    $message .= "🌍 <b>Location:</b> " . $telemetryData['lat'] . ", " . $telemetryData['lng'] . "\n";
+                }
+            }
+
+            // Add relay status if available
+            if (isset($telemetryData['r'])) {
+                $relayStatus = $telemetryData['r'] == 1 ? 'ON ✅' : 'OFF ⛔';
+                $message .= "🔌 <b>Relay:</b> " . $relayStatus . "\n";
+            }
+
+            // Add low voltage warning if present
+            if (isset($telemetryData['low_v']) && $telemetryData['low_v']) {
+                $message .= "⚠️ <b>Warning:</b> Low Voltage Detected\n";
+            }
+
+            TelegramHelper::sendMessage(
+                [
+                    'text' => $message,
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
+
+            Yii::info('Telegram notification sent: Data saved successfully');
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Telegram success notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send error notification to Telegram
+     */
+    private function sendErrorNotification($postData, $clientIp, $errorMessage)
+    {
+        try {
+            $deviceId = $postData['device_id'] ?? 'Unknown';
+            $deviceName = $postData['device_name'] ?? 'Unknown Device';
+
+            $message = "❌ <b>Telemetry Data Error</b>\n\n";
+            $message .= "🔧 <b>Device:</b> " . htmlspecialchars($deviceName) . "\n";
+            $message .= "🆔 <b>ID:</b> " . htmlspecialchars($deviceId) . "\n";
+            $message .= "🌐 <b>From IP:</b> " . $clientIp . "\n";
+            $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n";
+            $message .= "📝 <b>Error:</b> " . htmlspecialchars($errorMessage) . "\n";
+
+            TelegramHelper::sendMessage(
+                [
+                    'text' => $message,
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
+
+            Yii::info('Telegram notification sent: Error occurred');
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Telegram error notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send exception notification to Telegram
+     */
+    private function sendExceptionNotification($exception, $clientIp)
+    {
+        try {
+            $message = "🚨 <b>Server Exception in Telemetry Endpoint</b>\n\n";
+            $message .= "🌐 <b>From IP:</b> " . $clientIp . "\n";
+            $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n";
+            $message .= "📝 <b>Error:</b> " . htmlspecialchars($exception->getMessage()) . "\n";
+            $message .= "📁 <b>File:</b> " . htmlspecialchars($exception->getFile()) . "\n";
+            $message .= "🔢 <b>Line:</b> " . $exception->getLine() . "\n";
+
+            // Truncate message if too long
+            if (strlen($message) > 4000) {
+                $message = substr($message, 0, 4000) . "\n...[truncated]";
+            }
+
+            TelegramHelper::sendMessage(
+                [
+                    'text' => $message,
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
+
+            Yii::info('Telegram notification sent: Server exception');
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Telegram exception notification: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Also update saveTelemetryData to send critical alerts
+     */
+    private function saveTelemetryData($postData, $telemetryData, $clientIp)
     {
         try {
             $db = Yii::$app->db;
@@ -338,7 +531,7 @@ class MobileController extends Controller
                 'buffer_start_time' => $telemetryData['buffer_start_time'],
                 'buffer_end_time' => $telemetryData['buffer_end_time'],
                 'original_sample_count' => intval($telemetryData['original_sample_count']),
-                'client_ip' => Yii::$app->request->getUserIP(),
+                'client_ip' => $clientIp,
                 'user_agent' => Yii::$app->request->getUserAgent(),
             ];
 
@@ -353,6 +546,12 @@ class MobileController extends Controller
             $result = $command->execute();
 
             if ($result > 0) {
+                $lastId = $db->getLastInsertID();
+                Yii::info("Telemetry data saved. ID: {$lastId}, Device: {$postData['device_id']}");
+
+                // Check for critical conditions and send alert
+                $this->checkCriticalConditions($postData, $telemetryData, $clientIp, $lastId);
+
                 return true;
             } else {
                 // Get database error
@@ -365,6 +564,60 @@ class MobileController extends Controller
         } catch (\Exception $e) {
             // Return the error message directly
             return "Database error: " . $e->getMessage();
+        }
+    }
+
+
+    /**
+     * Check for critical conditions and send alerts
+     */
+    private function checkCriticalConditions($postData, $telemetryData, $clientIp, $recordId)
+    {
+        try {
+            $criticalEvents = [];
+
+            // Check low voltage
+            if ($telemetryData['low_v']) {
+                $criticalEvents[] = "⚠️ <b>Low Voltage Warning</b>: " . ($telemetryData['ac_v'] ?? 'N/A') . "V";
+            }
+
+            // Check high voltage
+            if (isset($telemetryData['ac_v']) && floatval($telemetryData['ac_v']) > 250) {
+                $criticalEvents[] = "⚡ <b>High Voltage</b>: " . $telemetryData['ac_v'] . "V";
+            }
+
+            // Check high power
+            if (isset($telemetryData['ac_p']) && floatval($telemetryData['ac_p']) > 5000) {
+                $criticalEvents[] = "💡 <b>High Power</b>: " . $telemetryData['ac_p'] . "W";
+            }
+
+            // Check GPS lost
+            if (isset($telemetryData['gps_fixed']) && !$telemetryData['gps_fixed']) {
+                $criticalEvents[] = "📍 <b>GPS Signal Lost</b>";
+            }
+
+            // Send alert if there are critical events
+            if (!empty($criticalEvents)) {
+                $message = "🚨 <b>Critical Alert - Device: " . htmlspecialchars($postData['device_name']) . "</b>\n\n";
+                $message .= "🆔 <b>ID:</b> " . htmlspecialchars($postData['device_id']) . "\n";
+                $message .= "📊 <b>Record ID:</b> " . $recordId . "\n";
+                $message .= "🌐 <b>From IP:</b> " . $clientIp . "\n";
+                $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n\n";
+                $message .= "<b>Critical Events:</b>\n";
+                $message .= implode("\n", $criticalEvents);
+
+                TelegramHelper::sendMessage(
+                    [
+                        'text' => $message,
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                Yii::info('Critical alert sent to Telegram');
+            }
+        } catch (\Exception $e) {
+            Yii::error('Failed to check critical conditions: ' . $e->getMessage());
         }
     }
 
