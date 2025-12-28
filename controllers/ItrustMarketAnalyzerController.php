@@ -12,9 +12,9 @@ use yii\filters\VerbFilter;
 use yii\web\UploadedFile;
 
 /**
- * MarketAnalyzerController implements the CRUD actions for Banner model.
+ * ItrustMarketAnalyzerController implements the CRUD actions for Banner model.
  */
-class MarketAnalyzerController extends Controller
+class ItrustMarketAnalyzerController extends Controller
 {
 
     public $layout = 'market-analyzer';
@@ -65,7 +65,7 @@ class MarketAnalyzerController extends Controller
      */
     public function actionIndex()
     {
-        return "Market Analyzer";
-        // return $this->render('index');
+        // return "Market Analyzer";
+        return $this->render('index');
     }
 }
