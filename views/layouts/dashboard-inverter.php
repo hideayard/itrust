@@ -18,7 +18,6 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-
         .metric-card {
             background-color: #1f2937;
             border: 1px solid #374151;

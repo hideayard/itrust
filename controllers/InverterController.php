@@ -11,9 +11,6 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\UploadedFile;
 
-/**
- * InverterController implements the CRUD actions for Banner model.
- */
 class InverterController extends Controller
 {
 
