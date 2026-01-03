@@ -19,19 +19,25 @@ class MobileController extends Controller
      */
     public function behaviors()
     {
-        return array_merge(parent::behaviors(), [
+        $behaviors = parent::behaviors();
+
+        // Remove CSRF validation for API requests
+        unset($behaviors['authenticator']);
+
+        // Add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => \yii\filters\Cors::className(),
             'cors' => [
-                'class' => Cors::class,
-                'cors' => [
-                    'Origin' => ['*'],
-                    'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
-                    'Access-Control-Request-Headers' => ['*'],
-                    'Access-Control-Allow-Credentials' => true,
-                    'Access-Control-Max-Age' => 86400,
-                    'Access-Control-Expose-Headers' => [],
-                ],
+                'Origin' => ['*'], // Or restrict to specific domains: ['http://yourdomain.com']
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+                'Access-Control-Max-Age' => 86400,
+                'Access-Control-Expose-Headers' => [],
             ],
-        ]);
+        ];
+
+        return $behaviors;
     }
 
     /**
@@ -55,6 +61,17 @@ class MobileController extends Controller
 
     public function actionLogin()
     {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
