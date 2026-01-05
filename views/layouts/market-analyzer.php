@@ -1388,10 +1388,12 @@
                 <div class="control-group">
                     <label for="pair">Currency Pair</label>
                     <select id="pair">
-                        <option value="EURJPY">EUR/JPY</option>
+                        <option value="EURJPY" selected>EUR/JPY</option>
+                        <option value="USDJPY">USD/JPY</option>
                         <option value="EURUSD">EUR/USD</option>
                         <option value="GBPUSD">GBP/USD</option>
-                        <option value="USDJPY">USD/JPY</option>
+                        <option value="XAUUSD">XAU/USD</option>
+                        <option value="XAGUSD">XAG/USD</option>
                         <option value="BTCUSD">BTC/USD</option>
                     </select>
                 </div>
