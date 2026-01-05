@@ -939,43 +939,368 @@
             }
         }
 
-        /* Extra small screens */
         @media (max-width: 768px) {
+
+            /* Container adjustments for mobile */
+            .container {
+                padding: 8px;
+            }
+
+            /* Ultra-compact header */
             .dashboard-header {
                 flex-direction: column;
-                gap: 12px;
+                gap: 8px;
+                padding: 8px 12px;
+                max-height: 180px;
+                min-height: 140px;
+                overflow: hidden;
+                justify-content: space-between;
             }
 
+            /* Compact header left section */
             .header-left {
                 text-align: center;
+                flex-shrink: 1;
+                min-height: 0;
+                margin-bottom: 2px;
+                width: 100%;
             }
 
+            .header-left h1 {
+                font-size: 1.2rem;
+                margin-bottom: 2px;
+                line-height: 1.2;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
+            /* Very compact paragraph */
+            .header-left p {
+                font-size: 0.7rem;
+                line-height: 1.2;
+                max-height: 24px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 1;
+                -webkit-box-orient: vertical;
+                margin: 0 auto;
+                width: 95%;
+            }
+
+            /* Single line controls - dynamic widths */
             .controls {
                 width: 100%;
-                flex-direction: column;
-                align-items: stretch;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: nowrap;
+                gap: 6px;
+                flex-shrink: 0;
+                align-items: flex-end;
+                /* Align items to bottom */
+                justify-content: space-between;
+                margin-top: 2px;
+                min-width: 0;
             }
 
+            /* Control groups - dynamic sizing */
             .control-group {
+                flex: 1 1 0px;
+                min-width: 0;
                 max-width: 100%;
-                min-width: 100%;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                /* Push content to bottom */
             }
 
+            .control-group label {
+                font-size: 0.65rem;
+                margin-bottom: 2px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: block;
+                line-height: 1;
+                width: 100%;
+            }
+
+            /* Form elements - dynamic widths with consistent height */
+            select {
+                height: 30px;
+                /* Fixed height */
+                min-height: 30px;
+                max-height: 30px;
+                padding: 5px 8px;
+                font-size: 0.75rem;
+                padding-right: 28px;
+                width: 100%;
+                min-width: 0;
+                border-radius: 4px;
+                flex-shrink: 1;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                line-height: 1.2;
+                /* Ensure text aligns properly */
+            }
+
+            button {
+                height: 30px !important;
+                /* Fixed height with !important */
+                min-height: 30px !important;
+                max-height: 30px !important;
+                padding: 5px 8px;
+                font-size: 0.75rem;
+                flex: 1 1 0px;
+                min-width: 0;
+                max-width: 100%;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                border-radius: 4px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 4px;
+                line-height: 1 !important;
+                /* Reset line height */
+                box-sizing: border-box !important;
+                /* Ensure padding included in height */
+            }
+
+            /* Ensure button content doesn't affect height */
+            button span,
+            button i,
+            button svg {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 100%;
+                line-height: 1;
+                margin: 0;
+                padding: 0;
+            }
+
+            /* Even more compact for small screens */
+            @media (max-width: 576px) {
+                .dashboard-header {
+                    max-height: 160px;
+                    min-height: 130px;
+                    padding: 6px 10px;
+                }
+
+                .header-left h1 {
+                    font-size: 1.1rem;
+                }
+
+                .header-left p {
+                    font-size: 0.65rem;
+                    max-height: 20px;
+                }
+
+                /* Adjust gap for tighter layout */
+                .controls {
+                    gap: 4px;
+                }
+
+                .control-group label {
+                    font-size: 0.6rem;
+                }
+
+                select {
+                    height: 28px !important;
+                    min-height: 28px !important;
+                    max-height: 28px !important;
+                    padding: 4px 6px;
+                    font-size: 0.7rem;
+                    padding-right: 24px;
+                }
+
+                button {
+                    height: 28px !important;
+                    min-height: 28px !important;
+                    max-height: 28px !important;
+                    padding: 4px 6px;
+                    font-size: 0.7rem;
+                    line-height: 1 !important;
+                }
+
+                /* Handle text overflow better on very small screens */
+                select option {
+                    font-size: 0.8rem;
+                }
+            }
+
+            /* Extra small screens - maintain layout but reduce sizes */
+            @media (max-width: 400px) {
+                .dashboard-header {
+                    max-height: 150px;
+                    min-height: 120px;
+                    padding: 4px 8px;
+                }
+
+                .header-left h1 {
+                    font-size: 1rem;
+                }
+
+                .header-left p {
+                    font-size: 0.6rem;
+                }
+
+                .controls {
+                    gap: 3px;
+                }
+
+                .control-group label {
+                    font-size: 0.55rem;
+                    margin-bottom: 1px;
+                }
+
+                select {
+                    height: 26px !important;
+                    min-height: 26px !important;
+                    max-height: 26px !important;
+                    padding: 3px 4px;
+                    font-size: 0.65rem;
+                    padding-right: 22px;
+                }
+
+                button {
+                    height: 26px !important;
+                    min-height: 26px !important;
+                    max-height: 26px !important;
+                    padding: 3px 4px;
+                    font-size: 0.65rem;
+                    line-height: 1 !important;
+                }
+
+                /* Hide button text on very small, show only icon/short text */
+                button span:not(.icon) {
+                    display: inline;
+                    max-width: 40px;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    line-height: 1;
+                }
+            }
+
+            /* Ultra small screens - minimal but functional */
+            @media (max-width: 320px) {
+                .header-left p {
+                    display: none;
+                }
+
+                .control-group label {
+                    display: none;
+                }
+
+                .controls {
+                    align-items: center;
+                }
+
+                select {
+                    height: 24px !important;
+                    min-height: 24px !important;
+                    max-height: 24px !important;
+                    font-size: 0.6rem;
+                    padding: 2px 4px;
+                }
+
+                button {
+                    height: 24px !important;
+                    min-height: 24px !important;
+                    max-height: 24px !important;
+                    font-size: 0.6rem;
+                    padding: 2px 4px;
+                    line-height: 1 !important;
+                }
+            }
+
+            /* Ensure select dropdowns are readable and aligned */
+            select {
+                background-size: 12px;
+                background-position: right 6px center;
+                line-height: 1.2 !important;
+                display: flex;
+                align-items: center;
+            }
+
+            @media (max-width: 576px) {
+                select {
+                    background-size: 10px;
+                    background-position: right 4px center;
+                }
+            }
+
+            /* Override any existing button height styles */
+            button:not(.refresh-btn):not(.fullscreen-btn):not(.tab-btn) {
+                height: 30px !important;
+                min-height: 30px !important;
+                max-height: 30px !important;
+            }
+
+            /* Chart adjustments */
             .chart-header {
                 flex-direction: column;
                 text-align: center;
-                gap: 12px;
+                gap: 8px;
+                padding: 8px 12px;
+            }
+
+            .chart-title h2 {
+                font-size: 1rem;
+            }
+
+            .chart-meta {
+                font-size: 0.7rem;
+                gap: 6px;
             }
 
             .chart-controls {
-                width: 100%;
-                flex-direction: column;
-                align-items: stretch;
+                gap: 6px;
             }
 
             .refresh-btn,
             .fullscreen-btn {
-                width: 100%;
+                height: 28px !important;
+                font-size: 0.75rem;
+                line-height: 1 !important;
+            }
+
+            /* Adjust sidebar heights */
+            .sidebar {
+                height: 350px;
+            }
+        }
+
+        /* Override all button heights for consistency */
+        @media (max-width: 1200px) {
+            .controls button:not(.refresh-btn):not(.fullscreen-btn):not(.tab-btn) {
+                height: 30px !important;
+                min-height: 30px !important;
+                max-height: 30px !important;
+                line-height: 1 !important;
+            }
+
+            .controls {
+                flex-wrap: nowrap !important;
+            }
+
+            .control-group {
+                min-width: 0 !important;
+                max-width: none !important;
+            }
+        }
+
+        /* Ensure vertical alignment matches */
+        @media (max-width: 768px) {
+
+            select,
+            button {
+                vertical-align: middle;
+                align-items: center;
             }
         }
 
