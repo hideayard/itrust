@@ -9,6 +9,13 @@ use yii\filters\Cors;
 use app\models\forms\LoginForm;
 use app\helpers\TelegramHelper;
 use app\helpers\JwtHelper;
+use app\models\MyfxbookScrapedData;
+use app\models\MyfxbookEconomicEvent;
+use app\models\MyfxbookTechnicalPattern;
+use app\models\MyfxbookInterestRate;
+use app\models\MyfxbookStatistics;
+use app\models\MyfxbookApiLog;
+use yii\web\BadRequestHttpException;
 
 class MobileController extends Controller
 {
@@ -46,11 +53,517 @@ class MobileController extends Controller
     public function beforeAction($action)
     {
         // Set JSON response format for API endpoints
-        if (in_array($action->id, ['telemetry', 'averaged-telemetry', 'sync-status'])) {
+        if (in_array($action->id, [
+            'telemetry',
+            'averaged-telemetry',
+            'sync-status',
+            'save-scrape-data',
+            'get-scrape-data',
+            'get-latest-events',
+            'get-high-impact-events',
+            'get-technical-analysis',
+            'get-interest-rates',
+            'get-statistics'
+        ])) {
             Yii::$app->response->format = Response::FORMAT_JSON;
         }
 
         return parent::beforeAction($action);
+    }
+
+    public function actionSaveScrapeData()
+    {
+        $startTime = microtime(true);
+        $requestData = Yii::$app->request->getRawBody();
+        $jsonData = json_decode($requestData, true);
+
+        // Log request
+        MyfxbookApiLog::logRequest('save-scrape-data', 'POST', $jsonData);
+
+        try {
+            // Validate request
+            if (empty($jsonData)) {
+                throw new BadRequestHttpException('Invalid JSON data');
+            }
+
+            if (!isset($jsonData['data'])) {
+                throw new BadRequestHttpException('Missing data section');
+            }
+
+            // Save scraped data
+            $success = MyfxbookScrapedData::saveScrapedData($jsonData);
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            if ($success) {
+                // Get the last inserted ID
+                $scrapeId = Yii::$app->db->getLastInsertID();
+
+                // Send Telegram notification for high impact events
+                $this->sendHighImpactNotification($jsonData);
+
+                $response = [
+                    'success' => true,
+                    'message' => 'Scraped data saved successfully',
+                    'scrapeId' => $scrapeId,
+                    'responseTime' => $responseTime
+                ];
+
+                // Update log with success
+                MyfxbookApiLog::logRequest('save-scrape-data', 'POST', $jsonData, 200, $responseTime);
+
+                return $response;
+            } else {
+                throw new \Exception('Failed to save scraped data');
+            }
+        } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Update log with error
+            MyfxbookApiLog::logRequest('save-scrape-data', 'POST', $jsonData, 500, $responseTime);
+
+            Yii::error('Error saving scrape data: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to save scraped data: ' . $e->getMessage(),
+                'error' => $e->getMessage(),
+                'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    /**
+     * Get scraped data by ID or latest
+     * 
+     * Endpoint: GET /mobile/get-scrape-data?id=123
+     * Endpoint: GET /mobile/get-scrape-data?limit=10
+     * Endpoint: GET /mobile/get-scrape-data?date=2024-01-07
+     * Endpoint: GET /mobile/get-scrape-data?startDate=2024-01-01&endDate=2024-01-07
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "data": [...],
+     *   "total": 10
+     * }
+     */
+    public function actionGetScrapeData()
+    {
+        $startTime = microtime(true);
+
+        try {
+            $id = Yii::$app->request->get('id');
+            $limit = Yii::$app->request->get('limit', 10);
+            $date = Yii::$app->request->get('date');
+            $startDate = Yii::$app->request->get('startDate');
+            $endDate = Yii::$app->request->get('endDate');
+
+            if ($id) {
+                // Get specific scrape by ID
+                $data = MyfxbookScrapedData::find()
+                    ->with(['economicEvents', 'technicalPatterns', 'technicalSummary', 'interestRates'])
+                    ->where(['id' => $id])
+                    ->one();
+
+                $result = $data ? [$data] : [];
+                $total = $data ? 1 : 0;
+            } elseif ($date) {
+                // Get scrapes for specific date
+                $result = MyfxbookScrapedData::getScrapesByDateRange($date . ' 00:00:00', $date . ' 23:59:59');
+                $total = count($result);
+            } elseif ($startDate && $endDate) {
+                // Get scrapes for date range
+                $result = MyfxbookScrapedData::getScrapesByDateRange($startDate . ' 00:00:00', $endDate . ' 23:59:59');
+                $total = count($result);
+            } else {
+                // Get latest scrapes
+                $result = MyfxbookScrapedData::getLatestScrapes($limit);
+                $total = count($result);
+            }
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Format response
+            $formattedData = [];
+            foreach ($result as $scrape) {
+                $formattedData[] = $this->formatScrapeData($scrape);
+            }
+
+            // Log request
+            MyfxbookApiLog::logRequest('get-scrape-data', 'GET', $_GET, 200, $responseTime);
+
+            return [
+                'success' => true,
+                'data' => $formattedData,
+                'total' => $total,
+                'responseTime' => $responseTime
+            ];
+        } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log error
+            MyfxbookApiLog::logRequest('get-scrape-data', 'GET', $_GET, 500, $responseTime);
+
+            Yii::error('Error getting scrape data: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to get scraped data: ' . $e->getMessage(),
+                'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    /**
+     * Get latest economic events
+     * 
+     * Endpoint: GET /mobile/get-latest-events?currency=EUR&limit=20
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "events": [...],
+     *   "total": 15
+     * }
+     */
+    public function actionGetLatestEvents()
+    {
+        $startTime = microtime(true);
+
+        try {
+            $currency = Yii::$app->request->get('currency');
+            $limit = Yii::$app->request->get('limit', 20);
+
+            $events = MyfxbookEconomicEvent::find()
+                ->joinWith('scrapeData')
+                ->orderBy(['myfxbook_economic_events.created_at' => SORT_DESC])
+                ->limit($limit);
+
+            if ($currency) {
+                $events->andWhere(['currency' => $currency]);
+            }
+
+            $events = $events->all();
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log request
+            MyfxbookApiLog::logRequest('get-latest-events', 'GET', $_GET, 200, $responseTime);
+
+            return [
+                'success' => true,
+                'events' => $events,
+                'total' => count($events),
+                'responseTime' => $responseTime
+            ];
+        } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log error
+            MyfxbookApiLog::logRequest('get-latest-events', 'GET', $_GET, 500, $responseTime);
+
+            Yii::error('Error getting latest events: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to get events: ' . $e->getMessage(),
+                'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    /**
+     * Get high impact events
+     * 
+     * Endpoint: GET /mobile/get-high-impact-events?currency=USD&limit=10
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "events": [...],
+     *   "total": 8
+     * }
+     */
+    public function actionGetHighImpactEvents()
+    {
+        $startTime = microtime(true);
+
+        try {
+            $currency = Yii::$app->request->get('currency');
+            $limit = Yii::$app->request->get('limit', 10);
+
+            $events = MyfxbookScrapedData::getHighImpactEvents($currency, $limit);
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log request
+            MyfxbookApiLog::logRequest('get-high-impact-events', 'GET', $_GET, 200, $responseTime);
+
+            return [
+                'success' => true,
+                'events' => $events,
+                'total' => count($events),
+                'responseTime' => $responseTime
+            ];
+        } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log error
+            MyfxbookApiLog::logRequest('get-high-impact-events', 'GET', $_GET, 500, $responseTime);
+
+            Yii::error('Error getting high impact events: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to get high impact events: ' . $e->getMessage(),
+                'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    /**
+     * Get technical analysis data
+     * 
+     * Endpoint: GET /mobile/get-technical-analysis?limit=5
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "technicalAnalysis": [...],
+     *   "total": 5
+     * }
+     */
+    public function actionGetTechnicalAnalysis()
+    {
+        $startTime = microtime(true);
+
+        try {
+            $limit = Yii::$app->request->get('limit', 5);
+
+            $scrapes = MyfxbookScrapedData::getLatestScrapes($limit);
+
+            $technicalData = [];
+            foreach ($scrapes as $scrape) {
+                if ($scrape->technicalSummary) {
+                    $technicalData[] = [
+                        'scrapeId' => $scrape->id,
+                        'scrapeTimestamp' => $scrape->scrape_timestamp,
+                        'technicalSummary' => $scrape->technicalSummary->technical_summary,
+                        'totalPatterns' => $scrape->technicalSummary->total_patterns,
+                        'buyCount' => $scrape->technicalSummary->buy_count,
+                        'sellCount' => $scrape->technicalSummary->sell_count,
+                        'neutralCount' => $scrape->technicalSummary->neutral_count,
+                        'buyPercentage' => $scrape->technicalSummary->getBuyPercentage(),
+                        'sellPercentage' => $scrape->technicalSummary->getSellPercentage(),
+                        'patterns' => $scrape->technicalPatterns
+                    ];
+                }
+            }
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log request
+            MyfxbookApiLog::logRequest('get-technical-analysis', 'GET', $_GET, 200, $responseTime);
+
+            return [
+                'success' => true,
+                'technicalAnalysis' => $technicalData,
+                'total' => count($technicalData),
+                'responseTime' => $responseTime
+            ];
+        } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log error
+            MyfxbookApiLog::logRequest('get-technical-analysis', 'GET', $_GET, 500, $responseTime);
+
+            Yii::error('Error getting technical analysis: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to get technical analysis: ' . $e->getMessage(),
+                'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    /**
+     * Get interest rates
+     * 
+     * Endpoint: GET /mobile/get-interest-rates?country=United States&limit=10
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "interestRates": [...],
+     *   "total": 5
+     * }
+     */
+    public function actionGetInterestRates()
+    {
+        $startTime = microtime(true);
+
+        try {
+            $country = Yii::$app->request->get('country');
+            $limit = Yii::$app->request->get('limit', 10);
+
+            $query = MyfxbookInterestRate::find()
+                ->joinWith('scrapeData')
+                ->orderBy(['myfxbook_interest_rates.created_at' => SORT_DESC])
+                ->limit($limit);
+
+            if ($country) {
+                $query->andWhere(['country' => $country]);
+            }
+
+            $rates = $query->all();
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log request
+            MyfxbookApiLog::logRequest('get-interest-rates', 'GET', $_GET, 200, $responseTime);
+
+            return [
+                'success' => true,
+                'interestRates' => $rates,
+                'total' => count($rates),
+                'responseTime' => $responseTime
+            ];
+        } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log error
+            MyfxbookApiLog::logRequest('get-interest-rates', 'GET', $_GET, 500, $responseTime);
+
+            Yii::error('Error getting interest rates: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to get interest rates: ' . $e->getMessage(),
+                'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    /**
+     * Get scraping statistics
+     * 
+     * Endpoint: GET /mobile/get-statistics?startDate=2024-01-01&endDate=2024-01-07
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "statistics": [...],
+     *   "total": 7
+     * }
+     */
+    public function actionGetStatistics()
+    {
+        $startTime = microtime(true);
+
+        try {
+            $startDate = Yii::$app->request->get('startDate', date('Y-m-d', strtotime('-7 days')));
+            $endDate = Yii::$app->request->get('endDate', date('Y-m-d'));
+
+            $statistics = MyfxbookStatistics::getStatisticsByDateRange($startDate, $endDate);
+
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log request
+            MyfxbookApiLog::logRequest('get-statistics', 'GET', $_GET, 200, $responseTime);
+
+            return [
+                'success' => true,
+                'statistics' => $statistics,
+                'total' => count($statistics),
+                'responseTime' => $responseTime
+            ];
+        } catch (\Exception $e) {
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log error
+            MyfxbookApiLog::logRequest('get-statistics', 'GET', $_GET, 500, $responseTime);
+
+            Yii::error('Error getting statistics: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to get statistics: ' . $e->getMessage(),
+                'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    /**
+     * Format scrape data for response
+     *
+     * @param MyfxbookScrapedData $scrape
+     * @return array
+     */
+    private function formatScrapeData($scrape)
+    {
+        return [
+            'id' => $scrape->id,
+            'scrapeTimestamp' => $scrape->scrape_timestamp,
+            'scrapeNumber' => $scrape->scrape_number,
+            'url' => $scrape->url,
+            'refreshInterval' => $scrape->refresh_interval,
+            'createdAt' => $scrape->created_at,
+            'economicEvents' => $scrape->economicEvents,
+            'technicalAnalysis' => $scrape->technicalSummary ? [
+                'technicalSummary' => $scrape->technicalSummary->technical_summary,
+                'totalPatterns' => $scrape->technicalSummary->total_patterns,
+                'buyCount' => $scrape->technicalSummary->buy_count,
+                'sellCount' => $scrape->technicalSummary->sell_count,
+                'neutralCount' => $scrape->technicalSummary->neutral_count,
+                'buyPercentage' => $scrape->technicalSummary->getBuyPercentage(),
+                'sellPercentage' => $scrape->technicalSummary->getSellPercentage(),
+                'patterns' => $scrape->technicalPatterns
+            ] : null,
+            'interestRates' => $scrape->interestRates
+        ];
+    }
+
+    /**
+     * Send Telegram notification for high impact events
+     *
+     * @param array $scrapeData
+     * @return void
+     */
+    private function sendHighImpactNotification($scrapeData)
+    {
+        try {
+            $highImpactEvents = [];
+
+            if (isset($scrapeData['data']['economicCalendar']['events'])) {
+                foreach ($scrapeData['data']['economicCalendar']['events'] as $event) {
+                    if (($event['impact'] ?? '') === 'high') {
+                        $highImpactEvents[] = $event;
+                    }
+                }
+            }
+
+            if (!empty($highImpactEvents)) {
+                $message = "🔔 *HIGH IMPACT EVENTS DETECTED*\n\n";
+
+                foreach ($highImpactEvents as $event) {
+                    $message .= "⏰ *Time:* {$event['time']}\n";
+                    $message .= "💰 *Currency:* {$event['currency']}\n";
+                    $message .= "📅 *Event:* {$event['event']}\n";
+                    $message .= "📊 *Previous:* {$event['previous']}\n";
+                    $message .= "🎯 *Forecast:* {$event['forecast']}\n";
+                    $message .= "📍 *Country:* {$event['country']}\n\n";
+                }
+
+                // Send via TelegramHelper if available
+                if (class_exists('app\helpers\TelegramHelper')) {
+                    TelegramHelper::sendMessage($message);
+                }
+            }
+        } catch (\Exception $e) {
+            Yii::error('Error sending Telegram notification: ' . $e->getMessage());
+        }
     }
 
     public function actionIndex()
@@ -943,5 +1456,252 @@ class MobileController extends Controller
                 'code' => 503
             ];
         }
+    }
+
+    /**
+     * Get all devices for the authenticated user
+     */
+    public function actionUserDevices()
+    {
+        $user_id = Yii::$app->user->identity->user_id;
+
+        // Get user's devices with optional filters
+        $query = UserDevices::find()
+            ->where(['user_id' => $user_id])
+            ->andWhere(['is_active' => 1]);
+
+        // Optional: Get latest telemetry data for each device
+        $devices = $query->all();
+
+        $result = [];
+        foreach ($devices as $device) {
+            // Get latest telemetry data for this device
+            $latestTelemetry = TelemetryData::find()
+                ->where(['device_id' => $device->device_id])
+                ->orderBy(['data_timestamp' => SORT_DESC])
+                ->one();
+
+            $deviceData = [
+                'id' => $device->id,
+                'device_id' => $device->device_id,
+                'device_alias' => $device->device_alias,
+                'device_description' => $device->device_description,
+                'created_at' => $device->created_at,
+                'updated_at' => $device->updated_at,
+            ];
+
+            if ($latestTelemetry) {
+                $deviceData['latest_telemetry'] = [
+                    'timestamp' => $latestTelemetry->data_timestamp,
+                    'ac_power' => $latestTelemetry->ac_p,
+                    'ac_voltage' => $latestTelemetry->ac_v,
+                    'ac_current' => $latestTelemetry->ac_i,
+                    'energy' => $latestTelemetry->energy,
+                    'relay_state' => $latestTelemetry->relay_state,
+                    'gps_location' => $latestTelemetry->lat && $latestTelemetry->lng ? [
+                        'lat' => $latestTelemetry->lat,
+                        'lng' => $latestTelemetry->lng
+                    ] : null
+                ];
+            }
+
+            $result[] = $deviceData;
+        }
+
+        return [
+            'success' => true,
+            'data' => $result,
+            'count' => count($result)
+        ];
+    }
+
+    /**
+     * Get telemetry data for a specific device by device_id
+     */
+    public function actionDeviceTelemetry($device_id = null)
+    {
+        $user_id = Yii::$app->user->identity->user_id;
+
+        if (!$device_id) {
+            Yii::$app->response->statusCode = 400;
+            return [
+                'success' => false,
+                'message' => 'Device ID is required'
+            ];
+        }
+
+        // Verify that the user owns this device
+        $userDevice = UserDevices::findOne([
+            'user_id' => $user_id,
+            'device_id' => $device_id,
+            'is_active' => 1
+        ]);
+
+        if (!$userDevice) {
+            Yii::$app->response->statusCode = 403;
+            return [
+                'success' => false,
+                'message' => 'Device not found or access denied'
+            ];
+        }
+
+        $request = Yii::$app->request;
+
+        // Get query parameters for filtering
+        $startDate = $request->get('start_date');
+        $endDate = $request->get('end_date');
+        $limit = $request->get('limit', 100);
+        $offset = $request->get('offset', 0);
+        $order = $request->get('order', 'DESC'); // ASC or DESC
+
+        $query = TelemetryData::find()
+            ->where(['device_id' => $device_id]);
+
+        // Apply date filters if provided
+        if ($startDate) {
+            $query->andWhere(['>=', 'data_timestamp', $startDate]);
+        }
+
+        if ($endDate) {
+            $query->andWhere(['<=', 'data_timestamp', $endDate]);
+        }
+
+        // Apply pagination and ordering
+        $totalCount = $query->count();
+        $telemetryData = $query
+            ->orderBy(['data_timestamp' => $order === 'ASC' ? SORT_ASC : SORT_DESC])
+            ->limit($limit)
+            ->offset($offset)
+            ->all();
+
+        $formattedData = [];
+        foreach ($telemetryData as $data) {
+            $formattedData[] = [
+                'id' => $data->id,
+                'timestamp' => $data->data_timestamp,
+                'ac_voltage' => $data->ac_v,
+                'ac_current' => $data->ac_i,
+                'ac_power' => $data->ac_p,
+                'energy' => $data->energy,
+                'frequency' => $data->freq,
+                'power_factor' => $data->pf,
+                'dc_voltage' => $data->dc_v,
+                'dc_current' => $data->dc_i,
+                'low_voltage_warning' => (bool)$data->low_v,
+                'gps_fixed' => (bool)$data->gps_fixed,
+                'latitude' => $data->lat,
+                'longitude' => $data->lng,
+                'relay_state' => (bool)$data->relay_state,
+                'device_name' => $data->device_name,
+                'sync_type' => $data->sync_type,
+                'data_type' => $data->data_type,
+                'created_at' => $data->created_at
+            ];
+        }
+
+        return [
+            'success' => true,
+            'device' => [
+                'id' => $userDevice->device_id,
+                'alias' => $userDevice->device_alias,
+                'description' => $userDevice->device_description
+            ],
+            'data' => $formattedData,
+            'pagination' => [
+                'total' => $totalCount,
+                'limit' => $limit,
+                'offset' => $offset,
+                'has_more' => ($offset + $limit) < $totalCount
+            ]
+        ];
+    }
+
+    /**
+     * Get specific telemetry record by ID
+     */
+    public function actionDeviceTelemetryById($id = null)
+    {
+        $user_id = Yii::$app->user->identity->user_id;
+
+        if (!$id) {
+            Yii::$app->response->statusCode = 400;
+            return [
+                'success' => false,
+                'message' => 'Telemetry record ID is required'
+            ];
+        }
+
+        // Find the telemetry record
+        $telemetry = TelemetryData::findOne($id);
+
+        if (!$telemetry) {
+            Yii::$app->response->statusCode = 404;
+            return [
+                'success' => false,
+                'message' => 'Telemetry record not found'
+            ];
+        }
+
+        // Verify that the user owns the device associated with this telemetry record
+        $userDevice = UserDevices::findOne([
+            'user_id' => $user_id,
+            'device_id' => $telemetry->device_id,
+            'is_active' => 1
+        ]);
+
+        if (!$userDevice) {
+            Yii::$app->response->statusCode = 403;
+            return [
+                'success' => false,
+                'message' => 'Access denied to this telemetry record'
+            ];
+        }
+
+        // Format the response
+        $formattedData = [
+            'id' => $telemetry->id,
+            'device_id' => $telemetry->device_id,
+            'device_name' => $telemetry->device_name,
+            'timestamp' => $telemetry->data_timestamp,
+            'ac_voltage' => $telemetry->ac_v,
+            'ac_current' => $telemetry->ac_i,
+            'ac_power' => $telemetry->ac_p,
+            'energy' => $telemetry->energy,
+            'frequency' => $telemetry->freq,
+            'power_factor' => $telemetry->pf,
+            'dc_voltage' => $telemetry->dc_v,
+            'dc_current' => $telemetry->dc_i,
+            'low_voltage_warning' => (bool)$telemetry->low_v,
+            'gps_fixed' => (bool)$telemetry->gps_fixed,
+            'latitude' => $telemetry->lat,
+            'longitude' => $telemetry->lng,
+            'relay_state' => (bool)$telemetry->relay_state,
+            'sample_count' => $telemetry->sample_count,
+            'sync_type' => $telemetry->sync_type,
+            'data_type' => $telemetry->data_type,
+            'buffer_start_time' => $telemetry->buffer_start_time,
+            'buffer_end_time' => $telemetry->buffer_end_time,
+            'device_manufacturer' => $telemetry->device_manufacturer,
+            'device_model' => $telemetry->device_model,
+            'sync_interval' => $telemetry->sync_interval,
+            'sync_iteration_count' => $telemetry->sync_iteration_count,
+            'client_ip' => $telemetry->client_ip,
+            'created_at' => $telemetry->created_at,
+            'updated_at' => $telemetry->updated_at
+        ];
+
+        return [
+            'success' => true,
+            'data' => $formattedData
+        ];
+    }
+
+    /**
+     * Handle OPTIONS request for CORS preflight
+     */
+    public function actionOptions()
+    {
+        Yii::$app->response->statusCode = 200;
+        return [];
     }
 }

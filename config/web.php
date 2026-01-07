@@ -58,13 +58,38 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                // Myfxbook API endpoints
+                'POST mobile/save-scrape-data' => 'mobile/save-scrape-data',
+                'GET mobile/get-scrape-data' => 'mobile/get-scrape-data',
+                'GET mobile/get-latest-events' => 'mobile/get-latest-events',
+                'GET mobile/get-high-impact-events' => 'mobile/get-high-impact-events',
+                'GET mobile/get-technical-analysis' => 'mobile/get-technical-analysis',
+                'GET mobile/get-interest-rates' => 'mobile/get-interest-rates',
+                'GET mobile/get-statistics' => 'mobile/get-statistics',
+
                 'course/<id:\d+>' => 'site/detailcourse',
                 'enroll/<id:\d+>/<id_section:\d+>' => 'site/enroll',
                 'courses/sections/<id:\d+>' => 'courses/sections',
                 'bot/webhook' => 'bot/webhook',
+
                 'mobile/login' => 'mobile/login',
+                'mobile/user-devices' => 'mobile/user-devices',
+                'mobile/device-telemetry' => 'mobile/device-telemetry',
+                'mobile/device-telemetry-by-id' => 'mobile/device-telemetry-by-id',
                 'mobile/validate-token' => 'mobile/validate-token',
 
+                // Telemetry Device API Routes
+                'telemetry-device' => 'telemetry-device/index',
+                'telemetry-device/create' => 'telemetry-device/create',
+                'telemetry-device/<id:\d+>' => 'telemetry-device/view',
+                'telemetry-device/<id:\d+>/update' => 'telemetry-device/update',
+                'telemetry-device/<id:\d+>/delete' => 'telemetry-device/delete',
+                'telemetry-device/<id:\d+>/activate' => 'telemetry-device/activate',
+                'telemetry-device/<id:\d+>/telemetry' => 'telemetry-device/telemetry',
+                'telemetry-device/<id:\d+>/stats' => 'telemetry-device/stats',
+                'telemetry-device/search' => 'telemetry-device/search',
+                'telemetry-device/user/<user_id:\d+>' => 'telemetry-device/by-user',
+                'telemetry-device/bulk-assign' => 'telemetry-device/bulk-assign',
                 // 'confirm/<email:\s+>/<token:\s+>' => 'site/confirm',
             ],
         ],
