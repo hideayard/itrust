@@ -1892,7 +1892,7 @@ class MobileController extends Controller
                     'message' => 'User ID not found in token'
                 ];
             }
-            
+
             // Fetch devices
             $devices = UserDevices::find()
                 ->where(['user_id' => $userId, 'is_active' => 1])
@@ -1974,6 +1974,406 @@ class MobileController extends Controller
 
         return null;
     }
+
+    public function actionGetDevicesWithData()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Fetch devices
+            $devices = UserDevices::find()
+                ->where(['user_id' => $userId, 'is_active' => 1])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            $formattedDevices = [];
+            foreach ($devices as $device) {
+                // Get latest telemetry data for this device
+                $latestTelemetry = TelemetryData::getLatestByDevice($device->device_id);
+
+                // Format telemetry data
+                $telemetryData = $latestTelemetry ? $this->formatTelemetryData($latestTelemetry) : null;
+
+                // Calculate derived metrics
+                $calculatedMetrics = $this->calculateDeviceMetrics($latestTelemetry);
+
+                // Get device status
+                $status = $this->getDeviceStatus($latestTelemetry);
+
+                // Get location data if available
+                $location = $this->getLocationData($latestTelemetry);
+
+                $formattedDevices[] = [
+                    'id' => $device->id,
+                    'device_id' => $device->device_id,
+                    'device_name' => $device->device_name,
+                    'device_alias' => $device->device_alias,
+                    'device_description' => $device->device_description,
+                    'device_remark' => $device->device_remark,
+                    'is_active' => (bool)$device->is_active,
+                    'created_at' => $device->created_at,
+                    'updated_at' => $device->updated_at,
+
+                    // Telemetry data
+                    'telemetry' => $telemetryData,
+                    'metrics' => $calculatedMetrics,
+                    'status' => $status,
+                    'status_text' => $this->getStatusText($status),
+                    'last_updated' => $telemetryData ? $telemetryData['data_timestamp'] : null,
+                    'last_updated_ago' => $telemetryData ? $this->getTimeAgo($telemetryData['data_timestamp']) : 'Never',
+
+                    // Location data
+                    'location' => $location,
+                    'has_location' => !empty($location),
+
+                    // Device hardware info from telemetry
+                    'hardware_info' => [
+                        'manufacturer' => $latestTelemetry->device_manufacturer ?? null,
+                        'model' => $latestTelemetry->device_model ?? null,
+                        'sync_type' => $latestTelemetry->sync_type ?? null,
+                        'data_type' => $latestTelemetry->data_type ?? null,
+                    ],
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Devices retrieved successfully with telemetry data',
+                'data' => $formattedDevices,
+                'summary' => [
+                    'total_devices' => count($formattedDevices),
+                    'active_devices' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['status'] === 'active';
+                    })),
+                    'warning_devices' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['status'] === 'warning';
+                    })),
+                    'offline_devices' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['status'] === 'offline';
+                    })),
+                    'with_telemetry' => count(array_filter($formattedDevices, function ($d) {
+                        return !empty($d['telemetry']);
+                    })),
+                    'with_location' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['has_location'];
+                    })),
+                    'total_power' => array_sum(array_map(function ($d) {
+                        return $d['metrics']['calculated_power'] ?? 0;
+                    }, $formattedDevices)),
+                    'total_energy' => array_sum(array_map(function ($d) {
+                        return $d['telemetry']['energy'] ?? 0;
+                    }, $formattedDevices)),
+                    'total_carbon_reduction' => array_sum(array_map(function ($d) {
+                        return $d['metrics']['carbon_reduction'] ?? 0;
+                    }, $formattedDevices)),
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get devices with data',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Format telemetry data for API response
+     */
+    private function formatTelemetryData($telemetry)
+    {
+        if (!$telemetry) {
+            return null;
+        }
+
+        return [
+            'id' => $telemetry->id,
+            'data_timestamp' => $telemetry->data_timestamp,
+
+            // AC measurements
+            'ac_voltage' => $telemetry->ac_v,
+            'ac_current' => $telemetry->ac_i,
+            'ac_power' => $telemetry->ac_p,
+            'energy' => $telemetry->energy,
+            'frequency' => $telemetry->freq,
+            'power_factor' => $telemetry->pf,
+
+            // DC measurements
+            'dc_voltage' => $telemetry->dc_v,
+            'dc_current' => $telemetry->dc_i,
+
+            // Status flags
+            'low_voltage_warning' => (bool)$telemetry->low_v,
+            'gps_fixed' => (bool)$telemetry->gps_fixed,
+            'relay_state' => (bool)$telemetry->relay_state,
+
+            // Location
+            'latitude' => $telemetry->lat,
+            'longitude' => $telemetry->lng,
+
+            // Metadata
+            'sample_count' => $telemetry->sample_count,
+            'sync_type' => $telemetry->sync_type,
+            'data_type' => $telemetry->data_type,
+            'buffer_start_time' => $telemetry->buffer_start_time,
+            'buffer_end_time' => $telemetry->buffer_end_time,
+            'original_sample_count' => $telemetry->original_sample_count,
+            'sync_interval' => $telemetry->sync_interval,
+            'sync_iteration_count' => $telemetry->sync_iteration_count,
+
+            // Device info from telemetry
+            'device_name_from_telemetry' => $telemetry->device_name,
+            'device_manufacturer' => $telemetry->device_manufacturer,
+            'device_model' => $telemetry->device_model,
+        ];
+    }
+
+    /**
+     * Calculate derived metrics from telemetry data
+     */
+    private function calculateDeviceMetrics($telemetry)
+    {
+        if (!$telemetry) {
+            return [
+                'status' => 'no_data',
+                'calculated_power' => 0,
+                'carbon_reduction' => 0,
+                'uptime' => 0,
+                'efficiency' => 0,
+                'battery_percentage' => 0,
+                'signal_quality' => 'unknown',
+                'dc_power' => 0,
+                'ac_dc_efficiency' => 0,
+            ];
+        }
+
+        // Calculate AC power if not provided
+        $calculatedAcPower = $telemetry->ac_p;
+        if (!$calculatedAcPower && $telemetry->ac_v !== null && $telemetry->ac_i !== null) {
+            $calculatedAcPower = $telemetry->ac_v * $telemetry->ac_i * ($telemetry->pf ?: 1);
+        }
+
+        // Calculate DC power
+        $dcPower = 0;
+        if ($telemetry->dc_v !== null && $telemetry->dc_i !== null) {
+            $dcPower = $telemetry->dc_v * $telemetry->dc_i;
+        }
+
+        // Calculate efficiency (DC to AC if both available)
+        $acDcEfficiency = 0;
+        if ($dcPower > 0 && $calculatedAcPower > 0) {
+            $acDcEfficiency = ($calculatedAcPower / $dcPower) * 100;
+        }
+
+        // Calculate carbon reduction (example formula)
+        $carbonReduction = 0;
+        if ($telemetry->energy) {
+            // Assuming renewable energy, 0.5 kg CO2 per kWh saved from grid
+            $carbonReduction = $telemetry->energy * 0.5;
+        }
+
+        // Calculate uptime based on last update time
+        $uptime = $this->calculateUptime($telemetry->data_timestamp);
+
+        // Calculate efficiency from power factor
+        $efficiency = 0;
+        if ($telemetry->pf) {
+            $efficiency = $telemetry->pf * 100;
+        }
+
+        // Estimate battery percentage from DC voltage (example: 12V system)
+        $batteryPercentage = 0;
+        if ($telemetry->dc_v !== null) {
+            // Example for 12V lead-acid battery
+            if ($telemetry->dc_v >= 12.7) {
+                $batteryPercentage = 100;
+            } elseif ($telemetry->dc_v >= 12.4) {
+                $batteryPercentage = 75;
+            } elseif ($telemetry->dc_v >= 12.2) {
+                $batteryPercentage = 50;
+            } elseif ($telemetry->dc_v >= 12.0) {
+                $batteryPercentage = 25;
+            } else {
+                $batteryPercentage = 0;
+            }
+        }
+
+        return [
+            'status' => 'active',
+            'calculated_power' => round($calculatedAcPower, 2),
+            'dc_power' => round($dcPower, 2),
+            'carbon_reduction' => round($carbonReduction, 2),
+            'uptime' => round($uptime, 1),
+            'efficiency' => round($efficiency, 1),
+            'ac_dc_efficiency' => round($acDcEfficiency, 1),
+            'battery_percentage' => $batteryPercentage,
+            'battery_voltage' => $telemetry->dc_v,
+            'signal_quality' => 'good', // You can add signal strength if available
+            'low_voltage' => (bool)$telemetry->low_v,
+            'relay_on' => (bool)$telemetry->relay_state,
+            'gps_locked' => (bool)$telemetry->gps_fixed,
+            'frequency_stable' => $telemetry->freq ? (abs($telemetry->freq - 50) < 0.5 || abs($telemetry->freq - 60) < 0.5) : false,
+        ];
+    }
+
+    /**
+     * Calculate uptime percentage based on last update
+     */
+    private function calculateUptime($lastTimestamp)
+    {
+        if (!$lastTimestamp) {
+            return 0;
+        }
+
+        $lastUpdate = strtotime($lastTimestamp);
+        $now = time();
+        $timeDiff = $now - $lastUpdate;
+
+        // Return uptime based on how recent the data is
+        if ($timeDiff < 300) { // Last 5 minutes
+            return 100;
+        } elseif ($timeDiff < 1800) { // Last 30 minutes
+            return 95;
+        } elseif ($timeDiff < 3600) { // Last hour
+            return 90;
+        } elseif ($timeDiff < 7200) { // Last 2 hours
+            return 80;
+        } elseif ($timeDiff < 14400) { // Last 4 hours
+            return 70;
+        } elseif ($timeDiff < 28800) { // Last 8 hours
+            return 50;
+        } else {
+            return 0;
+        }
+    }
+
+    /**
+     * Determine device status based on telemetry
+     */
+    private function getDeviceStatus($telemetry)
+    {
+        if (!$telemetry) {
+            return 'offline';
+        }
+
+        $timestamp = $telemetry->data_timestamp;
+        if (!$timestamp) {
+            return 'offline';
+        }
+
+        $lastUpdate = strtotime($timestamp);
+        $now = time();
+        $timeDiff = $now - $lastUpdate;
+
+        // Check for warning conditions
+        $hasWarnings = false;
+        if ($telemetry->low_v) {
+            $hasWarnings = true;
+        }
+        if ($telemetry->dc_v !== null && $telemetry->dc_v < 12.0) {
+            $hasWarnings = true;
+        }
+
+        if ($timeDiff < 300) { // Last 5 minutes
+            return $hasWarnings ? 'warning' : 'active';
+        } elseif ($timeDiff < 3600) { // Last hour
+            return 'idle';
+        } else {
+            return 'offline';
+        }
+    }
+
+    /**
+     * Get status text for display
+     */
+    private function getStatusText($status)
+    {
+        $statusTexts = [
+            'active' => '🟢 Active',
+            'warning' => '🟡 Warning',
+            'idle' => '⚪ Idle',
+            'offline' => '🔴 Offline',
+            'no_data' => '⚫ No Data',
+        ];
+
+        return $statusTexts[$status] ?? 'Unknown';
+    }
+
+    /**
+     * Get location data from telemetry
+     */
+    private function getLocationData($telemetry)
+    {
+        if (!$telemetry || !$telemetry->lat || !$telemetry->lng) {
+            return null;
+        }
+
+        return [
+            'latitude' => $telemetry->lat,
+            'longitude' => $telemetry->lng,
+            'gps_fixed' => (bool)$telemetry->gps_fixed,
+            'formatted' => sprintf('%.6f, %.6f', $telemetry->lat, $telemetry->lng),
+            'google_maps_link' => sprintf('https://maps.google.com/?q=%s,%s', $telemetry->lat, $telemetry->lng),
+            'openstreetmap_link' => sprintf('https://www.openstreetmap.org/?mlat=%s&mlon=%s', $telemetry->lat, $telemetry->lng),
+        ];
+    }
+
+    /**
+     * Get time ago string
+     */
+    private function getTimeAgo($timestamp)
+    {
+        if (!$timestamp) {
+            return 'Never';
+        }
+
+        $time = strtotime($timestamp);
+        $now = time();
+        $diff = $now - $time;
+
+        if ($diff < 60) {
+            return 'Just now';
+        } elseif ($diff < 3600) {
+            $mins = floor($diff / 60);
+            return $mins . ' min' . ($mins > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
+        } elseif ($diff < 604800) {
+            $days = floor($diff / 86400);
+            return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
+        } else {
+            return date('M j, Y', $time);
+        }
+    }
+
+
     /**
      * Handle OPTIONS request for CORS preflight
      */
