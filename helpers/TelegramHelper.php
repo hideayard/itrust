@@ -14,15 +14,84 @@ class TelegramHelper
 
     private static $groups = [];
 
+
+    /**
+     * Send a simple error message without model
+     * 
+     * @param string $errorMessage The error message/description
+     * @param string|null $context Additional context information
+     * @param string|int|null $group Group ID (optional, defaults to error_group_id from params)
+     * @param int|null $threadId Thread ID (optional, defaults to error_thread_id from params)
+     * @return mixed
+     */
+    public static function sendSimpleError($errorMessage, $context = null, $group = null, $threadId = null)
+    {
+        // Determine group ID
+        $chatId = $group ?? Yii::$app->params['error_group_id'] ?? Yii::$app->params['group_id'] ?? self::$defaultChatId;
+
+        // Determine thread ID
+        $messageThreadId = $threadId ?? (Yii::$app->params['error_thread_id'] ?? null);
+
+        // Build error message
+        $message = "🚨 <b>Error Alert</b>\n";
+        $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n";
+
+        if ($context) {
+            $message .= "📋 <b>Context:</b> " . htmlspecialchars($context) . "\n";
+        }
+
+        $message .= "❌ <b>Error:</b> " . htmlspecialchars($errorMessage);
+
+        // Truncate if needed
+        $message = self::truncateMessage($message);
+
+        // Prepare parameters
+        $params = [
+            'text' => $message,
+            'parse_mode' => 'html',
+            'chat_id' => $chatId
+        ];
+
+        // Add thread ID if available
+        if ($messageThreadId !== null) {
+            $params['message_thread_id'] = (int)$messageThreadId;
+        }
+
+        try {
+            return self::send('sendMessage', $params);
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Telegram simple error: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    // // Simple error with default settings
+    // TelegramHelper::sendSimpleError("Database connection failed");
+
+    // // Error with context
+    // TelegramHelper::sendSimpleError(
+    //     "API request timeout", 
+    //     "Fetching EUR/USD rates from provider"
+    // );
+
+    // // Error with custom group and thread
+    // TelegramHelper::sendSimpleError(
+    //     "Cron job failed",
+    //     "Daily report generation",
+    //     Yii::$app->params['monitoring_group_id'],
+    //     789
+    // );
+
     /**
      * Report error to Telegram
      * 
      * @param string $title Error title/context
      * @param mixed $data Error data (will be JSON encoded)
      * @param string|null $additionalInfo Additional context
-     * @param string $groupId Telegram group ID (optional, will use default from params)
+     * @param string|int|null $groupId Telegram group ID (optional, will use default from params)
+     * @param int|null $threadId Thread ID for forum topics (optional)
      */
-    public static function report($title, $data, $additionalInfo = null, $groupId = null)
+    public static function report($title, $data, $additionalInfo = null, $groupId = null, $threadId = null)
     {
         // Build error message
         $message = "⚠️ <b>Error Report</b>\n";
@@ -45,8 +114,13 @@ class TelegramHelper
         // Truncate if needed
         $message = self::truncateMessage($message);
 
-        // Determine group ID
-        $targetGroupId = $groupId ?? Yii::$app->params['error_group_id'] ?? Yii::$app->params['group_id'];
+        // Determine group ID and thread ID
+        $targetGroupId = $groupId ?? Yii::$app->params['error_group_id'] ?? Yii::$app->params['group_id'] ?? self::$defaultChatId;
+
+        // Get thread ID for errors if not explicitly provided
+        if ($threadId === null) {
+            $threadId = Yii::$app->params['error_thread_id'] ?? null;
+        }
 
         if (empty($targetGroupId)) {
             Yii::error('Telegram group ID not configured for error reporting');
@@ -54,13 +128,17 @@ class TelegramHelper
         }
 
         try {
-            return self::sendMessage(
-                [
-                    'text' => $message,
-                    'parse_mode' => 'html'
-                ],
-                $targetGroupId
-            );
+            $params = [
+                'text' => $message,
+                'parse_mode' => 'html'
+            ];
+
+            // Add thread ID if provided
+            if ($threadId !== null) {
+                $params['message_thread_id'] = (int)$threadId;
+            }
+
+            return self::sendMessage($params, $targetGroupId);
         } catch (\Exception $e) {
             Yii::error('Failed to send Telegram error report: ' . $e->getMessage());
             return false;
@@ -93,17 +171,16 @@ class TelegramHelper
     /**
      * Report Yii model errors
      */
-    public static function reportModelError($model, $context = null, $groupId = null)
+    public static function reportModelError($model, $context = null, $groupId = null, $threadId = null)
     {
         $title = 'Model Validation Error';
         $additional = $context ? "Context: {$context}" : "Model: " . get_class($model);
 
-        return self::report($title, $model->errors, $additional, $groupId);
+        return self::report($title, $model->errors, $additional, $groupId, $threadId);
     }
 
     private static function send($method, $params, $botToken = null, $log = false)
     {
-
         if (!self::$ch) {
             self::$ch = curl_init();
             curl_setopt(self::$ch, CURLOPT_POST, true);
@@ -122,13 +199,15 @@ class TelegramHelper
 
         $endPoint = 'https://api.telegram.org/bot' . $botToken . '/' . $method;
         curl_setopt(self::$ch, CURLOPT_URL, $endPoint);
-        curl_setopt(self::$ch, CURLOPT_POSTFIELDS, http_build_query($params));
 
+        // Handle multipart/form-data for file uploads
         if ($method == 'sendPhoto' || $method == 'sendDocument') {
             curl_setopt(self::$ch, CURLOPT_HTTPHEADER, [
                 "Content-Type: multipart/form-data"
             ]);
             curl_setopt(self::$ch, CURLOPT_POSTFIELDS, $params);
+        } else {
+            curl_setopt(self::$ch, CURLOPT_POSTFIELDS, http_build_query($params));
         }
 
         if ($log) {
@@ -147,7 +226,6 @@ class TelegramHelper
 
     public static function getFile($file_id, $botToken)
     {
-
         if (!self::$ch) {
             self::$ch = curl_init();
             curl_setopt(self::$ch, CURLOPT_POST, true);
@@ -181,7 +259,6 @@ class TelegramHelper
 
     public static function downloadFile($file_path, $botToken)
     {
-
         if (!$botToken || empty($botToken)) {
             $botToken = Yii::$app->params['telegramBotToken'];
         }
@@ -218,15 +295,22 @@ class TelegramHelper
         return self::send('deleteMessage', $params);
     }
 
-
     public static function editMessageText($params, $botToken = null)
     {
         return self::send('editMessageText', $params, $botToken);
     }
 
-    public static function sendMessage($params, $group = null, $botToken = null)
+    /**
+     * Send message to Telegram
+     * 
+     * @param array $params Message parameters
+     * @param string|int|null $group Group ID or alias
+     * @param string|null $botToken Bot token (optional)
+     * @param int|null $threadId Thread ID for forum topics (optional)
+     * @return mixed
+     */
+    public static function sendMessage($params, $group = null, $botToken = null, $threadId = null)
     {
-
         if (!isset($params['text']) || empty($params['text'])) {
             return false;
         }
@@ -235,14 +319,31 @@ class TelegramHelper
             $params['parse_mode'] = 'html';
         }
 
+        // Determine chat ID
         $params['chat_id'] = ($group) ? (is_numeric($group) ? $group : self::$groups[$group]) : self::$defaultChatId;
+
+        // Add thread ID if provided or from params for regular messages
+        if ($threadId !== null) {
+            $params['message_thread_id'] = (int)$threadId;
+        } elseif ($params['chat_id'] == (Yii::$app->params['group_id'] ?? null) && isset(Yii::$app->params['thread_id'])) {
+            // Default thread for main group
+            $params['message_thread_id'] = (int)Yii::$app->params['thread_id'];
+        }
 
         return self::send('sendMessage', $params, $botToken);
     }
 
-    public static function sendDocument($params, $group = null, $botToken = null)
+    /**
+     * Send document to Telegram
+     * 
+     * @param array $params Document parameters
+     * @param string|int|null $group Group ID or alias
+     * @param string|null $botToken Bot token (optional)
+     * @param int|null $threadId Thread ID for forum topics (optional)
+     * @return mixed
+     */
+    public static function sendDocument($params, $group = null, $botToken = null, $threadId = null)
     {
-
         if (!isset($params['document']) || empty($params['document'])) {
             return false;
         }
@@ -253,12 +354,28 @@ class TelegramHelper
 
         $params['chat_id'] = ($group) ? (is_numeric($group) ? $group : self::$groups[$group]) : self::$defaultChatId;
 
+        // Add thread ID if provided
+        if ($threadId !== null) {
+            $params['message_thread_id'] = (int)$threadId;
+        } elseif ($params['chat_id'] == (Yii::$app->params['group_id'] ?? null) && isset(Yii::$app->params['thread_id'])) {
+            // Default thread for main group
+            $params['message_thread_id'] = (int)Yii::$app->params['thread_id'];
+        }
+
         return self::send('sendDocument', $params, $botToken);
     }
 
-    public static function sendPhoto($params, $group = null, $botToken = null)
+    /**
+     * Send photo to Telegram
+     * 
+     * @param array $params Photo parameters
+     * @param string|int|null $group Group ID or alias
+     * @param string|null $botToken Bot token (optional)
+     * @param int|null $threadId Thread ID for forum topics (optional)
+     * @return mixed
+     */
+    public static function sendPhoto($params, $group = null, $botToken = null, $threadId = null)
     {
-
         if (!isset($params['photo']) || empty($params['photo'])) {
             return false;
         }
@@ -269,12 +386,19 @@ class TelegramHelper
 
         $params['chat_id'] = ($group) ? (is_numeric($group) ? $group : self::$groups[$group]) : self::$defaultChatId;
 
+        // Add thread ID if provided
+        if ($threadId !== null) {
+            $params['message_thread_id'] = (int)$threadId;
+        } elseif ($params['chat_id'] == (Yii::$app->params['group_id'] ?? null) && isset(Yii::$app->params['thread_id'])) {
+            // Default thread for main group
+            $params['message_thread_id'] = (int)Yii::$app->params['thread_id'];
+        }
+
         return self::send('sendPhoto', $params, $botToken);
     }
 
     public static function sendPoll($params, $group = null)
     {
-
         if (!isset($params['parse_mode'])) {
             $params['parse_mode'] = 'html';
         }
@@ -300,5 +424,36 @@ class TelegramHelper
         curl_close($ch);
 
         return $result;
+    }
+
+    /**
+     * Send a simple message with default group and thread settings
+     * 
+     * @param string $message Message text
+     * @param string|int|null $group Group ID (optional, defaults to group_id from params)
+     * @param int|null $threadId Thread ID (optional, defaults to thread_id from params)
+     * @return mixed
+     */
+    public static function sendSimpleMessage($message, $group = null, $threadId = null)
+    {
+        // Determine group ID
+        $chatId = $group ?? Yii::$app->params['group_id'] ?? self::$defaultChatId;
+
+        // Determine thread ID
+        $messageThreadId = $threadId ?? (Yii::$app->params['thread_id'] ?? null);
+
+        // Prepare parameters
+        $params = [
+            'text' => $message,
+            'parse_mode' => 'html',
+            'chat_id' => $chatId
+        ];
+
+        // Add thread ID if available
+        if ($messageThreadId !== null) {
+            $params['message_thread_id'] = (int)$messageThreadId;
+        }
+
+        return self::send('sendMessage', $params);
     }
 }

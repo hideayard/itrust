@@ -558,7 +558,7 @@ class MobileController extends Controller
 
                 // Send via TelegramHelper if available
                 if (class_exists('app\helpers\TelegramHelper')) {
-                    TelegramHelper::sendMessage($message);
+                    TelegramHelper::sendSimpleMessage($message);
                 }
             }
         } catch (\Exception $e) {
@@ -618,7 +618,7 @@ class MobileController extends Controller
                 // Log the login activity
                 $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
 
-                TelegramHelper::sendMessage(
+                TelegramHelper::sendSimpleMessage(
                     [
                         'text' => "Mobile User Login : " . $model->user_name . "\nFrom : " . $clientIp,
                         'parse_mode' => 'html'
@@ -878,7 +878,7 @@ class MobileController extends Controller
             $shortAgent = strlen($userAgent) > 50 ? substr($userAgent, 0, 50) . '...' : $userAgent;
             $message .= "🤖 <b>Agent:</b> " . htmlspecialchars($shortAgent) . "\n";
 
-            TelegramHelper::sendMessage(
+            TelegramHelper::sendSimpleMessage(
                 [
                     'text' => $message,
                     'parse_mode' => 'html'
@@ -946,7 +946,7 @@ class MobileController extends Controller
                 $message .= "⚠️ <b>Warning:</b> Low Voltage Detected\n";
             }
 
-            TelegramHelper::sendMessage(
+            TelegramHelper::sendSimpleMessage(
                 [
                     'text' => $message,
                     'parse_mode' => 'html'
@@ -976,7 +976,7 @@ class MobileController extends Controller
             $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n";
             $message .= "📝 <b>Error:</b> " . htmlspecialchars($errorMessage) . "\n";
 
-            TelegramHelper::sendMessage(
+            TelegramHelper::sendSimpleMessage(
                 [
                     'text' => $message,
                     'parse_mode' => 'html'
@@ -1008,7 +1008,7 @@ class MobileController extends Controller
                 $message = substr($message, 0, 4000) . "\n...[truncated]";
             }
 
-            TelegramHelper::sendMessage(
+            TelegramHelper::sendSimpleMessage(
                 [
                     'text' => $message,
                     'parse_mode' => 'html'
@@ -1136,7 +1136,7 @@ class MobileController extends Controller
                 $message .= "<b>Critical Events:</b>\n";
                 $message .= implode("\n", $criticalEvents);
 
-                TelegramHelper::sendMessage(
+                TelegramHelper::sendSimpleMessage(
                     [
                         'text' => $message,
                         'parse_mode' => 'html'
@@ -1304,7 +1304,7 @@ class MobileController extends Controller
                 $message .= "From IP: " . $clientIp . "\n\n";
                 $message .= "<b>Events:</b>\n" . implode("\n", $criticalEvents);
 
-                TelegramHelper::sendMessage(
+                TelegramHelper::sendSimpleMessage(
                     [
                         'text' => $message,
                         'parse_mode' => 'html'
@@ -1324,7 +1324,7 @@ class MobileController extends Controller
                 $summary .= "Latest samples: " . $postData['sample_count'] . "\n";
                 $summary .= "Time: " . date('Y-m-d H:i:s');
 
-                TelegramHelper::sendMessage(
+                TelegramHelper::sendSimpleMessage(
                     [
                         'text' => $summary,
                         'parse_mode' => 'html'

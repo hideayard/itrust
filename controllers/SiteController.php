@@ -128,7 +128,7 @@ class SiteController extends Controller
         if ($model->load(Yii::$app->request->post()) && $model->login()) {
             $clientIp = CustomHelper::get_client_ip() ?? 'localhost';
 
-            TelegramHelper::sendMessage(
+            TelegramHelper::sendSimpleMessage(
                 [
                     'text' => "User Login : " . $model->user_name . "\nFrom : " . $clientIp,
                     'parse_mode' => 'html'
@@ -166,7 +166,7 @@ class SiteController extends Controller
                 $newNotif->notif_processed = "true";
 
                 if ($newNotif->save()) {
-                    TelegramHelper::sendMessage(
+                    TelegramHelper::sendSimpleMessage(
                         [
                             'text' => "<strong>Notification :</strong>\nFrom : " . $value->notif_from . "\n" . $value->notif_text,
                             'parse_mode' => 'html'
@@ -174,7 +174,7 @@ class SiteController extends Controller
                         Yii::$app->params['group_id']
                     );
                 } else {
-                    TelegramHelper::sendMessage(
+                    TelegramHelper::sendSimpleMessage(
                         [
                             'text' => "<strong>ERROR :</strong> \nactionCheckNotif : " . current($newNotif->errors)[0],
                             'parse_mode' => 'html'
