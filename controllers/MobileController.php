@@ -279,6 +279,8 @@ class MobileController extends Controller
 
     public function actionGetLatestScrapeData()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
         try {
             $pair = Yii::$app->request->get('pair', 'EURJPY');
             $timeframe = Yii::$app->request->get('timeframe', 'H4');
