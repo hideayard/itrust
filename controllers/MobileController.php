@@ -74,7 +74,7 @@ class MobileController extends Controller
         return parent::beforeAction($action);
     }
 
-    public function actionScrapedDataSave()
+    public function actionSaveScrapeData()
     {
         $startTime = microtime(true);
         $response = ['success' => false, 'message' => ''];
@@ -214,7 +214,7 @@ class MobileController extends Controller
         }
     }
 
-    public function actionSaveScrapeData()
+    public function actionSaveScrapeData2()
     {
         $startTime = microtime(true);
         $requestData = Yii::$app->request->getRawBody();
