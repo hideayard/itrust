@@ -1862,6 +1862,83 @@ class MobileController extends Controller
         ];
     }
 
+    public function actionGetDevices()
+    {
+        // Check if it's a POST request
+        if (Yii::$app->request->isPost) {
+            try {
+                // Get the authorization token from header
+                $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
+
+                if (!$authHeader) {
+                    throw new \Exception('No authorization token provided');
+                }
+
+                // Extract token (remove 'Bearer ' prefix if present)
+                $token = str_replace('Bearer ', '', $authHeader);
+
+                // Decode JWT token
+                $secretKey = Yii::$app->params['jwtSecretKey'] ?? 'your-secret-key';
+                $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($secretKey, 'HS256'));
+
+                // Get user data from token
+                $userData = $decoded->data;
+                $userId = $userData->id;
+
+                // Fetch devices for this user
+                $devices = UserDevices::find()
+                    ->where(['user_id' => $userId, 'is_active' => 1])
+                    ->orderBy(['created_at' => SORT_DESC])
+                    ->all();
+
+                // Format response
+                $formattedDevices = [];
+                foreach ($devices as $device) {
+                    $formattedDevices[] = [
+                        'id' => $device->id,
+                        'device_id' => $device->device_id,
+                        'device_name' => $device->device_name,
+                        'device_alias' => $device->device_alias,
+                        'device_description' => $device->device_description,
+                        'device_remark' => $device->device_remark,
+                        'is_active' => $device->is_active,
+                        'created_at' => $device->created_at,
+                        'updated_at' => $device->updated_at,
+                    ];
+                }
+
+                return $this->asJson([
+                    'success' => true,
+                    'message' => 'Devices retrieved successfully',
+                    'data' => $formattedDevices
+                ]);
+            } catch (\Firebase\JWT\ExpiredException $e) {
+                return $this->asJson([
+                    'success' => false,
+                    'message' => 'Token expired',
+                    'error' => $e->getMessage()
+                ]);
+            } catch (\Firebase\JWT\SignatureInvalidException $e) {
+                return $this->asJson([
+                    'success' => false,
+                    'message' => 'Invalid token signature',
+                    'error' => $e->getMessage()
+                ]);
+            } catch (\Exception $e) {
+                return $this->asJson([
+                    'success' => false,
+                    'message' => 'Failed to get devices',
+                    'error' => $e->getMessage()
+                ]);
+            }
+        }
+
+        return $this->asJson([
+            'success' => false,
+            'message' => 'Invalid request method'
+        ]);
+    }
+
     /**
      * Handle OPTIONS request for CORS preflight
      */
