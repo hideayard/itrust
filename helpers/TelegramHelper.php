@@ -7,11 +7,99 @@ use Yii;
 
 class TelegramHelper
 {
+    const MAX_MESSAGE_LENGTH = 4000; // Slightly under 4096 to be safe
 
     private static $ch; //cURL Handle
     private static $defaultChatId =  -1002149598297; //bot common
 
     private static $groups = [];
+
+    /**
+     * Report error to Telegram
+     * 
+     * @param string $title Error title/context
+     * @param mixed $data Error data (will be JSON encoded)
+     * @param string|null $additionalInfo Additional context
+     * @param string $groupId Telegram group ID (optional, will use default from params)
+     */
+    public static function report($title, $data, $additionalInfo = null, $groupId = null)
+    {
+        // Build error message
+        $message = "⚠️ <b>Error Report</b>\n";
+        $message .= "📝 <b>Title:</b> " . htmlspecialchars($title) . "\n";
+        $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n";
+
+        if ($additionalInfo) {
+            $message .= "📋 <b>Context:</b> " . htmlspecialchars($additionalInfo) . "\n";
+        }
+
+        // Format data
+        if (is_array($data) || is_object($data)) {
+            $formattedData = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        } else {
+            $formattedData = (string)$data;
+        }
+
+        $message .= "❌ <b>Error Details:</b>\n<code>" . htmlspecialchars($formattedData) . "</code>";
+
+        // Truncate if needed
+        $message = self::truncateMessage($message);
+
+        // Determine group ID
+        $targetGroupId = $groupId ?? Yii::$app->params['error_group_id'] ?? Yii::$app->params['group_id'];
+
+        if (empty($targetGroupId)) {
+            Yii::error('Telegram group ID not configured for error reporting');
+            return false;
+        }
+
+        try {
+            return self::sendMessage(
+                [
+                    'text' => $message,
+                    'parse_mode' => 'html'
+                ],
+                $targetGroupId
+            );
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Telegram error report: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Truncate message for Telegram limits
+     */
+    private static function truncateMessage($text, $maxLength = null)
+    {
+        $maxLength = $maxLength ?? self::MAX_MESSAGE_LENGTH;
+
+        if (mb_strlen($text, 'UTF-8') <= $maxLength) {
+            return $text;
+        }
+
+        // Try to truncate at a reasonable point
+        $truncated = mb_substr($text, 0, $maxLength - 100, 'UTF-8');
+
+        // Find last newline before the limit
+        $lastNewline = mb_strrpos($truncated, "\n", 0, 'UTF-8');
+        if ($lastNewline > $maxLength - 200) {
+            $truncated = mb_substr($truncated, 0, $lastNewline, 'UTF-8');
+        }
+
+        return $truncated . "\n\n... [message truncated due to Telegram length limits]";
+    }
+
+    /**
+     * Report Yii model errors
+     */
+    public static function reportModelError($model, $context = null, $groupId = null)
+    {
+        $title = 'Model Validation Error';
+        $additional = $context ? "Context: {$context}" : "Model: " . get_class($model);
+
+        return self::report($title, $model->errors, $additional, $groupId);
+    }
 
     private static function send($method, $params, $botToken = null, $log = false)
     {
@@ -210,7 +298,7 @@ class TelegramHelper
         curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
         $result = curl_exec($ch);
         curl_close($ch);
-    
+
         return $result;
     }
 }

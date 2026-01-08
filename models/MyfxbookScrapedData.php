@@ -2,6 +2,7 @@
 
 namespace app\models;
 
+use app\helpers\TelegramHelper;
 use Yii;
 use yii\db\ActiveRecord;
 use yii\behaviors\TimestampBehavior;
@@ -138,27 +139,31 @@ class MyfxbookScrapedData extends ActiveRecord
     public static function saveScrapedData(array $scrapeData)
     {
         $transaction = Yii::$app->db->beginTransaction();
-        
+
         try {
             // Extract metadata
             $metadata = $scrapeData['metadata'] ?? [];
             $data = $scrapeData['data'] ?? [];
-            
+
             // Save main scraped data
             $scrapedData = new self();
             $scrapedData->scrape_timestamp = $metadata['scrapeTimestamp'] ?? date('Y-m-d H:i:s');
             $scrapedData->scrape_number = $metadata['scrapeCount'] ?? 0;
             $scrapedData->url = $metadata['url'] ?? '';
             $scrapedData->refresh_interval = $metadata['refreshInterval'] ?? null;
-            
+
             if (!$scrapedData->save()) {
                 Yii::error('Failed to save scraped data: ' . json_encode($scrapedData->errors));
+                TelegramHelper::reportModelError(
+                    $scrapedData,
+                    'Failed to save economic event'
+                );
                 $transaction->rollBack();
                 return false;
             }
-            
+
             $scrapeId = $scrapedData->id;
-            
+
             // Save economic events
             if (isset($data['economicCalendar']['events'])) {
                 foreach ($data['economicCalendar']['events'] as $event) {
@@ -173,19 +178,23 @@ class MyfxbookScrapedData extends ActiveRecord
                     $economicEvent->forecast_value = $event['forecast'] ?? null;
                     $economicEvent->country = $event['country'] ?? null;
                     $economicEvent->country_code = $event['countryCode'] ?? null;
-                    
+
                     if (!$economicEvent->save()) {
                         Yii::error('Failed to save economic event: ' . json_encode($economicEvent->errors));
+                        TelegramHelper::reportModelError(
+                            $economicEvent,
+                            'Failed to save economic event'
+                        );
                         $transaction->rollBack();
                         return false;
                     }
                 }
             }
-            
+
             // Save technical analysis
             if (isset($data['technicalAnalysis'])) {
                 $taData = $data['technicalAnalysis'];
-                
+
                 // Save technical summary
                 $technicalSummary = new MyfxbookTechnicalSummary();
                 $technicalSummary->scrape_data_id = $scrapeId;
@@ -196,13 +205,17 @@ class MyfxbookScrapedData extends ActiveRecord
                 $technicalSummary->neutral_count = $taData['counts']['neutral'] ?? 0;
                 $technicalSummary->header_buy_count = $taData['headerCounts']['buy'] ?? 0;
                 $technicalSummary->header_sell_count = $taData['headerCounts']['sell'] ?? 0;
-                
+
                 if (!$technicalSummary->save()) {
                     Yii::error('Failed to save technical summary: ' . json_encode($technicalSummary->errors));
+                    TelegramHelper::reportModelError(
+                        $economicEvent,
+                        'Failed to save economic event'
+                    );
                     $transaction->rollBack();
                     return false;
                 }
-                
+
                 // Save technical patterns
                 if (isset($taData['patterns'])) {
                     foreach ($taData['patterns'] as $pattern) {
@@ -214,16 +227,20 @@ class MyfxbookScrapedData extends ActiveRecord
                         $technicalPattern->buy_value = $pattern['buy'] ?? null;
                         $technicalPattern->sell_value = $pattern['sell'] ?? null;
                         $technicalPattern->timeframes = $pattern['timeframes'] ?? null;
-                        
+
                         if (!$technicalPattern->save()) {
                             Yii::error('Failed to save technical pattern: ' . json_encode($technicalPattern->errors));
+                            TelegramHelper::reportModelError(
+                                $technicalPattern,
+                                'Failed to save economic event'
+                            );
                             $transaction->rollBack();
                             return false;
                         }
                     }
                 }
             }
-            
+
             // Save interest rates
             if (isset($data['interestRates'])) {
                 foreach ($data['interestRates'] as $rate) {
@@ -235,38 +252,50 @@ class MyfxbookScrapedData extends ActiveRecord
                     $interestRate->previous_rate = $rate['previousRate'] ?? null;
                     $interestRate->next_meeting = $rate['nextMeeting'] ?? null;
                     $interestRate->row_index = $rate['rowIndex'] ?? null;
-                    
+
                     if (!$interestRate->save()) {
                         Yii::error('Failed to save interest rate: ' . json_encode($interestRate->errors));
+                        TelegramHelper::reportModelError(
+                            $interestRate,
+                            'Failed to save economic event'
+                        );
                         $transaction->rollBack();
                         return false;
                     }
                 }
             }
-            
+
             // Save metadata
             foreach ($metadata as $key => $value) {
                 $meta = new MyfxbookMetadata();
                 $meta->scrape_data_id = $scrapeId;
                 $meta->key_name = $key;
                 $meta->key_value = is_array($value) ? json_encode($value) : $value;
-                
+
                 if (!$meta->save()) {
                     Yii::error('Failed to save metadata: ' . json_encode($meta->errors));
+                    TelegramHelper::reportModelError(
+                        $meta,
+                        'Failed to save economic event'
+                    );
                     $transaction->rollBack();
                     return false;
                 }
             }
-            
+
             // Update statistics
             self::updateStatistics($scrapeId);
-            
+
             $transaction->commit();
             return true;
-            
         } catch (\Exception $e) {
-            $transaction->rollBack();
+            TelegramHelper::reportModelError(
+                $e->getMessage(),
+                'Failed to save economic event'
+            );
             Yii::error('Error saving scraped data: ' . $e->getMessage());
+
+            $transaction->rollBack();
             return false;
         }
     }
@@ -280,24 +309,24 @@ class MyfxbookScrapedData extends ActiveRecord
     private static function updateStatistics($scrapeId)
     {
         $date = date('Y-m-d');
-        
+
         // Get statistics for today
         $statistics = MyfxbookStatistics::findOne(['date' => $date]);
-        
+
         if (!$statistics) {
             $statistics = new MyfxbookStatistics();
             $statistics->date = $date;
         }
-        
+
         // Count totals from this scrape
         $scrapeData = self::findOne($scrapeId);
-        
+
         if ($scrapeData) {
             $statistics->total_scrapes += 1;
             $statistics->total_events += count($scrapeData->economicEvents);
             $statistics->total_patterns += count($scrapeData->technicalPatterns);
             $statistics->total_rates += count($scrapeData->interestRates);
-            
+
             // Calculate average signals
             if ($scrapeData->technicalSummary) {
                 $totalPatterns = $scrapeData->technicalSummary->total_patterns;
@@ -306,10 +335,10 @@ class MyfxbookScrapedData extends ActiveRecord
                     $statistics->avg_sell_signal = ($statistics->avg_sell_signal + ($scrapeData->technicalSummary->sell_count / $totalPatterns)) / 2;
                 }
             }
-            
+
             return $statistics->save();
         }
-        
+
         return false;
     }
 
@@ -358,11 +387,11 @@ class MyfxbookScrapedData extends ActiveRecord
             ->joinWith('scrapeData')
             ->where(['impact' => 'high'])
             ->orderBy(['myfxbook_economic_events.created_at' => SORT_DESC]);
-        
+
         if ($currency) {
             $query->andWhere(['currency' => $currency]);
         }
-        
+
         return $query->limit($limit)->all();
     }
 }
