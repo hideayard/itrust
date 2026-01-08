@@ -79,13 +79,13 @@ class ScrapedDataLog extends ActiveRecord
     {
         $pair = 'UNKNOWN';
         $timeframe = 'UNKNOWN';
-        
+
         // Extract from myfxbook URL pattern: /forex-market/currencies/EURJPY-H4
         if (preg_match('/currencies\/([A-Z]{6})-?([A-Za-z0-9]*)/i', $url, $matches)) {
             $pair = $matches[1] ?? 'UNKNOWN';
             $timeframe = $matches[2] ?? 'UNKNOWN';
         }
-        
+
         // If timeframe is empty, try to get from other patterns
         if (empty($timeframe) || $timeframe === 'UNKNOWN') {
             // Check for timeframe in URL parameters or path
@@ -97,7 +97,7 @@ class ScrapedDataLog extends ActiveRecord
                 }
             }
         }
-        
+
         return [
             'pair' => strtoupper($pair),
             'timeframe' => strtoupper($timeframe)
@@ -123,21 +123,21 @@ class ScrapedDataLog extends ActiveRecord
         $log->method = $method;
         $log->ip_address = Yii::$app->request->getUserIP();
         $log->user_agent = Yii::$app->request->getUserAgent();
-        
+
         // Convert request data to JSON if it's not already a string
         if (!is_string($requestData)) {
             $requestData = json_encode($requestData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         }
         $log->request_data = $requestData;
-        
+
         // Extract pair and timeframe from data if not provided
         if ($pair === null || $timeframe === null) {
             $dataArray = json_decode($requestData, true);
             $url = $dataArray['metadata']['url'] ?? '';
-            
+
             if (!empty($url)) {
                 $extracted = self::extractPairAndTimeframe($url);
-                
+
                 if ($pair === null) {
                     $pair = $extracted['pair'];
                 }
@@ -146,12 +146,12 @@ class ScrapedDataLog extends ActiveRecord
                 }
             }
         }
-        
+
         $log->pair = $pair ?? 'UNKNOWN';
         $log->timeframe = $timeframe ?? 'UNKNOWN';
         $log->response_status = $responseStatus;
         $log->response_time = $responseTime;
-        
+
         return $log->save();
     }
 
@@ -165,7 +165,7 @@ class ScrapedDataLog extends ActiveRecord
         if (empty($this->request_data)) {
             return null;
         }
-        
+
         return json_decode($this->request_data, true);
     }
 
@@ -261,12 +261,22 @@ class ScrapedDataLog extends ActiveRecord
     public static function getPairStatistics($pair)
     {
         $query = self::find()->where(['pair' => strtoupper($pair)]);
-        
         return [
             'total_logs' => $query->count(),
             'average_response_time' => $query->average('response_time'),
             'success_rate' => $query->andWhere(['response_status' => 200])->count() / max(1, $query->count()) * 100,
             'latest_log' => $query->orderBy(['created_at' => SORT_DESC])->one(),
+        ];
+    }
+
+    public static function getLatestData($pair = "EURJPJ", $timeframe = "H4")
+    {
+        return [
+            'latest_data' =>
+            self::find()
+                ->where(['pair' => strtoupper($pair), 'timeframe' => strtoupper($timeframe)])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->one()
         ];
     }
 }

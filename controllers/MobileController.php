@@ -114,7 +114,7 @@ class MobileController extends Controller
             $timeframe = $extracted['timeframe'];
 
             // Process and save the data to application tables
-            $processingResult = true;//$this->processAndSaveData($jsonData, $pair, $timeframe);
+            $processingResult = true; //$this->processAndSaveData($jsonData, $pair, $timeframe);
 
             // Log the API request
             $responseTime = microtime(true) - $startTime;
@@ -273,6 +273,26 @@ class MobileController extends Controller
                 'message' => 'Failed to save scraped data: ' . $e->getMessage(),
                 'error' => $e->getMessage(),
                 'responseTime' => $responseTime
+            ];
+        }
+    }
+
+    public function actionGetlatestScrapeData()
+    {
+        try {
+            $pair = Yii::$app->request->get('pair', 'EURJPY');
+            $timeframe = Yii::$app->request->get('timeframe', 'H4');
+            return [
+                'success' => true,
+                'data' => ScrapedDataLog::getLatestData($pair, $timeframe)
+            ];
+        } catch (\Exception $e) {
+
+            Yii::error('Error getting scrape data: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to get scraped data: ' . $e->getMessage(),
             ];
         }
     }
