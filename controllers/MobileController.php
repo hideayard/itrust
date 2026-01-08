@@ -1864,81 +1864,116 @@ class MobileController extends Controller
 
     public function actionGetDevices()
     {
-        // Check if it's a POST request
-        if (Yii::$app->request->isPost) {
-            try {
-                // Get the authorization token from header
-                $authHeader = Yii::$app->request->getHeaders()->get('Authorization');
+        \Yii::$app->response->format = Response::FORMAT_JSON;
 
-                if (!$authHeader) {
-                    throw new \Exception('No authorization token provided');
-                }
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
 
-                // Extract token (remove 'Bearer ' prefix if present)
-                $token = str_replace('Bearer ', '', $authHeader);
-
-                // Decode JWT token
-                $secretKey = Yii::$app->params['jwtSecretKey'] ?? 'your-secret-key';
-                $decoded = \Firebase\JWT\JWT::decode($token, new \Firebase\JWT\Key($secretKey, 'HS256'));
-
-                // Get user data from token
-                $userData = $decoded->data;
-                $userId = $userData->id;
-
-                // Fetch devices for this user
-                $devices = UserDevices::find()
-                    ->where(['user_id' => $userId, 'is_active' => 1])
-                    ->orderBy(['created_at' => SORT_DESC])
-                    ->all();
-
-                // Format response
-                $formattedDevices = [];
-                foreach ($devices as $device) {
-                    $formattedDevices[] = [
-                        'id' => $device->id,
-                        'device_id' => $device->device_id,
-                        'device_name' => $device->device_name,
-                        'device_alias' => $device->device_alias,
-                        'device_description' => $device->device_description,
-                        'device_remark' => $device->device_remark,
-                        'is_active' => $device->is_active,
-                        'created_at' => $device->created_at,
-                        'updated_at' => $device->updated_at,
-                    ];
-                }
-
-                return $this->asJson([
-                    'success' => true,
-                    'message' => 'Devices retrieved successfully',
-                    'data' => $formattedDevices
-                ]);
-            } catch (\Firebase\JWT\ExpiredException $e) {
-                return $this->asJson([
+            if (!$token) {
+                return [
                     'success' => false,
-                    'message' => 'Token expired',
-                    'error' => $e->getMessage()
-                ]);
-            } catch (\Firebase\JWT\SignatureInvalidException $e) {
-                return $this->asJson([
-                    'success' => false,
-                    'message' => 'Invalid token signature',
-                    'error' => $e->getMessage()
-                ]);
-            } catch (\Exception $e) {
-                return $this->asJson([
-                    'success' => false,
-                    'message' => 'Failed to get devices',
-                    'error' => $e->getMessage()
-                ]);
+                    'message' => 'No authorization token provided'
+                ];
             }
-        }
 
-        return $this->asJson([
-            'success' => false,
-            'message' => 'Invalid request method'
-        ]);
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+            
+            // Fetch devices
+            $devices = UserDevices::find()
+                ->where(['user_id' => $userId, 'is_active' => 1])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            $formattedDevices = [];
+            foreach ($devices as $device) {
+                $formattedDevices[] = [
+                    'id' => $device->id,
+                    'device_id' => $device->device_id,
+                    'device_name' => $device->device_name,
+                    'device_alias' => $device->device_alias,
+                    'device_description' => $device->device_description,
+                    'device_remark' => $device->device_remark,
+                    'is_active' => (bool)$device->is_active,
+                    'created_at' => $device->created_at,
+                    'updated_at' => $device->updated_at,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Devices retrieved successfully',
+                'data' => $formattedDevices
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get devices',
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
+    private function getTokenFromRequest()
+    {
+        $request = \Yii::$app->request;
+
+        // Check Authorization header
+        $authHeader = $request->getHeaders()->get('Authorization');
+        if ($authHeader && preg_match('/^Bearer\s+(.*)$/i', $authHeader, $matches)) {
+            return trim($matches[1]);
+        }
+
+        // Check POST data
+        $token = $request->post('token');
+        if ($token) {
+            return trim($token);
+        }
+
+        // Check GET parameter (for testing)
+        $token = $request->get('token');
+        if ($token) {
+            return trim($token);
+        }
+
+        return null;
+    }
+
+    private function extractUserIdFromPayload($payload)
+    {
+        // Check for user ID in various possible locations
+        if (isset($payload['data']['id'])) {
+            return (int)$payload['data']['id'];
+        }
+
+        if (isset($payload['user_id'])) {
+            return (int)$payload['user_id'];
+        }
+
+        if (isset($payload['id'])) {
+            return (int)$payload['id'];
+        }
+
+        if (isset($payload['sub'])) {
+            return (int)$payload['sub'];
+        }
+
+        return null;
+    }
     /**
      * Handle OPTIONS request for CORS preflight
      */
