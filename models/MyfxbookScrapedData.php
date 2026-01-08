@@ -147,6 +147,7 @@ class MyfxbookScrapedData extends ActiveRecord
 
             // Save main scraped data
             $scrapedData = new self();
+            $scrapedData->key = $metadata['key'] ?? '';
             $scrapedData->scrape_timestamp = $metadata['scrapeTimestamp'] ?? date('Y-m-d H:i:s');
             $scrapedData->scrape_number = $metadata['scrapeCount'] ?? 0;
             $scrapedData->url = $metadata['url'] ?? '';
@@ -154,9 +155,9 @@ class MyfxbookScrapedData extends ActiveRecord
 
             if (!$scrapedData->save()) {
                 Yii::error('Failed to save scraped data: ' . json_encode($scrapedData->errors));
-                TelegramHelper::reportModelError(
-                    $scrapedData,
-                    'Failed to save economic event'
+                TelegramHelper::sendSimpleError(
+                    'Failed to save economic event',
+                    json_encode($scrapedData->errors)
                 );
                 $transaction->rollBack();
                 return false;
