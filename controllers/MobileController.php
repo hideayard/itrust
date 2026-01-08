@@ -191,7 +191,7 @@ class MobileController extends Controller
 
         return $response;
     }
-    
+
     private function sendSuccessScrapedDataNotification($data, $pair, $timeframe, $processingResult)
     {
         $metadata = $data['metadata'];
@@ -213,6 +213,44 @@ class MobileController extends Controller
             TelegramHelper::sendSimpleMessage($message);
         }
     }
+
+    private function processAndSaveData($data, $pair, $timeframe)
+    {
+        $result = [
+            'economic_events_saved' => 0,
+            'technical_patterns_saved' => 0,
+            'interest_rates_saved' => 0,
+            'metadata_saved' => false
+        ];
+
+        // Save metadata
+        if ($this->saveMetadata($data['metadata'], $pair, $timeframe)) {
+            $result['metadata_saved'] = true;
+        }
+
+        // Save economic calendar events
+        if (isset($data['data']['economicCalendar']['events'])) {
+            $events = $data['data']['economicCalendar']['events'];
+            $result['economic_events_saved'] = $this->saveEconomicEvents($events, $pair, $timeframe);
+        }
+
+        // Save technical analysis
+        if (isset($data['data']['technicalAnalysis'])) {
+            $technicalData = $data['data']['technicalAnalysis'];
+            $result['technical_patterns_saved'] = $this->saveTechnicalAnalysis($technicalData, $pair, $timeframe);
+        }
+
+        // Save interest rates
+        if (isset($data['data']['interestRates'])) {
+            $interestRates = $data['data']['interestRates'];
+            $result['interest_rates_saved'] = $this->saveInterestRates($interestRates, $pair, $timeframe);
+        }
+
+        Yii::info("Data processed for {$pair}-{$timeframe}: " . json_encode($result));
+
+        return $result;
+    }
+
 
     public function actionSaveScrapeData2()
     {
