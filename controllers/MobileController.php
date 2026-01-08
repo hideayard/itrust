@@ -17,6 +17,7 @@ use app\models\MyfxbookStatistics;
 use app\models\MyfxbookApiLog;
 use app\models\TelemetryData;
 use app\models\UserDevices;
+use app\models\ScrapedDataLog;
 use yii\web\BadRequestHttpException;
 
 class MobileController extends Controller
@@ -71,6 +72,146 @@ class MobileController extends Controller
         }
 
         return parent::beforeAction($action);
+    }
+
+    public function actionScrapedDataSave()
+    {
+        $startTime = microtime(true);
+        $response = ['success' => false, 'message' => ''];
+
+        try {
+            // Get raw JSON input
+            $rawData = Yii::$app->request->getRawBody();
+            $jsonData = json_decode($rawData, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid JSON data: ' . json_last_error_msg());
+            }
+
+            // Validate required structure
+            if (!isset($jsonData['metadata']) || !isset($jsonData['data'])) {
+                throw new \Exception('Missing required fields: metadata and data');
+            }
+
+            // Validate metadata
+            if (!isset($jsonData['metadata']['url'])) {
+                throw new \Exception('Missing url in metadata');
+            }
+
+            // Validate data structure has at least one data type
+            $hasData = isset($jsonData['data']['technicalAnalysis']) ||
+                isset($jsonData['data']['economicCalendar']) ||
+                isset($jsonData['data']['interestRates']);
+
+            if (!$hasData) {
+                throw new \Exception('No data found in data section');
+            }
+
+            // Extract pair and timeframe from URL
+            $url = $jsonData['metadata']['url'];
+            $extracted = ScrapedDataLog::extractPairAndTimeframe($url);
+            $pair = $extracted['pair'];
+            $timeframe = $extracted['timeframe'];
+
+            // Process and save the data to application tables
+            $processingResult = $this->processAndSaveData($jsonData, $pair, $timeframe);
+
+            // Log the API request
+            $responseTime = microtime(true) - $startTime;
+            ScrapedDataLog::logScrapedData(
+                'scraped-data/save',
+                'POST',
+                $jsonData,
+                $pair,
+                $timeframe,
+                200,
+                $responseTime
+            );
+
+            // Send success notification to Telegram if configured
+            $this->sendSuccessScrapedDataNotification($jsonData, $pair, $timeframe, $processingResult);
+
+            $response = [
+                'success' => true,
+                'message' => 'Scraped data saved successfully',
+                'data' => [
+                    'pair' => $pair,
+                    'timeframe' => $timeframe,
+                    'url' => $url,
+                    'scrape_timestamp' => $jsonData['metadata']['scrapeTimestamp'] ?? null,
+                    'processing_result' => $processingResult,
+                    'response_time' => round($responseTime, 3) . 's'
+                ]
+            ];
+        } catch (\Exception $e) {
+            // Log error
+            $responseTime = microtime(true) - $startTime;
+
+            // Try to extract pair and timeframe from URL even on error
+            $pair = 'ERROR';
+            $timeframe = 'ERROR';
+            try {
+                if (isset($jsonData['metadata']['url'])) {
+                    $extracted = ScrapedDataLog::extractPairAndTimeframe($jsonData['metadata']['url']);
+                    $pair = $extracted['pair'];
+                    $timeframe = $extracted['timeframe'];
+                }
+            } catch (\Exception $ex) {
+                // Ignore extraction error
+            }
+
+            ScrapedDataLog::logScrapedData(
+                'scraped-data/save',
+                'POST',
+                $rawData,
+                $pair,
+                $timeframe,
+                400,
+                $responseTime
+            );
+
+            // Send error notification to Telegram
+            TelegramHelper::sendSimpleError(
+                "Scraped data save failed: " . $e->getMessage(),
+                "Pair: {$pair}, Timeframe: {$timeframe}"
+            );
+
+            Yii::error('Scraped Data API Error: ' . $e->getMessage());
+
+            $response = [
+                'success' => false,
+                'message' => 'Error processing scraped data: ' . $e->getMessage(),
+                'error_code' => 400,
+                'pair' => $pair,
+                'timeframe' => $timeframe
+            ];
+
+            Yii::$app->response->statusCode = 400;
+        }
+
+        return $response;
+    }
+    
+    private function sendSuccessScrapedDataNotification($data, $pair, $timeframe, $processingResult)
+    {
+        $metadata = $data['metadata'];
+        $technicalAnalysis = $data['data']['technicalAnalysis'] ?? null;
+
+        if ($technicalAnalysis) {
+            $summary = $technicalAnalysis['technicalSummary'] ?? 'No summary';
+            $buyCount = $technicalAnalysis['counts']['buy'] ?? 0;
+            $sellCount = $technicalAnalysis['counts']['sell'] ?? 0;
+            $neutralCount = $technicalAnalysis['counts']['neutral'] ?? 0;
+
+            $message = "✅ <b>Scraped Data Saved Successfully</b>\n";
+            $message .= "📊 <b>Pair:</b> {$pair}-{$timeframe}\n";
+            $message .= "📈 <b>Technical Summary:</b> {$summary}\n";
+            $message .= "🔍 <b>Signals:</b> 🟢 {$buyCount} | 🔴 {$sellCount} | ⚪ {$neutralCount}\n";
+            $message .= "🕐 <b>Scraped:</b> " . date('H:i:s', strtotime($metadata['scrapeTimestamp'])) . "\n";
+            $message .= "🌐 <b>URL:</b> " . $metadata['url'];
+
+            TelegramHelper::sendSimpleMessage($message);
+        }
     }
 
     public function actionSaveScrapeData()

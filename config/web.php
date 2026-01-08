@@ -77,6 +77,7 @@ $config = [
                 'mobile/device-telemetry' => 'mobile/device-telemetry',
                 'mobile/device-telemetry-by-id' => 'mobile/device-telemetry-by-id',
                 'mobile/validate-token' => 'mobile/validate-token',
+                'mobile/scraped-data-save' => 'mobile/scraped-data-save',
 
                 // Telemetry Device API Routes
                 'telemetry-device' => 'telemetry-device/index',
@@ -93,10 +94,10 @@ $config = [
                 // 'confirm/<email:\s+>/<token:\s+>' => 'site/confirm',
 
                 // Scraped data endpoints
-                'scraped-data/save' => 'scraped-data/save',
-                'scraped-data/logs' => 'scraped-data/logs',
-                'scraped-data/statistics' => 'scraped-data/statistics',
-                'scraped-data/test' => 'scraped-data/test',
+                // 'scraped-data/save' => 'scraped-data/save',
+                // 'scraped-data/logs' => 'scraped-data/logs',
+                // 'scraped-data/statistics' => 'scraped-data/statistics',
+                // 'scraped-data/test' => 'scraped-data/test',
 
             ],
         ],
