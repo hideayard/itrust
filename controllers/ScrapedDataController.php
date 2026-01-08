@@ -20,6 +20,12 @@ class ScrapedDataController extends Controller
      */
     public function behaviors()
     {
+        $behaviors = parent::behaviors();
+
+        // Remove CSRF validation for API requests
+        unset($behaviors['authenticator']);
+
+
         return [
             'contentNegotiator' => [
                 'class' => ContentNegotiator::class,
@@ -58,44 +64,44 @@ class ScrapedDataController extends Controller
     {
         $startTime = microtime(true);
         $response = ['success' => false, 'message' => ''];
-        
+
         try {
             // Get raw JSON input
             $rawData = Yii::$app->request->getRawBody();
             $jsonData = json_decode($rawData, true);
-            
+
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \Exception('Invalid JSON data: ' . json_last_error_msg());
             }
-            
+
             // Validate required structure
             if (!isset($jsonData['metadata']) || !isset($jsonData['data'])) {
                 throw new \Exception('Missing required fields: metadata and data');
             }
-            
+
             // Validate metadata
             if (!isset($jsonData['metadata']['url'])) {
                 throw new \Exception('Missing url in metadata');
             }
-            
+
             // Validate data structure has at least one data type
-            $hasData = isset($jsonData['data']['technicalAnalysis']) || 
-                       isset($jsonData['data']['economicCalendar']) || 
-                       isset($jsonData['data']['interestRates']);
-            
+            $hasData = isset($jsonData['data']['technicalAnalysis']) ||
+                isset($jsonData['data']['economicCalendar']) ||
+                isset($jsonData['data']['interestRates']);
+
             if (!$hasData) {
                 throw new \Exception('No data found in data section');
             }
-            
+
             // Extract pair and timeframe from URL
             $url = $jsonData['metadata']['url'];
             $extracted = ScrapedDataLog::extractPairAndTimeframe($url);
             $pair = $extracted['pair'];
             $timeframe = $extracted['timeframe'];
-            
+
             // Process and save the data to application tables
             $processingResult = $this->processAndSaveData($jsonData, $pair, $timeframe);
-            
+
             // Log the API request
             $responseTime = microtime(true) - $startTime;
             ScrapedDataLog::logScrapedData(
@@ -107,10 +113,10 @@ class ScrapedDataController extends Controller
                 200,
                 $responseTime
             );
-            
+
             // Send success notification to Telegram if configured
             $this->sendSuccessNotification($jsonData, $pair, $timeframe, $processingResult);
-            
+
             $response = [
                 'success' => true,
                 'message' => 'Scraped data saved successfully',
@@ -123,11 +129,10 @@ class ScrapedDataController extends Controller
                     'response_time' => round($responseTime, 3) . 's'
                 ]
             ];
-            
         } catch (\Exception $e) {
             // Log error
             $responseTime = microtime(true) - $startTime;
-            
+
             // Try to extract pair and timeframe from URL even on error
             $pair = 'ERROR';
             $timeframe = 'ERROR';
@@ -140,7 +145,7 @@ class ScrapedDataController extends Controller
             } catch (\Exception $ex) {
                 // Ignore extraction error
             }
-            
+
             ScrapedDataLog::logScrapedData(
                 'scraped-data/save',
                 'POST',
@@ -150,15 +155,15 @@ class ScrapedDataController extends Controller
                 400,
                 $responseTime
             );
-            
+
             // Send error notification to Telegram
             TelegramHelper::sendSimpleError(
                 "Scraped data save failed: " . $e->getMessage(),
                 "Pair: {$pair}, Timeframe: {$timeframe}"
             );
-            
+
             Yii::error('Scraped Data API Error: ' . $e->getMessage());
-            
+
             $response = [
                 'success' => false,
                 'message' => 'Error processing scraped data: ' . $e->getMessage(),
@@ -166,10 +171,10 @@ class ScrapedDataController extends Controller
                 'pair' => $pair,
                 'timeframe' => $timeframe
             ];
-            
+
             Yii::$app->response->statusCode = 400;
         }
-        
+
         return $response;
     }
 
@@ -183,9 +188,9 @@ class ScrapedDataController extends Controller
         $pair = Yii::$app->request->get('pair', 'EURUSD');
         $timeframe = Yii::$app->request->get('timeframe', 'H4');
         $limit = Yii::$app->request->get('limit', 10);
-        
+
         $logs = ScrapedDataLog::findByPairAndTimeframe($pair, $timeframe, $limit);
-        
+
         $result = [];
         foreach ($logs as $log) {
             $result[] = [
@@ -203,7 +208,7 @@ class ScrapedDataController extends Controller
                 'has_interest' => !empty($log->getInterestRates()),
             ];
         }
-        
+
         return [
             'success' => true,
             'pair' => $pair,
@@ -221,9 +226,9 @@ class ScrapedDataController extends Controller
     public function actionStatistics()
     {
         $pair = Yii::$app->request->get('pair', 'EURUSD');
-        
+
         $statistics = ScrapedDataLog::getPairStatistics($pair);
-        
+
         return [
             'success' => true,
             'pair' => $pair,
@@ -247,32 +252,32 @@ class ScrapedDataController extends Controller
             'interest_rates_saved' => 0,
             'metadata_saved' => false
         ];
-        
+
         // Save metadata
         if ($this->saveMetadata($data['metadata'], $pair, $timeframe)) {
             $result['metadata_saved'] = true;
         }
-        
+
         // Save economic calendar events
         if (isset($data['data']['economicCalendar']['events'])) {
             $events = $data['data']['economicCalendar']['events'];
             $result['economic_events_saved'] = $this->saveEconomicEvents($events, $pair, $timeframe);
         }
-        
+
         // Save technical analysis
         if (isset($data['data']['technicalAnalysis'])) {
             $technicalData = $data['data']['technicalAnalysis'];
             $result['technical_patterns_saved'] = $this->saveTechnicalAnalysis($technicalData, $pair, $timeframe);
         }
-        
+
         // Save interest rates
         if (isset($data['data']['interestRates'])) {
             $interestRates = $data['data']['interestRates'];
             $result['interest_rates_saved'] = $this->saveInterestRates($interestRates, $pair, $timeframe);
         }
-        
+
         Yii::info("Data processed for {$pair}-{$timeframe}: " . json_encode($result));
-        
+
         return $result;
     }
 
@@ -296,7 +301,7 @@ class ScrapedDataController extends Controller
         // $model->scrape_count = $metadata['scrapeCount'] ?? 1;
         // $model->refresh_interval = $metadata['refreshInterval'] ?? 900;
         // return $model->save();
-        
+
         return true;
     }
 
@@ -311,7 +316,7 @@ class ScrapedDataController extends Controller
     private function saveEconomicEvents($events, $pair, $timeframe)
     {
         $saved = 0;
-        
+
         foreach ($events as $event) {
             // TODO: Save to your economic_events table
             // $economicEvent = new EconomicEvent();
@@ -329,7 +334,7 @@ class ScrapedDataController extends Controller
             //     $saved++;
             // }
         }
-        
+
         return $saved;
     }
 
@@ -344,7 +349,7 @@ class ScrapedDataController extends Controller
     private function saveTechnicalAnalysis($technicalAnalysis, $pair, $timeframe)
     {
         $saved = 0;
-        
+
         if (isset($technicalAnalysis['patterns'])) {
             foreach ($technicalAnalysis['patterns'] as $pattern) {
                 // TODO: Save to your technical_patterns table
@@ -362,7 +367,7 @@ class ScrapedDataController extends Controller
                 // }
             }
         }
-        
+
         return $saved;
     }
 
@@ -377,7 +382,7 @@ class ScrapedDataController extends Controller
     private function saveInterestRates($interestRates, $pair, $timeframe)
     {
         $saved = 0;
-        
+
         foreach ($interestRates as $rate) {
             // TODO: Save to your interest_rates table
             // $interestRate = new InterestRate();
@@ -393,7 +398,7 @@ class ScrapedDataController extends Controller
             //     $saved++;
             // }
         }
-        
+
         return $saved;
     }
 
@@ -409,20 +414,20 @@ class ScrapedDataController extends Controller
     {
         $metadata = $data['metadata'];
         $technicalAnalysis = $data['data']['technicalAnalysis'] ?? null;
-        
+
         if ($technicalAnalysis) {
             $summary = $technicalAnalysis['technicalSummary'] ?? 'No summary';
             $buyCount = $technicalAnalysis['counts']['buy'] ?? 0;
             $sellCount = $technicalAnalysis['counts']['sell'] ?? 0;
             $neutralCount = $technicalAnalysis['counts']['neutral'] ?? 0;
-            
+
             $message = "✅ <b>Scraped Data Saved Successfully</b>\n";
             $message .= "📊 <b>Pair:</b> {$pair}-{$timeframe}\n";
             $message .= "📈 <b>Technical Summary:</b> {$summary}\n";
             $message .= "🔍 <b>Signals:</b> 🟢 {$buyCount} | 🔴 {$sellCount} | ⚪ {$neutralCount}\n";
             $message .= "🕐 <b>Scraped:</b> " . date('H:i:s', strtotime($metadata['scrapeTimestamp'])) . "\n";
             $message .= "🌐 <b>URL:</b> " . $metadata['url'];
-            
+
             TelegramHelper::sendSimpleMessage($message);
         }
     }
