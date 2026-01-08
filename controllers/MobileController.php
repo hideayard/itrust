@@ -15,6 +15,8 @@ use app\models\MyfxbookTechnicalPattern;
 use app\models\MyfxbookInterestRate;
 use app\models\MyfxbookStatistics;
 use app\models\MyfxbookApiLog;
+use app\models\TelemetryData;
+use app\models\UserDevices;
 use yii\web\BadRequestHttpException;
 
 class MobileController extends Controller

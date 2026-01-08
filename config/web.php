@@ -91,6 +91,13 @@ $config = [
                 'telemetry-device/user/<user_id:\d+>' => 'telemetry-device/by-user',
                 'telemetry-device/bulk-assign' => 'telemetry-device/bulk-assign',
                 // 'confirm/<email:\s+>/<token:\s+>' => 'site/confirm',
+
+                // Scraped data endpoints
+                'scraped-data/save' => 'scraped-data/save',
+                'scraped-data/logs' => 'scraped-data/logs',
+                'scraped-data/statistics' => 'scraped-data/statistics',
+                'scraped-data/test' => 'scraped-data/test',
+
             ],
         ],
     ],
