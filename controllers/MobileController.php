@@ -277,7 +277,7 @@ class MobileController extends Controller
         }
     }
 
-    public function actionGetlatestScrapeData()
+    public function actionGetLatestScrapeData()
     {
         try {
             $pair = Yii::$app->request->get('pair', 'EURJPY');
