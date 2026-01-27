@@ -278,6 +278,273 @@ class MobileController extends Controller
         }
     }
 
+    public function actionGetAllScrapedDataV2()
+    {
+        try {
+            // Get query parameters
+            $request = Yii::$app->request;
+            $limit = $request->get('limit', 50);
+            $offset = $request->get('offset', 0);
+            $pair = $request->get('pair');
+            $timeframe = $request->get('timeframe');
+            $dateFrom = $request->get('date_from');
+            $dateTo = $request->get('date_to');
+            $sort = $request->get('sort', 'desc'); // asc or desc
+
+            // Validate limit
+            $limit = min(max(1, $limit), 1000); // Cap at 1000 records
+
+            // Build query
+            $query = DualSourceScrapedData::find();
+
+            // Apply filters
+            if ($pair) {
+                $query->andWhere(['pair' => $pair]);
+            }
+
+            if ($timeframe) {
+                $query->andWhere(['timeframe' => $timeframe]);
+            }
+
+            if ($dateFrom) {
+                $query->andWhere(['>=', 'created_at', $dateFrom]);
+            }
+
+            if ($dateTo) {
+                $query->andWhere(['<=', 'created_at', $dateTo]);
+            }
+
+            // Apply sorting
+            $orderBy = ($sort === 'asc') ? 'created_at ASC' : 'created_at DESC';
+            $query->orderBy($orderBy);
+
+            // Get total count for pagination
+            $totalCount = $query->count();
+
+            // Apply pagination
+            $query->limit($limit)->offset($offset);
+
+            // Execute query
+            $data = $query->all();
+
+            // Format response
+            $formattedData = [];
+            foreach ($data as $record) {
+                $formattedData[] = $this->formatScrapedDataRecord($record);
+            }
+
+            $response = [
+                'success' => true,
+                'data' => $formattedData,
+                'pagination' => [
+                    'total' => $totalCount,
+                    'limit' => $limit,
+                    'offset' => $offset,
+                    'has_more' => ($offset + $limit) < $totalCount
+                ],
+                'filters' => [
+                    'pair' => $pair,
+                    'timeframe' => $timeframe,
+                    'date_from' => $dateFrom,
+                    'date_to' => $dateTo,
+                    'sort' => $sort
+                ]
+            ];
+
+            return $response;
+        } catch (\Exception $e) {
+            Yii::error('Get All Scraped Data V2 Error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Error retrieving scraped data: ' . $e->getMessage(),
+                'error_code' => 500
+            ];
+        }
+    }
+
+    public function actionGetScrapedDataV2($id)
+    {
+        try {
+            // Find record
+            $record = DualSourceScrapedData::findOne($id);
+
+            if (!$record) {
+                return [
+                    'success' => false,
+                    'message' => 'Scraped data not found',
+                    'error_code' => 404
+                ];
+            }
+
+            // Format response with full data
+            $response = [
+                'success' => true,
+                'data' => $this->formatScrapedDataRecord($record, true) // true = include full data
+            ];
+
+            return $response;
+        } catch (\Exception $e) {
+            Yii::error('Get Scraped Data V2 Error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Error retrieving scraped data: ' . $e->getMessage(),
+                'error_code' => 500
+            ];
+        }
+    }
+
+    public function actionGetLatestScrapedDataV2()
+    {
+        try {
+            // Get query parameters
+            $request = Yii::$app->request;
+            $pair = $request->get('pair', 'EUR/JPY');
+            $timeframe = $request->get('timeframe', 'H4');
+            $hours = $request->get('hours', 24); // Last X hours
+
+            // Calculate date threshold
+            $dateThreshold = date('Y-m-d H:i:s', strtotime("-{$hours} hours"));
+
+            // Find latest record
+            $record = DualSourceScrapedData::find()
+                ->where(['pair' => $pair, 'timeframe' => $timeframe])
+                ->andWhere(['>=', 'created_at', $dateThreshold])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->one();
+
+            if (!$record) {
+                return [
+                    'success' => false,
+                    'message' => 'No recent scraped data found',
+                    'error_code' => 404,
+                    'details' => [
+                        'pair' => $pair,
+                        'timeframe' => $timeframe,
+                        'hours' => $hours,
+                        'threshold' => $dateThreshold
+                    ]
+                ];
+            }
+
+            // Format response
+            $response = [
+                'success' => true,
+                'data' => $this->formatScrapedDataRecord($record, true)
+            ];
+
+            return $response;
+        } catch (\Exception $e) {
+            Yii::error('Get Latest Scraped Data V2 Error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Error retrieving latest scraped data: ' . $e->getMessage(),
+                'error_code' => 500
+            ];
+        }
+    }
+
+
+    public function actionGetScrapedDataStatsV2()
+    {
+        try {
+            // Get query parameters
+            $request = Yii::$app->request;
+            $pair = $request->get('pair');
+            $timeframe = $request->get('timeframe');
+            $days = $request->get('days', 7); // Last X days
+
+            $dateThreshold = date('Y-m-d 00:00:00', strtotime("-{$days} days"));
+
+            // Build base query
+            $query = DualSourceScrapedData::find()
+                ->where(['>=', 'created_at', $dateThreshold]);
+
+            if ($pair) {
+                $query->andWhere(['pair' => $pair]);
+            }
+
+            if ($timeframe) {
+                $query->andWhere(['timeframe' => $timeframe]);
+            }
+
+            // Get total count
+            $totalCount = $query->count();
+
+            // Get count by pair
+            $byPair = DualSourceScrapedData::find()
+                ->select(['pair', 'COUNT(*) as count'])
+                ->where(['>=', 'created_at', $dateThreshold])
+                ->groupBy(['pair'])
+                ->orderBy(['count' => SORT_DESC])
+                ->asArray()
+                ->all();
+
+            // Get count by timeframe
+            $byTimeframe = DualSourceScrapedData::find()
+                ->select(['timeframe', 'COUNT(*) as count'])
+                ->where(['>=', 'created_at', $dateThreshold])
+                ->groupBy(['timeframe'])
+                ->orderBy(['count' => SORT_DESC])
+                ->asArray()
+                ->all();
+
+            // Get daily counts
+            $dailyCounts = DualSourceScrapedData::find()
+                ->select([
+                    'DATE(created_at) as date',
+                    'COUNT(*) as count',
+                    'SUM(CASE WHEN investing_data IS NOT NULL THEN 1 ELSE 0 END) as investing_count',
+                    'SUM(CASE WHEN myfxbook_data IS NOT NULL THEN 1 ELSE 0 END) as myfxbook_count'
+                ])
+                ->where(['>=', 'created_at', $dateThreshold])
+                ->groupBy(['DATE(created_at)'])
+                ->orderBy(['date' => SORT_DESC])
+                ->asArray()
+                ->all();
+
+            // Get latest record timestamp
+            $latestRecord = DualSourceScrapedData::find()
+                ->select(['created_at', 'pair', 'timeframe'])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->one();
+
+            $response = [
+                'success' => true,
+                'data' => [
+                    'summary' => [
+                        'total_records' => $totalCount,
+                        'date_range' => [
+                            'from' => $dateThreshold,
+                            'to' => date('Y-m-d H:i:s'),
+                            'days' => $days
+                        ],
+                        'latest_scrape' => $latestRecord ? [
+                            'timestamp' => $latestRecord->created_at,
+                            'pair' => $latestRecord->pair,
+                            'timeframe' => $latestRecord->timeframe
+                        ] : null
+                    ],
+                    'by_pair' => $byPair,
+                    'by_timeframe' => $byTimeframe,
+                    'daily_counts' => $dailyCounts
+                ]
+            ];
+
+            return $response;
+        } catch (\Exception $e) {
+            Yii::error('Get Scraped Data Stats V2 Error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Error retrieving scraped data statistics: ' . $e->getMessage(),
+                'error_code' => 500
+            ];
+        }
+    }
+
     public function actionGetLatestScrapeData()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
