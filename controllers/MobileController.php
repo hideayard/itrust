@@ -2615,17 +2615,17 @@ class MobileController extends Controller
             }
 
             $message = "✅ Dual Source Scraped Data Received\n";
-            $message .= "Pair: {$pair}\n";
-            $message .= "Timeframe: {$timeframe}\n";
-            $message .= "Sources: " . implode(', ', $sources) . "\n";
-            $message .= "Scrape Time: " . ($jsonData['metadata']['scrapeTimestamp'] ?? 'N/A') . "\n";
-            $message .= "DB Save: " . ($dbSuccess ? 'Success' : 'Failed') . "\n";
+            $message .= "📊 Pair: {$pair}\n";
+            $message .= "🕐 Timeframe: {$timeframe}\n";
+            $message .= "🌐 Sources: " . implode(', ', $sources) . "\n";
+            $message .= "🔍 Scrape Time: " . ($jsonData['metadata']['scrapeTimestamp'] ?? 'N/A') . "\n";
+            $message .= "📈 DB Save: " . ($dbSuccess ? 'Success' : 'Failed') . "\n";
 
             if (isset($jsonData['data']['investing_com']['overall_signal'])) {
                 $message .= "Signal: " . $jsonData['data']['investing_com']['overall_signal'] . "\n";
             }
 
-            TelegramHelper::sendMessage($message);
+            TelegramHelper::sendSimpleMessage($message);
         } catch (\Exception $e) {
             Yii::error('Failed to send V2 success notification: ' . $e->getMessage());
         }
