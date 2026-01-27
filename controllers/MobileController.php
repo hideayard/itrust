@@ -18,6 +18,7 @@ use app\models\MyfxbookApiLog;
 use app\models\TelemetryData;
 use app\models\UserDevices;
 use app\models\ScrapedDataLog;
+use app\models\DualSourceScrapedData;
 use yii\web\BadRequestHttpException;
 
 class MobileController extends Controller
@@ -2370,6 +2371,263 @@ class MobileController extends Controller
             return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
         } else {
             return date('M j, Y', $time);
+        }
+    }
+
+    public function actionSaveScrapeDataV2()
+    {
+        $startTime = microtime(true);
+        $response = ['success' => false, 'message' => ''];
+
+        try {
+            // Get raw JSON input
+            $rawData = Yii::$app->request->getRawBody();
+            $jsonData = json_decode($rawData, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid JSON data: ' . json_last_error_msg());
+            }
+
+            // Validate required structure for V2
+            if (!isset($jsonData['metadata']) || !isset($jsonData['data'])) {
+                throw new \Exception('Missing required fields: metadata and data');
+            }
+
+            // Validate metadata
+            if (!isset($jsonData['metadata']['scrapeTimestamp'])) {
+                throw new \Exception('Missing scrapeTimestamp in metadata');
+            }
+
+            // Validate data structure has at least one source
+            if (!isset($jsonData['data']['investing_com']) && !isset($jsonData['data']['myfxbook'])) {
+                throw new \Exception('No data found from either investing.com or myfxbook');
+            }
+
+            // Extract pair (fixed for this scraper)
+            $pair = 'EUR/JPY';
+            $timeframe = 'H4'; // Default timeframe for this scraper
+
+            // Extract URLs if available
+            $investingUrl = $jsonData['data']['investing_com']['url'] ?? null;
+            $myfxbookUrl = $jsonData['data']['myfxbook']['url'] ?? null;
+
+            // Use first available URL for logging
+            $url = $investingUrl ?? $myfxbookUrl ?? '';
+
+            // Process Investing.com data if present
+            $investingData = null;
+            if (isset($jsonData['data']['investing_com'])) {
+                $investingData = $this->processInvestingData($jsonData['data']['investing_com'], $pair, $timeframe);
+            }
+
+            // Process Myfxbook data if present
+            $myfxbookData = null;
+            if (isset($jsonData['data']['myfxbook'])) {
+                $myfxbookData = $this->processMyfxbookData($jsonData['data']['myfxbook'], $pair, $timeframe);
+            }
+
+            // Log the API request
+            $responseTime = microtime(true) - $startTime;
+            ScrapedDataLog::logScrapedData(
+                'scraped-data/save-v2',
+                'POST',
+                $jsonData,
+                $pair,
+                $timeframe,
+                200,
+                $responseTime
+            );
+
+            // Save to database
+            $dbSuccess = $this->saveToDatabaseV2([
+                'pair' => $pair,
+                'timeframe' => $timeframe,
+                'investing_data' => $investingData,
+                'myfxbook_data' => $myfxbookData,
+                'combined_data' => $jsonData['data'],
+                'scrape_timestamp' => $jsonData['metadata']['scrapeTimestamp'],
+                'combined_at' => $jsonData['data']['combined_at'] ?? null,
+                'investing_url' => $investingUrl,
+                'myfxbook_url' => $myfxbookUrl
+            ]);
+
+            // Send success notification to Telegram if configured
+            $this->sendV2SuccessNotification($jsonData, $pair, $timeframe, $dbSuccess);
+
+            $response = [
+                'success' => true,
+                'message' => 'Dual source scraped data saved successfully',
+                'data' => [
+                    'pair' => $pair,
+                    'timeframe' => $timeframe,
+                    'sources_received' => array_filter([
+                        'investing.com' => !empty($jsonData['data']['investing_com']),
+                        'myfxbook' => !empty($jsonData['data']['myfxbook'])
+                    ]),
+                    'scrape_timestamp' => $jsonData['metadata']['scrapeTimestamp'],
+                    'combined_at' => $jsonData['data']['combined_at'] ?? null,
+                    'database_save_success' => $dbSuccess,
+                    'response_time' => round($responseTime, 3) . 's'
+                ]
+            ];
+        } catch (\Exception $e) {
+            // Log error
+            $responseTime = microtime(true) - $startTime;
+
+            ScrapedDataLog::logScrapedData(
+                'scraped-data/save-v2',
+                'POST',
+                $rawData,
+                $pair ?? 'ERROR',
+                $timeframe ?? 'ERROR',
+                400,
+                $responseTime
+            );
+
+            // Send error notification to Telegram
+            TelegramHelper::sendSimpleError(
+                "V2 Scraped data save failed: " . $e->getMessage(),
+                "Pair: " . ($pair ?? 'UNKNOWN') . ", Timeframe: " . ($timeframe ?? 'UNKNOWN')
+            );
+
+            Yii::error('Scraped Data V2 API Error: ' . $e->getMessage());
+
+            $response = [
+                'success' => false,
+                'message' => 'Error processing V2 scraped data: ' . $e->getMessage(),
+                'error_code' => 400,
+                'pair' => $pair ?? null,
+                'timeframe' => $timeframe ?? null
+            ];
+
+            Yii::$app->response->statusCode = 400;
+        }
+
+        return $response;
+    }
+
+    /**
+     * Process Investing.com data structure
+     */
+    private function processInvestingData($investingData, $pair, $timeframe)
+    {
+        $processed = [
+            'currency_pair' => $investingData['currency_pair'] ?? $pair,
+            'url' => $investingData['url'] ?? '',
+            'source' => $investingData['source'] ?? 'investing.com',
+            'scraped_at' => $investingData['scraped_at'] ?? date('Y-m-d H:i:s'),
+            'overall_signal' => $investingData['overall_signal'] ?? null,
+            'sections' => []
+        ];
+
+        // Process sections if available
+        if (isset($investingData['sections']) && is_array($investingData['sections'])) {
+            foreach ($investingData['sections'] as $sectionName => $sectionData) {
+                $processed['sections'][$sectionName] = [
+                    'headers' => $sectionData['headers'] ?? [],
+                    'row_count' => isset($sectionData['rows']) ? count($sectionData['rows']) : 0,
+                    'rows' => $sectionData['rows'] ?? []
+                ];
+            }
+        }
+
+        return $processed;
+    }
+
+    /**
+     * Process Myfxbook data structure
+     */
+    private function processMyfxbookData($myfxbookData, $pair, $timeframe)
+    {
+        $processed = [
+            'currency_pair' => $myfxbookData['currency_pair'] ?? $pair,
+            'url' => $myfxbookData['url'] ?? '',
+            'source' => $myfxbookData['source'] ?? 'myfxbook.com',
+            'scraped_at' => $myfxbookData['scraped_at'] ?? date('Y-m-d H:i:s'),
+            'price_info' => $myfxbookData['price_info'] ?? null,
+            'technical_summary' => $myfxbookData['technical_summary'] ?? null,
+            'sections' => []
+        ];
+
+        // Process sections if available
+        if (isset($myfxbookData['sections']) && is_array($myfxbookData['sections'])) {
+            foreach ($myfxbookData['sections'] as $sectionName => $sectionData) {
+                $processed['sections'][$sectionName] = [
+                    'headers' => $sectionData['headers'] ?? [],
+                    'row_count' => isset($sectionData['rows']) ? count($sectionData['rows']) : 0,
+                    'rows' => $sectionData['rows'] ?? []
+                ];
+            }
+        }
+
+        return $processed;
+    }
+
+    /**
+     * Save processed data to database
+     */
+    private function saveToDatabaseV2($data)
+    {
+        try {
+            // Create new model instance for dual source data
+            $model = new DualSourceScrapedData();
+
+            $model->pair = $data['pair'];
+            $model->timeframe = $data['timeframe'];
+            $model->investing_data = json_encode($data['investing_data']);
+            $model->myfxbook_data = json_encode($data['myfxbook_data']);
+            $model->combined_data = json_encode($data['combined_data']);
+            $model->scrape_timestamp = $data['scrape_timestamp'];
+            $model->combined_at = $data['combined_at'];
+            $model->investing_url = $data['investing_url'];
+            $model->myfxbook_url = $data['myfxbook_url'];
+            $model->created_at = date('Y-m-d H:i:s');
+
+            if ($model->save()) {
+                Yii::info('Dual source scraped data saved to database: ' . $data['pair']);
+                return true;
+            } else {
+                Yii::error('Failed to save dual source scraped data: ' . json_encode($model->errors));
+                return false;
+            }
+        } catch (\Exception $e) {
+            Yii::error('Database save error for dual source data: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Send success notification for V2 data
+     */
+    private function sendV2SuccessNotification($jsonData, $pair, $timeframe, $dbSuccess)
+    {
+        if (!Yii::$app->params['enableTelegramNotifications'] ?? false) {
+            return;
+        }
+
+        try {
+            $sources = [];
+            if (!empty($jsonData['data']['investing_com'])) {
+                $sources[] = 'Investing.com';
+            }
+            if (!empty($jsonData['data']['myfxbook'])) {
+                $sources[] = 'Myfxbook';
+            }
+
+            $message = "✅ Dual Source Scraped Data Received\n";
+            $message .= "Pair: {$pair}\n";
+            $message .= "Timeframe: {$timeframe}\n";
+            $message .= "Sources: " . implode(', ', $sources) . "\n";
+            $message .= "Scrape Time: " . ($jsonData['metadata']['scrapeTimestamp'] ?? 'N/A') . "\n";
+            $message .= "DB Save: " . ($dbSuccess ? 'Success' : 'Failed') . "\n";
+
+            if (isset($jsonData['data']['investing_com']['overall_signal'])) {
+                $message .= "Signal: " . $jsonData['data']['investing_com']['overall_signal'] . "\n";
+            }
+
+            TelegramHelper::sendMessage($message);
+        } catch (\Exception $e) {
+            Yii::error('Failed to send V2 success notification: ' . $e->getMessage());
         }
     }
 
