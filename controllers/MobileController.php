@@ -395,14 +395,42 @@ class MobileController extends Controller
         }
     }
 
-    public function actionGetLatestScrapedDataV2()
+    /**
+     * Get latest scraped data V2 - Updated to match web page requirements
+     * 
+     * Endpoint: GET /mobile/get-latest-scrape-data-v2
+     * Parameters: pair, timeframe (optional)
+     */
+    public function actionGetLatestScrapeDataV2()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        $startTime = microtime(true);
+
         try {
             // Get query parameters
             $request = Yii::$app->request;
-            $pair = $request->get('pair', 'EUR/JPY');
-            $timeframe = $request->get('timeframe', 'H4');
-            $hours = $request->get('hours', 24); // Last X hours
+            $pair = $request->post('pair', $request->get('pair', 'EUR/JPY'));
+            $timeframe = $request->post('timeframe', $request->get('timeframe', 'H4'));
+            $hours = $request->get('hours', 24);
+
+            // Convert pair format if needed (e.g., EURJPY to EUR/JPY)
+            $pair = str_replace('/', '', $pair); // Remove existing slashes
+            if (strlen($pair) == 6) {
+                $pair = substr($pair, 0, 3) . '/' . substr($pair, 3, 3);
+            }
+
+            // Convert timeframe format if needed
+            $timeframe = strtoupper($timeframe);
+            if (is_numeric($timeframe)) {
+                // Convert numeric to H format (e.g., 240 to H4)
+                if ($timeframe == 240) $timeframe = 'H4';
+                elseif ($timeframe == 60) $timeframe = 'H1';
+                elseif ($timeframe == 30) $timeframe = 'M30';
+                elseif ($timeframe == 15) $timeframe = 'M15';
+                elseif ($timeframe == 'D') $timeframe = 'D1';
+                elseif ($timeframe == 'W') $timeframe = 'W1';
+            }
 
             // Calculate date threshold
             $dateThreshold = date('Y-m-d H:i:s', strtotime("-{$hours} hours"));
@@ -417,35 +445,279 @@ class MobileController extends Controller
             if (!$record) {
                 return [
                     'success' => false,
-                    'message' => 'No recent scraped data found',
+                    'message' => 'No recent scraped data found for specified parameters',
                     'error_code' => 404,
                     'details' => [
                         'pair' => $pair,
                         'timeframe' => $timeframe,
                         'hours' => $hours,
                         'threshold' => $dateThreshold
+                    ],
+                    'suggestions' => [
+                        'Try different pair/timeframe',
+                        'Check if data exists in database',
+                        'Verify scrapers are running'
                     ]
                 ];
             }
 
-            // Format response
-            $response = [
-                'success' => true,
-                'data' => $this->formatScrapedDataRecord($record, true)
-            ];
+            // Format response for web page consumption
+            $responseData = $this->formatScrapedDataForWeb($record);
 
-            return $response;
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            // Log successful request
+            Yii::info("V2 Scrape Data fetched - Pair: {$pair}, Timeframe: {$timeframe}, Response time: {$responseTime}ms");
+
+            return [
+                'success' => true,
+                'message' => 'Latest scraped data retrieved successfully',
+                'data' => $responseData,
+                'metadata' => [
+                    'pair' => $pair,
+                    'timeframe' => $timeframe,
+                    'record_id' => $record->id,
+                    'retrieved_at' => date('Y-m-d H:i:s'),
+                    'response_time_ms' => $responseTime,
+                    'data_age_seconds' => time() - strtotime($record->created_at)
+                ]
+            ];
         } catch (\Exception $e) {
-            Yii::error('Get Latest Scraped Data V2 Error: ' . $e->getMessage());
+            $responseTime = round((microtime(true) - $startTime) * 1000, 2);
+
+            Yii::error('Get Latest Scrape Data V2 Error: ' . $e->getMessage());
 
             return [
                 'success' => false,
                 'message' => 'Error retrieving latest scraped data: ' . $e->getMessage(),
-                'error_code' => 500
+                'error_code' => 500,
+                'response_time_ms' => $responseTime,
+                'trace' => YII_DEBUG ? $e->getTraceAsString() : null
             ];
         }
     }
 
+    /**
+     * Format scraped data for web page consumption
+     */
+    private function formatScrapedDataForWeb($record)
+    {
+        $data = [
+            'id' => $record->id,
+            'pair' => $record->pair,
+            'timeframe' => $record->timeframe,
+            'created_at' => $record->created_at,
+            'scrape_timestamp' => $record->scrape_timestamp,
+            'combined_at' => $record->combined_at,
+            'has_investing_data' => !empty($record->investing_data),
+            'has_myfxbook_data' => !empty($record->myfxbook_data),
+        ];
+
+        // Parse investing.com data if available
+        if (!empty($record->investing_data)) {
+            $investingData = json_decode($record->investing_data, true);
+            if ($investingData) {
+                $data['investing'] = $this->extractInvestingAnalysis($investingData);
+            }
+        }
+
+        // Parse myfxbook data if available
+        if (!empty($record->myfxbook_data)) {
+            $myfxbookData = json_decode($record->myfxbook_data, true);
+            if ($myfxbookData) {
+                $data['myfxbook'] = $this->extractMyfxbookAnalysis($myfxbookData);
+            }
+        }
+
+        // Parse combined data
+        if (!empty($record->combined_data)) {
+            $combinedData = json_decode($record->combined_data, true);
+            if ($combinedData) {
+                $data['combined'] = $this->extractCombinedAnalysis($combinedData);
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * Extract technical analysis from investing.com data
+     */
+    private function extractInvestingAnalysis($investingData)
+    {
+        $analysis = [
+            'technicalSummary' => $investingData['overall_signal'] ?? 'Neutral',
+            'patterns' => [],
+            'counts' => ['buy' => 0, 'sell' => 0, 'neutral' => 0],
+            'totalPatterns' => 0
+        ];
+
+        // Extract from sections if available
+        if (isset($investingData['sections']) && is_array($investingData['sections'])) {
+            foreach ($investingData['sections'] as $sectionName => $sectionData) {
+                if (isset($sectionData['rows']) && is_array($sectionData['rows'])) {
+                    foreach ($sectionData['rows'] as $row) {
+                        if (isset($row['name']) && isset($row['action'])) {
+                            $pattern = [
+                                'name' => $row['name'],
+                                'signal' => strtolower($row['action'])
+                            ];
+
+                            $analysis['patterns'][] = $pattern;
+                            $analysis['totalPatterns']++;
+
+                            if (strtolower($row['action']) == 'buy') {
+                                $analysis['counts']['buy']++;
+                            } elseif (strtolower($row['action']) == 'sell') {
+                                $analysis['counts']['sell']++;
+                            } else {
+                                $analysis['counts']['neutral']++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $analysis;
+    }
+
+    /**
+     * Extract technical analysis from myfxbook data
+     */
+    private function extractMyfxbookAnalysis($myfxbookData)
+    {
+        $analysis = [
+            'technicalSummary' => $myfxbookData['technical_summary'] ?? 'Neutral',
+            'patterns' => [],
+            'counts' => ['buy' => 0, 'sell' => 0, 'neutral' => 0],
+            'totalPatterns' => 0
+        ];
+
+        // Extract from sections if available
+        if (isset($myfxbookData['sections']) && is_array($myfxbookData['sections'])) {
+            foreach ($myfxbookData['sections'] as $sectionName => $sectionData) {
+                if (isset($sectionData['rows']) && is_array($sectionData['rows'])) {
+                    foreach ($sectionData['rows'] as $row) {
+                        if (isset($row['name']) && isset($row['action'])) {
+                            $pattern = [
+                                'name' => $row['name'],
+                                'signal' => strtolower($row['action'])
+                            ];
+
+                            $analysis['patterns'][] = $pattern;
+                            $analysis['totalPatterns']++;
+
+                            if (strtolower($row['action']) == 'buy') {
+                                $analysis['counts']['buy']++;
+                            } elseif (strtolower($row['action']) == 'sell') {
+                                $analysis['counts']['sell']++;
+                            } else {
+                                $analysis['counts']['neutral']++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $analysis;
+    }
+
+    /**
+     * Extract combined analysis
+     */
+    private function extractCombinedAnalysis($combinedData)
+    {
+        return [
+            'technicalAnalysis' => $this->mergeTechnicalAnalysis(
+                $this->extractInvestingAnalysis($combinedData['investing_com'] ?? []),
+                $this->extractMyfxbookAnalysis($combinedData['myfxbook'] ?? [])
+            ),
+            'interestRates' => $this->extractInterestRates($combinedData),
+            'economicCalendar' => $this->extractEconomicCalendar($combinedData)
+        ];
+    }
+
+    /**
+     * Merge technical analysis from both sources
+     */
+    private function mergeTechnicalAnalysis($investing, $myfxbook)
+    {
+        // Prioritize myfxbook if available, otherwise use investing
+        if (!empty($myfxbook['patterns'])) {
+            return $myfxbook;
+        }
+
+        return $investing;
+    }
+
+    /**
+     * Extract interest rates data
+     */
+    private function extractInterestRates($combinedData)
+    {
+        $interestRates = [];
+
+        // Check if interest rates exist in either source
+        if (isset($combinedData['myfxbook']['sections']['interest_rates'])) {
+            $section = $combinedData['myfxbook']['sections']['interest_rates'];
+            if (isset($section['rows']) && is_array($section['rows'])) {
+                foreach ($section['rows'] as $row) {
+                    if (isset($row['country']) && isset($row['current_rate'])) {
+                        $interestRates[] = [
+                            'country' => $row['country'],
+                            'centralBank' => $row['central_bank'] ?? '',
+                            'currentRate' => $row['current_rate'],
+                            'previousRate' => $row['previous_rate'] ?? '',
+                            'nextMeeting' => $row['next_meeting'] ?? '',
+                            'change' => $row['change'] ?? '',
+                            'outlook' => $row['outlook'] ?? ''
+                        ];
+                    }
+                }
+            }
+        }
+
+        return $interestRates;
+    }
+
+    /**
+     * Extract economic calendar data
+     */
+    private function extractEconomicCalendar($combinedData)
+    {
+        $events = [];
+
+        // Check if economic calendar exists in either source
+        if (isset($combinedData['myfxbook']['sections']['economic_calendar'])) {
+            $section = $combinedData['myfxbook']['sections']['economic_calendar'];
+            if (isset($section['rows']) && is_array($section['rows'])) {
+                foreach ($section['rows'] as $row) {
+                    if (isset($row['time']) && isset($row['event'])) {
+                        $events[] = [
+                            'time' => $row['time'],
+                            'currency' => $row['currency'] ?? '',
+                            'event' => $row['event'],
+                            'previous' => $row['previous'] ?? '',
+                            'forecast' => $row['forecast'] ?? '',
+                            'actual' => $row['actual'] ?? '',
+                            'impact' => $row['impact'] ?? 'medium',
+                            'country' => $row['country'] ?? ''
+                        ];
+                    }
+                }
+            }
+        }
+
+        return [
+            'events' => $events,
+            'totalEvents' => count($events),
+            'highImpactEvents' => array_filter($events, function ($event) {
+                return ($event['impact'] ?? '') == 'high';
+            })
+        ];
+    }
 
     public function actionGetScrapedDataStatsV2()
     {
