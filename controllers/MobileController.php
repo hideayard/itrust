@@ -2943,7 +2943,7 @@ class MobileController extends Controller
             }
 
             // Extract pair (fixed for this scraper)
-            $pair = 'EUR/JPY';
+            $pair = $jsonData['data']['currency_pair'] ?? 'EURJPY';
             $timeframe = 'H4'; // Default timeframe for this scraper
 
             // Extract URLs if available
