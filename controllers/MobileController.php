@@ -416,9 +416,9 @@ class MobileController extends Controller
 
             // Convert pair format if needed (e.g., EURJPY to EUR/JPY)
             $pair = str_replace('/', '', $pair); // Remove existing slashes
-            if (strlen($pair) == 6) {
-                $pair = substr($pair, 0, 3) . '/' . substr($pair, 3, 3);
-            }
+            // if (strlen($pair) == 6) {
+            //     $pair = substr($pair, 0, 3) . '/' . substr($pair, 3, 3);
+            // }
 
             // Convert timeframe format if needed
             $timeframe = strtoupper($timeframe);
