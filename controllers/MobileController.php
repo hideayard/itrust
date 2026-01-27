@@ -410,9 +410,9 @@ class MobileController extends Controller
         try {
             // Get query parameters
             $request = Yii::$app->request;
-            $pair = $request->post('pair', $request->get('pair', 'EUR/JPY'));
+            $pair = $request->post('pair', $request->get('pair', 'EURJPY'));
             $timeframe = $request->post('timeframe', $request->get('timeframe', 'H4'));
-            $hours = $request->get('hours', 24);
+            // $hours = $request->get('hours', 24);
 
             // Convert pair format if needed (e.g., EURJPY to EUR/JPY)
             $pair = str_replace('/', '', $pair); // Remove existing slashes
