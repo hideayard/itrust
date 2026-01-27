@@ -433,12 +433,12 @@ class MobileController extends Controller
             }
 
             // Calculate date threshold
-            $dateThreshold = date('Y-m-d H:i:s', strtotime("-{$hours} hours"));
+            // $dateThreshold = date('Y-m-d H:i:s', strtotime("-{$hours} hours"));
 
             // Find latest record
             $record = DualSourceScrapedData::find()
                 ->where(['pair' => $pair, 'timeframe' => $timeframe])
-                ->andWhere(['>=', 'created_at', $dateThreshold])
+                // ->andWhere(['>=', 'created_at', $dateThreshold])
                 ->orderBy(['created_at' => SORT_DESC])
                 ->one();
 
