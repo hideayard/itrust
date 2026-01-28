@@ -3581,6 +3581,8 @@ class MobileController extends Controller
 
     public function actionGetLatestScrapeDataV3()
     {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
         $startTime = microtime(true);
         $response = ['success' => false, 'message' => ''];
 
