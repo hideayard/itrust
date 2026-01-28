@@ -3699,116 +3699,73 @@ class MobileController extends Controller
         return $response;
     }
 
-    private function getMyfxbookLatestData($pair, $timeframe, $limit, $timeRange, $includeRaw)
-    {
-        $query = MyfxbookScrapedDataNew::find()
-            ->where(['pair' => $pair, 'timeframe' => $timeframe])
-            ->andWhere(['>=', 'scrape_timestamp', $timeRange])
-            ->andWhere(['status' => 1])
-            ->orderBy(['scrape_timestamp' => SORT_DESC])
-            ->limit($limit);
-
-        $records = $query->all();
-        $data = [];
-        $summary = [
-            'total_records' => count($records),
-            'latest_scrape' => null,
-            'oldest_scrape' => null,
-            'average_events' => 0,
-            'average_patterns' => 0
-        ];
-
-        $totalEvents = 0;
-        $totalPatterns = 0;
-
-        foreach ($records as $record) {
-            $recordData = [
-                'id' => $record->id,
-                'pair' => $record->pair,
-                'timeframe' => $record->timeframe,
-                'url' => $record->url,
-                'scrape_timestamp' => $record->scrape_timestamp,
-                'created_at' => $record->created_at,
-                'source' => $record->source,
-                'price_info' => $record->price_info,
-                'technical_summary' => $record->technical_summary
-            ];
-
-            // Parse JSON fields
-            if ($record->economic_calendar) {
-                $economicData = json_decode($record->economic_calendar, true);
-                $recordData['economic_calendar'] = [
-                    'total_events' => $economicData['totalEvents'] ?? 0,
-                    'has_events' => $economicData['hasEvents'] ?? false,
-                    'events_sample' => isset($economicData['events']) && count($economicData['events']) > 0 ?
-                        array_slice($economicData['events'], 0, 3) : []
-                ];
-                $totalEvents += $recordData['economic_calendar']['total_events'];
-            }
-
-            if ($record->technical_analysis) {
-                $techData = json_decode($record->technical_analysis, true);
-                $recordData['technical_analysis'] = [
-                    'total_patterns' => $techData['totalPatterns'] ?? 0,
-                    'technical_summary' => $techData['technicalSummary'] ?? '',
-                    'counts' => $techData['counts'] ?? ['buy' => 0, 'sell' => 0, 'neutral' => 0],
-                    'patterns_sample' => isset($techData['patterns']) && count($techData['patterns']) > 0 ?
-                        array_slice($techData['patterns'], 0, 3) : []
-                ];
-                $totalPatterns += $recordData['technical_analysis']['total_patterns'];
-            }
-
-            if ($record->interest_rates) {
-                $ratesData = json_decode($record->interest_rates, true);
-                $recordData['interest_rates'] = [
-                    'total_rates' => is_array($ratesData) ? count($ratesData) : 0,
-                    'rates_sample' => is_array($ratesData) && count($ratesData) > 0 ?
-                        array_slice($ratesData, 0, 3) : []
-                ];
-            }
-
-            // Include raw data if requested
-            if ($includeRaw && $record->raw_data) {
-                $recordData['raw_data'] = json_decode($record->raw_data, true);
-            }
-
-            $data[] = $recordData;
-
-            // Update summary
-            if (!$summary['latest_scrape'] || $record->scrape_timestamp > $summary['latest_scrape']) {
-                $summary['latest_scrape'] = $record->scrape_timestamp;
-            }
-            if (!$summary['oldest_scrape'] || $record->scrape_timestamp < $summary['oldest_scrape']) {
-                $summary['oldest_scrape'] = $record->scrape_timestamp;
-            }
-        }
-
-        // Calculate averages
-        if (count($records) > 0) {
-            $summary['average_events'] = round($totalEvents / count($records), 2);
-            $summary['average_patterns'] = round($totalPatterns / count($records), 2);
-        }
-
-        return [
-            'data' => $data,
-            'summary' => $summary
-        ];
-    }
-
     private function getInvestingLatestData($pair, $limit, $timeRange, $includeRaw)
     {
         // Convert pair format if needed (EURJPY -> EUR/JPY)
         $formattedPair = $this->formatPairForInvesting($pair);
 
+        // First, try to get the latest record with non-null critical data
         $query = InvestingScrapedData::find()
             ->where(['pair' => $formattedPair])
             ->orWhere(['pair' => $pair]) // Try both formats
             ->andWhere(['>=', 'scrape_timestamp', $timeRange])
             ->andWhere(['status' => 1])
+            ->andWhere([
+                'AND',
+                ['IS NOT', 'technical_indicators', null],
+                ['!=', 'technical_indicators', ''],
+                ['IS NOT', 'moving_averages', null],
+                ['!=', 'moving_averages', ''],
+                ['IS NOT', 'pivot_points', null],
+                ['!=', 'pivot_points', '']
+            ])
             ->orderBy(['scrape_timestamp' => SORT_DESC])
-            ->limit($limit);
+            ->limit(1);
 
-        $records = $query->all();
+        $latestRecord = $query->one();
+
+        // If no record with all required data found, get the latest available record
+        if (!$latestRecord) {
+            $query = InvestingScrapedData::find()
+                ->where(['pair' => $formattedPair])
+                ->orWhere(['pair' => $pair])
+                ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+                ->andWhere(['status' => 1])
+                ->orderBy(['scrape_timestamp' => SORT_DESC])
+                ->limit(1);
+
+            $latestRecord = $query->one();
+        }
+
+        // If still no record found, return empty result
+        if (!$latestRecord) {
+            return [
+                'data' => [],
+                'summary' => [
+                    'total_records' => 0,
+                    'latest_scrape' => null,
+                    'oldest_scrape' => null,
+                    'has_overall_signal' => 0,
+                    'sections_available' => []
+                ]
+            ];
+        }
+
+        // Get additional historical records (excluding the latest one already fetched)
+        $historicalQuery = InvestingScrapedData::find()
+            ->where(['pair' => $formattedPair])
+            ->orWhere(['pair' => $pair])
+            ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+            ->andWhere(['status' => 1])
+            ->andWhere(['!=', 'id', $latestRecord->id]) // Exclude the latest record
+            ->orderBy(['scrape_timestamp' => SORT_DESC])
+            ->limit($limit - 1);
+
+        $historicalRecords = $historicalQuery->all();
+
+        // Combine latest record with historical records
+        $records = array_merge([$latestRecord], $historicalRecords);
+
         $data = [];
         $summary = [
             'total_records' => count($records),
@@ -3835,7 +3792,7 @@ class MobileController extends Controller
             // Check which sections are available
             $availableSections = [];
 
-            if ($record->technical_indicators) {
+            if ($record->technical_indicators && $record->technical_indicators !== '') {
                 $techIndicators = json_decode($record->technical_indicators, true);
                 $recordData['technical_indicators'] = [
                     'has_data' => !empty($techIndicators),
@@ -3846,7 +3803,7 @@ class MobileController extends Controller
                 $availableSections[] = 'technical_indicators';
             }
 
-            if ($record->moving_averages) {
+            if ($record->moving_averages && $record->moving_averages !== '') {
                 $movingAverages = json_decode($record->moving_averages, true);
                 $recordData['moving_averages'] = [
                     'has_data' => !empty($movingAverages),
@@ -3857,7 +3814,7 @@ class MobileController extends Controller
                 $availableSections[] = 'moving_averages';
             }
 
-            if ($record->pivot_points) {
+            if ($record->pivot_points && $record->pivot_points !== '') {
                 $pivotPoints = json_decode($record->pivot_points, true);
                 $recordData['pivot_points'] = [
                     'has_data' => !empty($pivotPoints),
@@ -3868,7 +3825,7 @@ class MobileController extends Controller
                 $availableSections[] = 'pivot_points';
             }
 
-            if ($record->summary_data) {
+            if ($record->summary_data && $record->summary_data !== '') {
                 $summaryData = json_decode($record->summary_data, true);
                 $recordData['summary_data'] = [
                     'has_data' => !empty($summaryData),
@@ -3877,7 +3834,7 @@ class MobileController extends Controller
                 $availableSections[] = 'summary';
             }
 
-            if ($record->other_sections) {
+            if ($record->other_sections && $record->other_sections !== '') {
                 $otherSections = json_decode($record->other_sections, true);
                 $recordData['other_sections'] = [
                     'has_data' => !empty($otherSections),
@@ -3895,7 +3852,7 @@ class MobileController extends Controller
             }
 
             // Include raw data if requested
-            if ($includeRaw && $record->raw_data) {
+            if ($includeRaw && $record->raw_data && $record->raw_data !== '') {
                 $recordData['raw_data'] = json_decode($record->raw_data, true);
             }
 
@@ -3921,6 +3878,152 @@ class MobileController extends Controller
             'summary' => $summary
         ];
     }
+
+    private function getMyfxbookLatestData($pair, $timeframe, $limit, $timeRange, $includeRaw)
+    {
+        // First, try to get the latest record with non-null technical analysis data
+        $query = MyfxbookScrapedDataNew::find()
+            ->where(['pair' => $pair, 'timeframe' => $timeframe])
+            ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+            ->andWhere(['status' => 1])
+            ->andWhere([
+                'AND',
+                ['IS NOT', 'technical_analysis', null],
+                ['!=', 'technical_analysis', ''],
+                ['IS NOT', 'interest_rates', null],
+                ['!=', 'interest_rates', '']
+            ])
+            ->orderBy(['scrape_timestamp' => SORT_DESC])
+            ->limit(1);
+
+        $latestRecord = $query->one();
+
+        // If no record with all required data found, get the latest available record
+        if (!$latestRecord) {
+            $query = MyfxbookScrapedDataNew::find()
+                ->where(['pair' => $pair, 'timeframe' => $timeframe])
+                ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+                ->andWhere(['status' => 1])
+                ->orderBy(['scrape_timestamp' => SORT_DESC])
+                ->limit(1);
+
+            $latestRecord = $query->one();
+        }
+
+        // If still no record found, return empty result
+        if (!$latestRecord) {
+            return [
+                'data' => [],
+                'summary' => [
+                    'total_records' => 0,
+                    'latest_scrape' => null,
+                    'oldest_scrape' => null,
+                    'average_events' => 0,
+                    'average_patterns' => 0
+                ]
+            ];
+        }
+
+        // Get additional historical records (excluding the latest one already fetched)
+        $historicalQuery = MyfxbookScrapedDataNew::find()
+            ->where(['pair' => $pair, 'timeframe' => $timeframe])
+            ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+            ->andWhere(['status' => 1])
+            ->andWhere(['!=', 'id', $latestRecord->id]) // Exclude the latest record
+            ->orderBy(['scrape_timestamp' => SORT_DESC])
+            ->limit($limit - 1);
+
+        $historicalRecords = $historicalQuery->all();
+
+        // Combine latest record with historical records
+        $records = array_merge([$latestRecord], $historicalRecords);
+
+        $data = [];
+        $summary = [
+            'total_records' => count($records),
+            'latest_scrape' => null,
+            'oldest_scrape' => null,
+            'average_events' => 0,
+            'average_patterns' => 0
+        ];
+
+        $totalEvents = 0;
+        $totalPatterns = 0;
+
+        foreach ($records as $record) {
+            $recordData = [
+                'id' => $record->id,
+                'pair' => $record->pair,
+                'timeframe' => $record->timeframe,
+                'url' => $record->url,
+                'scrape_timestamp' => $record->scrape_timestamp,
+                'created_at' => $record->created_at,
+                'source' => $record->source,
+                'price_info' => $record->price_info,
+                'technical_summary' => $record->technical_summary
+            ];
+
+            // Parse JSON fields
+            if ($record->economic_calendar && $record->economic_calendar !== '') {
+                $economicData = json_decode($record->economic_calendar, true);
+                $recordData['economic_calendar'] = [
+                    'total_events' => $economicData['totalEvents'] ?? 0,
+                    'has_events' => $economicData['hasEvents'] ?? false,
+                    'events_sample' => isset($economicData['events']) && count($economicData['events']) > 0 ?
+                        array_slice($economicData['events'], 0, 3) : []
+                ];
+                $totalEvents += $recordData['economic_calendar']['total_events'];
+            }
+
+            if ($record->technical_analysis && $record->technical_analysis !== '') {
+                $techData = json_decode($record->technical_analysis, true);
+                $recordData['technical_analysis'] = [
+                    'total_patterns' => $techData['totalPatterns'] ?? 0,
+                    'technical_summary' => $techData['technicalSummary'] ?? '',
+                    'counts' => $techData['counts'] ?? ['buy' => 0, 'sell' => 0, 'neutral' => 0],
+                    'patterns_sample' => isset($techData['patterns']) && count($techData['patterns']) > 0 ?
+                        array_slice($techData['patterns'], 0, 3) : []
+                ];
+                $totalPatterns += $recordData['technical_analysis']['total_patterns'];
+            }
+
+            if ($record->interest_rates && $record->interest_rates !== '') {
+                $ratesData = json_decode($record->interest_rates, true);
+                $recordData['interest_rates'] = [
+                    'total_rates' => is_array($ratesData) ? count($ratesData) : 0,
+                    'rates_sample' => is_array($ratesData) && count($ratesData) > 0 ?
+                        array_slice($ratesData, 0, 3) : []
+                ];
+            }
+
+            // Include raw data if requested
+            if ($includeRaw && $record->raw_data && $record->raw_data !== '') {
+                $recordData['raw_data'] = json_decode($record->raw_data, true);
+            }
+
+            $data[] = $recordData;
+
+            // Update summary
+            if (!$summary['latest_scrape'] || $record->scrape_timestamp > $summary['latest_scrape']) {
+                $summary['latest_scrape'] = $record->scrape_timestamp;
+            }
+            if (!$summary['oldest_scrape'] || $record->scrape_timestamp < $summary['oldest_scrape']) {
+                $summary['oldest_scrape'] = $record->scrape_timestamp;
+            }
+        }
+
+        // Calculate averages
+        if (count($records) > 0) {
+            $summary['average_events'] = round($totalEvents / count($records), 2);
+            $summary['average_patterns'] = round($totalPatterns / count($records), 2);
+        }
+
+        return [
+            'data' => $data,
+            'summary' => $summary
+        ];
+    }
+
 
     private function formatPairForInvesting($pair)
     {
