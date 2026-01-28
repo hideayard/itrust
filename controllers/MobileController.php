@@ -3579,6 +3579,437 @@ class MobileController extends Controller
     }
 
 
+    public function actionGetLatestScrapeDataV3()
+    {
+        $startTime = microtime(true);
+        $response = ['success' => false, 'message' => ''];
+
+        try {
+            // Get query parameters with defaults
+            $pair = Yii::$app->request->get('pair', 'EURJPY');
+            $timeframe = Yii::$app->request->get('timeframe', 'H4');
+            $source = Yii::$app->request->get('source', 'all'); // all, myfxbook, investing
+            $limit = Yii::$app->request->get('limit', 10);
+            $hoursBack = Yii::$app->request->get('hoursBack', 24);
+            $includeRaw = Yii::$app->request->get('includeRaw', false);
+
+            // Validate limit
+            $limit = min($limit, 50); // Max 50 records
+
+            // Calculate time range
+            $timeRange = date('Y-m-d H:i:s', strtotime("-$hoursBack hours"));
+
+            $data = [
+                'metadata' => [
+                    'requested_at' => date('Y-m-d H:i:s'),
+                    'pair' => $pair,
+                    'timeframe' => $timeframe,
+                    'source' => $source,
+                    'limit' => $limit,
+                    'hours_back' => $hoursBack,
+                    'include_raw' => $includeRaw
+                ],
+                'myfxbook_data' => [],
+                'investing_data' => [],
+                'summary' => []
+            ];
+
+            // Get Myfxbook data if requested
+            if ($source === 'all' || $source === 'myfxbook') {
+                $myfxbookData = $this->getMyfxbookLatestData($pair, $timeframe, $limit, $timeRange, $includeRaw);
+                $data['myfxbook_data'] = $myfxbookData['data'];
+                $data['summary']['myfxbook'] = $myfxbookData['summary'];
+            }
+
+            // Get Investing.com data if requested
+            if ($source === 'all' || $source === 'investing') {
+                $investingData = $this->getInvestingLatestData($pair, $limit, $timeRange, $includeRaw);
+                $data['investing_data'] = $investingData['data'];
+                $data['summary']['investing'] = $investingData['summary'];
+            }
+
+            // Generate overall summary
+            $data['summary']['overall'] = $this->generateOverallSummary($data);
+
+            // Log the API request
+            $responseTime = microtime(true) - $startTime;
+
+            // Log request for monitoring
+            if (class_exists('ScrapedDataLog')) {
+                ScrapedDataLog::logScrapedData(
+                    'mobile/get-latest-scrape-data-v3',
+                    'GET',
+                    Yii::$app->request->get(),
+                    $pair,
+                    $timeframe,
+                    200,
+                    $responseTime
+                );
+            }
+
+            $response = [
+                'success' => true,
+                'message' => 'Data retrieved successfully',
+                'data' => $data,
+                'response_time' => round($responseTime, 3) . 's',
+                'counts' => [
+                    'myfxbook_records' => count($data['myfxbook_data']),
+                    'investing_records' => count($data['investing_data'])
+                ]
+            ];
+        } catch (\Exception $e) {
+            // Handle error
+            $responseTime = microtime(true) - $startTime;
+
+            // Log error
+            if (class_exists('ScrapedDataLog')) {
+                ScrapedDataLog::logScrapedData(
+                    'mobile/get-latest-scrape-data-v3',
+                    'GET',
+                    Yii::$app->request->get(),
+                    Yii::$app->request->get('pair', 'ERROR'),
+                    Yii::$app->request->get('timeframe', 'ERROR'),
+                    400,
+                    $responseTime
+                );
+            }
+
+            // Send error notification if configured
+            if (class_exists('TelegramHelper')) {
+                TelegramHelper::sendSimpleError(
+                    "Get Latest Scrape Data V3 failed: " . $e->getMessage(),
+                    "Pair: " . Yii::$app->request->get('pair', 'N/A') .
+                        ", Source: " . Yii::$app->request->get('source', 'N/A')
+                );
+            }
+
+            Yii::error('Get Latest Scrape Data V3 Error: ' . $e->getMessage());
+
+            $response = [
+                'success' => false,
+                'message' => 'Error retrieving data: ' . $e->getMessage(),
+                'error_code' => 400
+            ];
+
+            Yii::$app->response->statusCode = 400;
+        }
+
+        return $response;
+    }
+
+    private function getMyfxbookLatestData($pair, $timeframe, $limit, $timeRange, $includeRaw)
+    {
+        $query = MyfxbookScrapedDataNew::find()
+            ->where(['pair' => $pair, 'timeframe' => $timeframe])
+            ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+            ->andWhere(['status' => 1])
+            ->orderBy(['scrape_timestamp' => SORT_DESC])
+            ->limit($limit);
+
+        $records = $query->all();
+        $data = [];
+        $summary = [
+            'total_records' => count($records),
+            'latest_scrape' => null,
+            'oldest_scrape' => null,
+            'average_events' => 0,
+            'average_patterns' => 0
+        ];
+
+        $totalEvents = 0;
+        $totalPatterns = 0;
+
+        foreach ($records as $record) {
+            $recordData = [
+                'id' => $record->id,
+                'pair' => $record->pair,
+                'timeframe' => $record->timeframe,
+                'url' => $record->url,
+                'scrape_timestamp' => $record->scrape_timestamp,
+                'created_at' => $record->created_at,
+                'source' => $record->source,
+                'price_info' => $record->price_info,
+                'technical_summary' => $record->technical_summary
+            ];
+
+            // Parse JSON fields
+            if ($record->economic_calendar) {
+                $economicData = json_decode($record->economic_calendar, true);
+                $recordData['economic_calendar'] = [
+                    'total_events' => $economicData['totalEvents'] ?? 0,
+                    'has_events' => $economicData['hasEvents'] ?? false,
+                    'events_sample' => isset($economicData['events']) && count($economicData['events']) > 0 ?
+                        array_slice($economicData['events'], 0, 3) : []
+                ];
+                $totalEvents += $recordData['economic_calendar']['total_events'];
+            }
+
+            if ($record->technical_analysis) {
+                $techData = json_decode($record->technical_analysis, true);
+                $recordData['technical_analysis'] = [
+                    'total_patterns' => $techData['totalPatterns'] ?? 0,
+                    'technical_summary' => $techData['technicalSummary'] ?? '',
+                    'counts' => $techData['counts'] ?? ['buy' => 0, 'sell' => 0, 'neutral' => 0],
+                    'patterns_sample' => isset($techData['patterns']) && count($techData['patterns']) > 0 ?
+                        array_slice($techData['patterns'], 0, 3) : []
+                ];
+                $totalPatterns += $recordData['technical_analysis']['total_patterns'];
+            }
+
+            if ($record->interest_rates) {
+                $ratesData = json_decode($record->interest_rates, true);
+                $recordData['interest_rates'] = [
+                    'total_rates' => is_array($ratesData) ? count($ratesData) : 0,
+                    'rates_sample' => is_array($ratesData) && count($ratesData) > 0 ?
+                        array_slice($ratesData, 0, 3) : []
+                ];
+            }
+
+            // Include raw data if requested
+            if ($includeRaw && $record->raw_data) {
+                $recordData['raw_data'] = json_decode($record->raw_data, true);
+            }
+
+            $data[] = $recordData;
+
+            // Update summary
+            if (!$summary['latest_scrape'] || $record->scrape_timestamp > $summary['latest_scrape']) {
+                $summary['latest_scrape'] = $record->scrape_timestamp;
+            }
+            if (!$summary['oldest_scrape'] || $record->scrape_timestamp < $summary['oldest_scrape']) {
+                $summary['oldest_scrape'] = $record->scrape_timestamp;
+            }
+        }
+
+        // Calculate averages
+        if (count($records) > 0) {
+            $summary['average_events'] = round($totalEvents / count($records), 2);
+            $summary['average_patterns'] = round($totalPatterns / count($records), 2);
+        }
+
+        return [
+            'data' => $data,
+            'summary' => $summary
+        ];
+    }
+
+    private function getInvestingLatestData($pair, $limit, $timeRange, $includeRaw)
+    {
+        // Convert pair format if needed (EURJPY -> EUR/JPY)
+        $formattedPair = $this->formatPairForInvesting($pair);
+
+        $query = InvestingScrapedData::find()
+            ->where(['pair' => $formattedPair])
+            ->orWhere(['pair' => $pair]) // Try both formats
+            ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+            ->andWhere(['status' => 1])
+            ->orderBy(['scrape_timestamp' => SORT_DESC])
+            ->limit($limit);
+
+        $records = $query->all();
+        $data = [];
+        $summary = [
+            'total_records' => count($records),
+            'latest_scrape' => null,
+            'oldest_scrape' => null,
+            'has_overall_signal' => 0,
+            'sections_available' => []
+        ];
+
+        $sectionsCount = [];
+
+        foreach ($records as $record) {
+            $recordData = [
+                'id' => $record->id,
+                'pair' => $record->pair,
+                'timeframe' => $record->timeframe,
+                'url' => $record->url,
+                'overall_signal' => $record->overall_signal,
+                'scrape_timestamp' => $record->scrape_timestamp,
+                'created_at' => $record->created_at,
+                'source' => $record->source
+            ];
+
+            // Check which sections are available
+            $availableSections = [];
+
+            if ($record->technical_indicators) {
+                $techIndicators = json_decode($record->technical_indicators, true);
+                $recordData['technical_indicators'] = [
+                    'has_data' => !empty($techIndicators),
+                    'rows_count' => isset($techIndicators['rows']) ? count($techIndicators['rows']) : 0,
+                    'sample' => isset($techIndicators['rows']) && count($techIndicators['rows']) > 0 ?
+                        array_slice($techIndicators['rows'], 0, 3) : []
+                ];
+                $availableSections[] = 'technical_indicators';
+            }
+
+            if ($record->moving_averages) {
+                $movingAverages = json_decode($record->moving_averages, true);
+                $recordData['moving_averages'] = [
+                    'has_data' => !empty($movingAverages),
+                    'rows_count' => isset($movingAverages['rows']) ? count($movingAverages['rows']) : 0,
+                    'sample' => isset($movingAverages['rows']) && count($movingAverages['rows']) > 0 ?
+                        array_slice($movingAverages['rows'], 0, 3) : []
+                ];
+                $availableSections[] = 'moving_averages';
+            }
+
+            if ($record->pivot_points) {
+                $pivotPoints = json_decode($record->pivot_points, true);
+                $recordData['pivot_points'] = [
+                    'has_data' => !empty($pivotPoints),
+                    'rows_count' => isset($pivotPoints['rows']) ? count($pivotPoints['rows']) : 0,
+                    'sample' => isset($pivotPoints['rows']) && count($pivotPoints['rows']) > 0 ?
+                        array_slice($pivotPoints['rows'], 0, 3) : []
+                ];
+                $availableSections[] = 'pivot_points';
+            }
+
+            if ($record->summary_data) {
+                $summaryData = json_decode($record->summary_data, true);
+                $recordData['summary_data'] = [
+                    'has_data' => !empty($summaryData),
+                    'rows_count' => isset($summaryData['rows']) ? count($summaryData['rows']) : 0
+                ];
+                $availableSections[] = 'summary';
+            }
+
+            if ($record->other_sections) {
+                $otherSections = json_decode($record->other_sections, true);
+                $recordData['other_sections'] = [
+                    'has_data' => !empty($otherSections),
+                    'section_names' => array_keys($otherSections),
+                    'total_sections' => count($otherSections)
+                ];
+            }
+
+            // Count sections for this record
+            foreach ($availableSections as $section) {
+                if (!isset($sectionsCount[$section])) {
+                    $sectionsCount[$section] = 0;
+                }
+                $sectionsCount[$section]++;
+            }
+
+            // Include raw data if requested
+            if ($includeRaw && $record->raw_data) {
+                $recordData['raw_data'] = json_decode($record->raw_data, true);
+            }
+
+            $data[] = $recordData;
+
+            // Update summary
+            if (!$summary['latest_scrape'] || $record->scrape_timestamp > $summary['latest_scrape']) {
+                $summary['latest_scrape'] = $record->scrape_timestamp;
+            }
+            if (!$summary['oldest_scrape'] || $record->scrape_timestamp < $summary['oldest_scrape']) {
+                $summary['oldest_scrape'] = $record->scrape_timestamp;
+            }
+            if ($record->overall_signal) {
+                $summary['has_overall_signal']++;
+            }
+        }
+
+        // Update sections available in summary
+        $summary['sections_available'] = $sectionsCount;
+
+        return [
+            'data' => $data,
+            'summary' => $summary
+        ];
+    }
+
+    private function formatPairForInvesting($pair)
+    {
+        // Convert EURJPY to EUR/JPY format for Investing.com
+        if (strlen($pair) === 6) {
+            $from = substr($pair, 0, 3);
+            $to = substr($pair, 3, 3);
+            return $from . '/' . $to;
+        }
+        return $pair;
+    }
+
+    private function generateOverallSummary($data)
+    {
+        $summary = [
+            'total_records' => 0,
+            'data_sources' => [],
+            'time_range' => '',
+            'recommendations' => []
+        ];
+
+        $myfxbookCount = count($data['myfxbook_data']);
+        $investingCount = count($data['investing_data']);
+
+        $summary['total_records'] = $myfxbookCount + $investingCount;
+        $summary['data_sources'] = [
+            'myfxbook' => $myfxbookCount,
+            'investing' => $investingCount
+        ];
+
+        // Determine time range
+        $latestTimes = [];
+        $oldestTimes = [];
+
+        if (!empty($data['myfxbook_data'])) {
+            $myfxbookSummary = $data['summary']['myfxbook'] ?? [];
+            if (!empty($myfxbookSummary['latest_scrape'])) {
+                $latestTimes[] = $myfxbookSummary['latest_scrape'];
+            }
+            if (!empty($myfxbookSummary['oldest_scrape'])) {
+                $oldestTimes[] = $myfxbookSummary['oldest_scrape'];
+            }
+        }
+
+        if (!empty($data['investing_data'])) {
+            $investingSummary = $data['summary']['investing'] ?? [];
+            if (!empty($investingSummary['latest_scrape'])) {
+                $latestTimes[] = $investingSummary['latest_scrape'];
+            }
+            if (!empty($investingSummary['oldest_scrape'])) {
+                $oldestTimes[] = $investingSummary['oldest_scrape'];
+            }
+        }
+
+        if (!empty($latestTimes) && !empty($oldestTimes)) {
+            $latest = max($latestTimes);
+            $oldest = min($oldestTimes);
+            $summary['time_range'] = "$oldest to $latest";
+        }
+
+        // Generate recommendations
+        $recommendations = [];
+
+        if ($myfxbookCount === 0 && $investingCount === 0) {
+            $recommendations[] = "No data found for the specified criteria. Try expanding the time range.";
+        }
+
+        if ($myfxbookCount > 0 && $investingCount === 0) {
+            $recommendations[] = "Only Myfxbook data available. Consider enabling Investing.com scraper.";
+        }
+
+        if ($myfxbookCount === 0 && $investingCount > 0) {
+            $recommendations[] = "Only Investing.com data available. Consider enabling Myfxbook scraper.";
+        }
+
+        if ($myfxbookCount > 0 && $investingCount > 0) {
+            $recommendations[] = "Both data sources available. Consider comparing signals from both sources.";
+
+            // Check if data is recent (within last hour)
+            $currentTime = time();
+            $latestTimestamp = strtotime($latest ?? '');
+            if ($latestTimestamp && ($currentTime - $latestTimestamp) > 3600) {
+                $recommendations[] = "Data is more than 1 hour old. Consider running scrapers more frequently.";
+            }
+        }
+
+        $summary['recommendations'] = $recommendations;
+
+        return $summary;
+    }
+
     /**
      * Handle OPTIONS request for CORS preflight
      */
