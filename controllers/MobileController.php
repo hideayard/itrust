@@ -9,6 +9,8 @@ use yii\filters\Cors;
 use app\models\forms\LoginForm;
 use app\helpers\TelegramHelper;
 use app\helpers\JwtHelper;
+use app\models\MyfxbookScrapedDataNew;
+use app\models\InvestingScrapedData;
 use app\models\MyfxbookScrapedData;
 use app\models\MyfxbookEconomicEvent;
 use app\models\MyfxbookTechnicalPattern;
@@ -3167,6 +3169,410 @@ class MobileController extends Controller
             TelegramHelper::sendSimpleMessage($message);
         } catch (\Exception $e) {
             Yii::error('Failed to send V2 success notification: ' . $e->getMessage());
+        }
+    }
+
+    public function actionSaveInvestingData()
+    {
+        $startTime = microtime(true);
+        $response = ['success' => false, 'message' => ''];
+
+        try {
+            // Get raw JSON input
+            $rawData = Yii::$app->request->getRawBody();
+            $jsonData = json_decode($rawData, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid JSON data: ' . json_last_error_msg());
+            }
+
+            // Validate required structure
+            if (!isset($jsonData['metadata']) || !isset($jsonData['data'])) {
+                throw new \Exception('Missing required fields: metadata and data');
+            }
+
+            // Validate metadata
+            if (!isset($jsonData['metadata']['source']) || $jsonData['metadata']['source'] !== 'investing.com') {
+                throw new \Exception('Invalid or missing source. Expected: investing.com');
+            }
+
+            // Validate data structure
+            if (!isset($jsonData['data']['currency_pair']) || !isset($jsonData['data']['sections'])) {
+                throw new \Exception('Missing required data fields: currency_pair or sections');
+            }
+
+            // Extract pair from data
+            $pair = $jsonData['data']['currency_pair'] ?? 'UNKNOWN';
+            $timeframe = null; // Investing.com doesn't use timeframe
+
+            // Extract URL
+            $url = $jsonData['data']['url'] ?? $jsonData['metadata']['url'] ?? null;
+
+            // Extract sections
+            $sections = $jsonData['data']['sections'] ?? [];
+
+            // Extract overall signal
+            $overallSignal = $jsonData['data']['overall_signal'] ?? null;
+
+            // Scrape timestamp
+            $scrapeTimestamp = $jsonData['data']['scraped_at'] ?? $jsonData['metadata']['scrapeTimestamp'] ?? date('Y-m-d H:i:s');
+
+            // Prepare data for database
+            $dbData = [
+                'pair' => $pair,
+                'timeframe' => $timeframe,
+                'url' => $url,
+                'overall_signal' => $overallSignal,
+                'scrape_timestamp' => $scrapeTimestamp,
+                'source' => 'investing.com',
+                'status' => 1
+            ];
+
+            // Extract specific sections
+            $dbData['technical_indicators'] = isset($sections['technical_indicators']) ?
+                json_encode($sections['technical_indicators']) : null;
+
+            $dbData['moving_averages'] = isset($sections['moving_averages']) ?
+                json_encode($sections['moving_averages']) : null;
+
+            $dbData['pivot_points'] = isset($sections['pivot_points']) ?
+                json_encode($sections['pivot_points']) : null;
+
+            $dbData['summary_data'] = isset($sections['summary']) ?
+                json_encode($sections['summary']) : null;
+
+            // Store other sections
+            $otherSections = [];
+            foreach ($sections as $key => $section) {
+                if (!in_array($key, ['technical_indicators', 'moving_averages', 'pivot_points', 'summary'])) {
+                    $otherSections[$key] = $section;
+                }
+            }
+
+            $dbData['other_sections'] = !empty($otherSections) ?
+                json_encode($otherSections) : null;
+
+            // Store raw data
+            $dbData['raw_data'] = json_encode($jsonData['data']);
+
+            // Save to database
+            $model = new InvestingScrapedData();
+            $model->attributes = $dbData;
+
+            if (!$model->save()) {
+                throw new \Exception('Failed to save data to database: ' . json_encode($model->errors));
+            }
+
+            // Log the API request
+            $responseTime = microtime(true) - $startTime;
+
+            // Use existing log method if available, or create new one
+            if (class_exists('ScrapedDataLog')) {
+                ScrapedDataLog::logScrapedData(
+                    'mobile/save-scrape-data-investing',
+                    'POST',
+                    $jsonData,
+                    $pair,
+                    $timeframe,
+                    200,
+                    $responseTime
+                );
+            }
+
+            // Send success notification if configured
+            $this->sendInvestingSuccessNotification($jsonData, $pair, $model->id);
+
+            $response = [
+                'success' => true,
+                'message' => 'Investing.com data saved successfully',
+                'data' => [
+                    'id' => $model->id,
+                    'pair' => $pair,
+                    'timeframe' => $timeframe,
+                    'url' => $url,
+                    'overall_signal' => $overallSignal,
+                    'scrape_timestamp' => $scrapeTimestamp,
+                    'created_at' => $model->created_at,
+                    'response_time' => round($responseTime, 3) . 's'
+                ]
+            ];
+        } catch (\Exception $e) {
+            // Handle error
+            $responseTime = microtime(true) - $startTime;
+
+            // Extract pair even on error
+            $pair = 'ERROR';
+            try {
+                if (isset($jsonData['data']['currency_pair'])) {
+                    $pair = $jsonData['data']['currency_pair'];
+                }
+            } catch (\Exception $ex) {
+                // Ignore extraction error
+            }
+
+            // Log error
+            if (class_exists('ScrapedDataLog')) {
+                ScrapedDataLog::logScrapedData(
+                    'mobile/save-scrape-data-investing',
+                    'POST',
+                    $rawData ?? [],
+                    $pair,
+                    null,
+                    400,
+                    $responseTime
+                );
+            }
+
+            // Send error notification if configured
+            if (class_exists('TelegramHelper')) {
+                TelegramHelper::sendSimpleError(
+                    "Investing.com data save failed: " . $e->getMessage(),
+                    "Pair: {$pair}"
+                );
+            }
+
+            Yii::error('Investing Data API Error: ' . $e->getMessage());
+
+            $response = [
+                'success' => false,
+                'message' => 'Error processing Investing.com data: ' . $e->getMessage(),
+                'error_code' => 400,
+                'pair' => $pair
+            ];
+
+            Yii::$app->response->statusCode = 400;
+        }
+
+        return $response;
+    }
+
+    private function sendInvestingSuccessNotification($data, $pair, $recordId)
+    {
+        if (!class_exists('TelegramHelper')) {
+            return;
+        }
+
+        try {
+            $sections = $data['data']['sections'] ?? [];
+            $sectionCount = count($sections);
+            $overallSignal = $data['data']['overall_signal'] ?? 'N/A';
+
+            $message = "✅ *Investing.com Data Saved Successfully*\n\n";
+            $message .= "• *Pair:* {$pair}\n";
+            $message .= "• *Record ID:* {$recordId}\n";
+            $message .= "• *Sections:* {$sectionCount}\n";
+            $message .= "• *Overall Signal:* {$overallSignal}\n";
+
+            if (isset($data['metadata']['scrapeTimestamp'])) {
+                $message .= "• *Scraped:* " . date('Y-m-d H:i:s', strtotime($data['metadata']['scrapeTimestamp'])) . "\n";
+            }
+
+            // List available sections
+            if (!empty($sections)) {
+                $message .= "• *Available Sections:* " . implode(', ', array_keys($sections)) . "\n";
+            }
+
+            TelegramHelper::sendMessage($message);
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Investing.com notification: ' . $e->getMessage());
+        }
+    }
+
+
+    public function actionSaveMyfxbookData()
+    {
+        $startTime = microtime(true);
+        $response = ['success' => false, 'message' => ''];
+
+        try {
+            // Get raw JSON input
+            $rawData = Yii::$app->request->getRawBody();
+            $jsonData = json_decode($rawData, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Invalid JSON data: ' . json_last_error_msg());
+            }
+
+            // Validate required structure
+            if (!isset($jsonData['metadata']) || !isset($jsonData['data'])) {
+                throw new \Exception('Missing required fields: metadata and data');
+            }
+
+            // Validate metadata
+            if (!isset($jsonData['metadata']['source']) || $jsonData['metadata']['source'] !== 'myfxbook.com') {
+                throw new \Exception('Invalid or missing source. Expected: myfxbook.com');
+            }
+
+            // Validate data structure
+            if (!isset($jsonData['data']['pair']) || !isset($jsonData['data']['timeframe'])) {
+                throw new \Exception('Missing required data fields: pair or timeframe');
+            }
+
+            // Extract pair and timeframe
+            $pair = $jsonData['data']['pair'] ?? 'UNKNOWN';
+            $timeframe = $jsonData['data']['timeframe'] ?? 'UNKNOWN';
+
+            // Extract URL
+            $url = $jsonData['data']['url'] ?? $jsonData['metadata']['url'] ?? null;
+
+            // Extract sections
+            $sections = $jsonData['data']['sections'] ?? [];
+
+            // Extract additional info
+            $priceInfo = $jsonData['data']['price_info'] ?? null;
+            $technicalSummary = $jsonData['data']['technical_summary'] ?? null;
+
+            // Scrape timestamp
+            $scrapeTimestamp = $jsonData['data']['scraped_at'] ?? $jsonData['metadata']['scrapeTimestamp'] ?? date('Y-m-d H:i:s');
+
+            // Prepare data for database
+            $dbData = [
+                'pair' => $pair,
+                'timeframe' => $timeframe,
+                'url' => $url,
+                'price_info' => $priceInfo,
+                'technical_summary' => $technicalSummary,
+                'scrape_timestamp' => $scrapeTimestamp,
+                'source' => 'myfxbook.com',
+                'status' => 1
+            ];
+
+            // Extract specific sections
+            $dbData['economic_calendar'] = isset($sections['economicCalendar']) ?
+                json_encode($sections['economicCalendar']) : null;
+
+            $dbData['technical_analysis'] = isset($sections['technicalAnalysis']) ?
+                json_encode($sections['technicalAnalysis']) : null;
+
+            $dbData['interest_rates'] = isset($sections['interestRates']) ?
+                json_encode($sections['interestRates']) : null;
+
+            // Store raw data
+            $dbData['raw_data'] = json_encode($jsonData['data']);
+
+            // Save to database
+            $model = new MyfxbookScrapedDataNew();
+            $model->attributes = $dbData;
+
+            if (!$model->save()) {
+                throw new \Exception('Failed to save data to database: ' . json_encode($model->errors));
+            }
+
+            // Log the API request
+            $responseTime = microtime(true) - $startTime;
+
+            // Use existing log method if available
+            if (class_exists('ScrapedDataLog')) {
+                ScrapedDataLog::logScrapedData(
+                    'mobile/save-scrape-data-myfxbook',
+                    'POST',
+                    $jsonData,
+                    $pair,
+                    $timeframe,
+                    200,
+                    $responseTime
+                );
+            }
+
+            // Send success notification if configured
+            $this->sendMyfxbookSuccessNotification($jsonData, $pair, $timeframe, $model->id);
+
+            $response = [
+                'success' => true,
+                'message' => 'Myfxbook data saved successfully',
+                'data' => [
+                    'id' => $model->id,
+                    'pair' => $pair,
+                    'timeframe' => $timeframe,
+                    'url' => $url,
+                    'scrape_timestamp' => $scrapeTimestamp,
+                    'created_at' => $model->created_at,
+                    'response_time' => round($responseTime, 3) . 's'
+                ]
+            ];
+        } catch (\Exception $e) {
+            // Handle error
+            $responseTime = microtime(true) - $startTime;
+
+            // Extract pair and timeframe even on error
+            $pair = 'ERROR';
+            $timeframe = 'ERROR';
+            try {
+                $pair = $jsonData['data']['pair'] ?? 'ERROR';
+                $timeframe = $jsonData['data']['timeframe'] ?? 'ERROR';
+            } catch (\Exception $ex) {
+                // Ignore extraction error
+            }
+
+            // Log error
+            if (class_exists('ScrapedDataLog')) {
+                ScrapedDataLog::logScrapedData(
+                    'mobile/save-scrape-data-myfxbook',
+                    'POST',
+                    $rawData ?? [],
+                    $pair,
+                    $timeframe,
+                    400,
+                    $responseTime
+                );
+            }
+
+            // Send error notification if configured
+            if (class_exists('TelegramHelper')) {
+                TelegramHelper::sendSimpleError(
+                    "Myfxbook data save failed: " . $e->getMessage(),
+                    "Pair: {$pair}, Timeframe: {$timeframe}"
+                );
+            }
+
+            Yii::error('Myfxbook Data API Error: ' . $e->getMessage());
+
+            $response = [
+                'success' => false,
+                'message' => 'Error processing Myfxbook data: ' . $e->getMessage(),
+                'error_code' => 400,
+                'pair' => $pair,
+                'timeframe' => $timeframe
+            ];
+
+            Yii::$app->response->statusCode = 400;
+        }
+
+        return $response;
+    }
+
+    private function sendMyfxbookSuccessNotification($data, $pair, $timeframe, $recordId)
+    {
+        if (!class_exists('TelegramHelper')) {
+            return;
+        }
+
+        try {
+            $sections = $data['data']['sections'] ?? [];
+            $economicEvents = $sections['economicCalendar']['totalEvents'] ?? 0;
+            $technicalPatterns = $sections['technicalAnalysis']['totalPatterns'] ?? 0;
+            $interestRates = count($sections['interestRates'] ?? []);
+
+            $message = "✅ *Myfxbook Data Saved Successfully*\n\n";
+            $message .= "• *Pair:* {$pair}\n";
+            $message .= "• *Timeframe:* {$timeframe}\n";
+            $message .= "• *Record ID:* {$recordId}\n";
+            $message .= "• *Economic Events:* {$economicEvents}\n";
+            $message .= "• *Technical Patterns:* {$technicalPatterns}\n";
+            $message .= "• *Interest Rates:* {$interestRates}\n";
+
+            if (isset($data['metadata']['scrapeTimestamp'])) {
+                $message .= "• *Scraped:* " . date('Y-m-d H:i:s', strtotime($data['metadata']['scrapeTimestamp'])) . "\n";
+            }
+
+            // Add price info if available
+            if (isset($data['data']['price_info'])) {
+                $message .= "• *Price Info:* " . substr($data['data']['price_info'], 0, 50) . "...\n";
+            }
+
+            TelegramHelper::sendMessage($message);
+        } catch (\Exception $e) {
+            Yii::error('Failed to send Myfxbook notification: ' . $e->getMessage());
         }
     }
 

@@ -93,11 +93,15 @@ $config = [
                 'telemetry-device/bulk-assign' => 'telemetry-device/bulk-assign',
                 // 'confirm/<email:\s+>/<token:\s+>' => 'site/confirm',
 
-                // Scraped data endpoints
-                // 'scraped-data/save' => 'scraped-data/save',
-                // 'scraped-data/logs' => 'scraped-data/logs',
-                // 'scraped-data/statistics' => 'scraped-data/statistics',
-                // 'scraped-data/test' => 'scraped-data/test',
+                // Myfxbook data endpoints
+                'web/mobile/save-scrape-data-myfxbook' => 'mobile/save-myfxbook-data',
+                'web/mobile/get-myfxbook-data' => 'mobile/get-myfxbook-data',
+                'web/mobile/get-latest-myfxbook-data' => 'mobile/get-latest-myfxbook-data',
+                
+                // Investing.com data endpoints
+                'web/mobile/save-scrape-data-investing' => 'mobile/save-investing-data',
+                'web/mobile/get-investing-data' => 'mobile/get-investing-data',
+                'web/mobile/get-latest-investing-data' => 'mobile/get-latest-investing-data',
 
             ],
         ],
