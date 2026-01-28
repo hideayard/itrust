@@ -64,6 +64,8 @@ class MobileController extends Controller
             'averaged-telemetry',
             'sync-status',
             'save-scrape-data',
+            'save-myfxbook-data',
+            'save-investing-data',
             'get-scrape-data',
             'get-latest-events',
             'get-high-impact-events',
