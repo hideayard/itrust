@@ -3759,7 +3759,8 @@ class MobileController extends Controller
                 'has_data' => !empty($techIndicators),
                 'rows_count' => isset($techIndicators['rows']) ? count($techIndicators['rows']) : 0,
                 'sample' => isset($techIndicators['rows']) && count($techIndicators['rows']) > 0 ?
-                    array_slice($techIndicators['rows'], 0, 3) : []
+                    $techIndicators['rows'] : []
+                    // array_slice($techIndicators['rows'], 0, 3) : []
             ];
             $availableSections[] = 'technical_indicators';
         }
@@ -3770,7 +3771,7 @@ class MobileController extends Controller
                 'has_data' => !empty($movingAverages),
                 'rows_count' => isset($movingAverages['rows']) ? count($movingAverages['rows']) : 0,
                 'sample' => isset($movingAverages['rows']) && count($movingAverages['rows']) > 0 ?
-                    array_slice($movingAverages['rows'], 0, 3) : []
+                    $movingAverages['rows'] : []
             ];
             $availableSections[] = 'moving_averages';
         }
@@ -3781,7 +3782,7 @@ class MobileController extends Controller
                 'has_data' => !empty($pivotPoints),
                 'rows_count' => isset($pivotPoints['rows']) ? count($pivotPoints['rows']) : 0,
                 'sample' => isset($pivotPoints['rows']) && count($pivotPoints['rows']) > 0 ?
-                    array_slice($pivotPoints['rows'], 0, 3) : []
+                    $pivotPoints['rows'] : []
             ];
             $availableSections[] = 'pivot_points';
         }
@@ -3883,7 +3884,7 @@ class MobileController extends Controller
                 'total_events' => $economicData['totalEvents'] ?? 0,
                 'has_events' => $economicData['hasEvents'] ?? false,
                 'events_sample' => isset($economicData['events']) && count($economicData['events']) > 0 ?
-                    array_slice($economicData['events'], 0, 3) : []
+                    $economicData['events'] : []
             ];
             $totalEvents += $recordData['economic_calendar']['total_events'];
         }
@@ -3895,7 +3896,7 @@ class MobileController extends Controller
                 'technical_summary' => $techData['technicalSummary'] ?? '',
                 'counts' => $techData['counts'] ?? ['buy' => 0, 'sell' => 0, 'neutral' => 0],
                 'patterns_sample' => isset($techData['patterns']) && count($techData['patterns']) > 0 ?
-                    array_slice($techData['patterns'], 0, 3) : []
+                    $techData['patterns'] : []
             ];
             $totalPatterns += $recordData['technical_analysis']['total_patterns'];
         }
@@ -3905,7 +3906,7 @@ class MobileController extends Controller
             $recordData['interest_rates'] = [
                 'total_rates' => is_array($ratesData) ? count($ratesData) : 0,
                 'rates_sample' => is_array($ratesData) && count($ratesData) > 0 ?
-                    array_slice($ratesData, 0, 3) : []
+                    $ratesData : []
             ];
         }
 
