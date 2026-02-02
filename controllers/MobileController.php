@@ -3708,7 +3708,7 @@ class MobileController extends Controller
         $query = InvestingScrapedData::find()
             ->where(['pair' => $formattedPair])
             ->orWhere(['pair' => $pair]) // Try both formats
-            ->andWhere(['>=', 'scrape_timestamp', $timeRange])
+            // ->andWhere(['>=', 'scrape_timestamp', $timeRange])
             ->andWhere(['status' => 1])
             ->andWhere([
                 'AND',
