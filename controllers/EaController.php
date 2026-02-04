@@ -260,7 +260,7 @@ class EaController extends Controller
      * Save or update trade DD data
      * @return array
      */
-    public function actionSaveDd()
+    public function actionSaveDdBackup()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
@@ -344,6 +344,123 @@ class EaController extends Controller
                         'account' => $tradeDd->account,
                         'wk_date' => $tradeDd->wk_date,
                         'all_date' => $tradeDd->all_date
+                    ]
+                ];
+            } else {
+                Yii::error('Failed to save trade DD data: ' . json_encode($tradeDd->errors));
+                throw new \yii\web\ServerErrorHttpException('Failed to save trade DD data: ' . json_encode($tradeDd->errors));
+            }
+        } catch (\Exception $e) {
+            Yii::error('Error in actionSaveDd: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionSaveDd()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->post('license');
+            $account = Yii::$app->request->post('account');
+            $wk_dd = Yii::$app->request->post('wk_dd', 0);
+            $wk_percentage_dd = Yii::$app->request->post('wk_percentage_dd', 0);
+            $wk_date = Yii::$app->request->post('wk_date');
+            $wk_equity = Yii::$app->request->post('wk_equity', 0);
+            $all_dd = Yii::$app->request->post('all_dd', 0);
+            $all_percentage_dd = Yii::$app->request->post('all_percentage_dd', 0);
+            $all_date = Yii::$app->request->post('all_date');
+            $all_equity = Yii::$app->request->post('all_equity', 0);
+
+            // Validate required parameters
+            if (empty($license) || empty($account)) {
+                throw new \yii\web\BadRequestHttpException('License and account are required');
+            }
+
+            // Find user by license
+            $user = Users::findOne(['user_license' => $license]);
+            if (!$user) {
+                throw new \yii\web\NotFoundHttpException('User not found for the provided license');
+            }
+
+            // Check if record already exists for this account and license
+            $tradeDd = Drawdown::find()
+                ->where(['account' => $account, 'license' => $license])
+                ->one();
+
+            $isNewRecord = false;
+            if (!$tradeDd) {
+                // Create new record
+                $tradeDd = new Drawdown();
+                $tradeDd->user_id = $user->id;
+                $tradeDd->license = $license;
+                $tradeDd->account = $account;
+                $isNewRecord = true;
+            }
+
+            // Function to convert date format from Y.m.d HH:MM to Y-m-d H:i:s
+            $convertDate = function ($dateString) {
+                if (empty($dateString)) {
+                    return null;
+                }
+
+                // Replace dots with dashes and ensure proper format
+                $converted = str_replace('.', '-', $dateString);
+
+                // Create DateTime object from the converted format
+                $dateTime = DateTime::createFromFormat('Y-m-d H:i', $converted);
+
+                if ($dateTime === false) {
+                    // If first format fails, try alternative parsing
+                    try {
+                        $dateTime = new DateTime($converted);
+                    } catch (\Exception $e) {
+                        Yii::warning("Failed to parse date: $dateString. Error: " . $e->getMessage());
+                        return null;
+                    }
+                }
+
+                return $dateTime ? $dateTime->format('Y-m-d H:i:s') : null;
+            };
+
+            // Convert date strings
+            $wk_date_converted = $convertDate($wk_date);
+            $all_date_converted = $convertDate($all_date);
+
+            // Always update weekly data
+            $tradeDd->wk_dd = (float)$wk_dd;
+            $tradeDd->wk_percentage_dd = (float)$wk_percentage_dd;
+            $tradeDd->wk_date = $wk_date_converted;
+            $tradeDd->wk_equity = (float)$wk_equity;
+
+            // For all-time data: only update if new all_dd is greater than existing
+            // OR if it's a new record
+            if ($isNewRecord || (float)$all_dd > (float)$tradeDd->all_dd) {
+                $tradeDd->all_dd = (float)$all_dd;
+                $tradeDd->all_percentage_dd = (float)$all_percentage_dd;
+                $tradeDd->all_date = $all_date_converted;
+                $tradeDd->all_equity = (float)$all_equity;
+            } else {
+                // Keep existing all-time data unchanged
+                // Optionally log that we're keeping the existing higher drawdown
+                Yii::info("Keeping existing all_dd ({$tradeDd->all_dd}) as new value ($all_dd) is lower or equal");
+            }
+
+            if ($tradeDd->save()) {
+                return [
+                    'status' => 'success',
+                    'message' => 'Trade DD data saved successfully',
+                    'data' => [
+                        'id' => $tradeDd->id,
+                        'account' => $tradeDd->account,
+                        'wk_date' => $tradeDd->wk_date,
+                        'all_date' => $tradeDd->all_date,
+                        'wk_dd' => $tradeDd->wk_dd,
+                        'all_dd' => $tradeDd->all_dd,
+                        'all_dd_updated' => !$isNewRecord && (float)$all_dd > (float)$tradeDd->getOldAttribute('all_dd')
                     ]
                 ];
             } else {
