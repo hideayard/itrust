@@ -116,8 +116,8 @@ class WebhookController extends Controller
 
             // file_put_contents("logs.txt", $content);
 
-            $this->bot_token        = Yii::$app->params['telegramBotToken'];
-            $this->bot_username     = Yii::$app->params['telegramBotUsername'];
+            $this->bot_token        = Yii::$app->params['telegramBotWebhookToken'];
+            $this->bot_username     = Yii::$app->params['telegramBotWebhookUsername'];
             $this->bot_admin        = Yii::$app->params['telegramBotAdmin'];
             $this->callback_query   = ArrayHelper::getValue($update, 'callback_query', null);
             $this->message_id       = ArrayHelper::getValue($update, 'message.message_id', null);
