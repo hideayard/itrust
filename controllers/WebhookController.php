@@ -69,6 +69,23 @@ class WebhookController extends Controller
 
     public function actionTelegram()
     {
+        if (Yii::$app->request->isGet) {
+            return "Telegram webhook endpoint ready";
+        }
+
+        $update = json_decode(file_get_contents("php://input"), true);
+
+        if (!$update) {
+            return "Invalid request";
+        }
+
+        // process message
+
+        return "ok";
+    }
+
+    public function actionTelegram2()
+    {
 
         try {
 
@@ -398,7 +415,7 @@ class WebhookController extends Controller
         }
         // TelegramHelper::sendSimpleMessage(['text' => "You choose gif : " . $this->message_id ." - " . $gifUrl ], $this->chat_id);
         $data = [
-            'parse_mode'=>'html',
+            'parse_mode' => 'html',
             'chat_id' => $chat_id ?? $this->chat_id,
             'video' => $gifUrl,
             'caption' => $msg //"Nope!"
@@ -451,15 +468,15 @@ class WebhookController extends Controller
         // $log_string = implode(", ", $log);
         $pengirim = $callbackQuery['message']['reply_to_message']['from']['username'];
         $penerima = $callbackQuery['from']['username'];
-        $tes = "reply_to_message pengirim : ".$pengirim. " penerima = ".$penerima;
-        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery '.$tes, $message_id, $chat_id, $data, $log_string);
+        $tes = "reply_to_message pengirim : " . $pengirim . " penerima = " . $penerima;
+        $this->notifLog('handleCallbackQuery', 'handleCallbackQuery ' . $tes, $message_id, $chat_id, $data, $log_string);
         //logs to notif
-        if (($pengirim != '') && ( ($pengirim == $penerima) || $penerima == 'hideayard' || $this->bot_admin)) {
+        if (($pengirim != '') && (($pengirim == $penerima) || $penerima == 'hideayard' || $this->bot_admin)) {
             TelegramHelper::sendSimpleMessage(['text' => "" . $message . "."], $message_id);
             $this->matchCommand($data, null, $callbackQuery);
         } else {
             $gifUrl = 'https://i.pinimg.com/originals/a9/61/57/a961575cc3b9ddf1993587d5cefdbc51.gif';
-            return $this->sendGif($gifUrl, 'gak boleh ya!',$message_id);
+            return $this->sendGif($gifUrl, 'gak boleh ya!', $message_id);
             // return TelegramHelper::answerCallbackQuery([
             //     'callback_query_id' => $callbackQuery['id'],
             //     'text' => 'Ga boleh ya!',
