@@ -67,25 +67,28 @@ class WebhookController extends Controller
         return 'index webhook';
     }
 
+    // public function actionTelegram()
+    // {
+    //     if (Yii::$app->request->isGet) {
+    //         return "Telegram webhook endpoint ready";
+    //     }
+
+    //     $update = json_decode(file_get_contents("php://input"), true);
+
+    //     if (!$update) {
+    //         return "Invalid request";
+    //     }
+
+    //     // process message
+
+    //     return "ok";
+    // }
+
     public function actionTelegram()
     {
         if (Yii::$app->request->isGet) {
             return "Telegram webhook endpoint ready";
         }
-
-        $update = json_decode(file_get_contents("php://input"), true);
-
-        if (!$update) {
-            return "Invalid request";
-        }
-
-        // process message
-
-        return "ok";
-    }
-
-    public function actionTelegram2()
-    {
 
         try {
 
