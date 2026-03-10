@@ -68,7 +68,7 @@ class WebhookController extends Controller
                             return $this->pull();
                             break;
                         default;
-                            return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Perintah tidak dikenal'], $this->chat_id);
+                            return TelegramHelper::sendSimpleMessage(['reply_to_message_id' => $this->message_id, 'text' => 'Perintah tidak dikenal'], $this->chat_id);
                             break;
                     }
                 }
@@ -83,7 +83,7 @@ class WebhookController extends Controller
 
     private function chatId()
     {
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "Chat ID : " . $this->chat_id], $this->chat_id);
+        return TelegramHelper::sendSimpleMessage(['reply_to_message_id' => $this->message_id, 'text' => "Chat ID : " . $this->chat_id], $this->chat_id);
     }
 
     private function pull()
@@ -103,6 +103,6 @@ class WebhookController extends Controller
         chdir("/var/www/aifarm.id");
         $response = shell_exec("sudo git pull");
 
-        return TelegramHelper::sendMessage(['reply_to_message_id' => $this->message_id, 'text' => "<pre>" . htmlentities($response) . "</pre>", 'reply_to_message_id' => $this->message_id], $this->chat_id);
+        return TelegramHelper::sendSimpleMessage(['reply_to_message_id' => $this->message_id, 'text' => "<pre>" . htmlentities($response) . "</pre>", 'reply_to_message_id' => $this->message_id], $this->chat_id);
     }
 }

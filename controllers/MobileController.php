@@ -19,9 +19,12 @@ use app\models\MyfxbookStatistics;
 use app\models\MyfxbookApiLog;
 use app\models\TelemetryData;
 use app\models\UserDevices;
+use app\models\Users;
 use app\models\ScrapedDataLog;
 use app\models\DualSourceScrapedData;
 use yii\web\BadRequestHttpException;
+use yii\validators\EmailValidator; // Add this import
+use yii\web\UploadedFile;
 
 class MobileController extends Controller
 {
@@ -454,8 +457,8 @@ class MobileController extends Controller
                     'details' => [
                         'pair' => $pair,
                         'timeframe' => $timeframe,
-                        'hours' => $hours,
-                        'threshold' => $dateThreshold
+                        // 'hours' => $hours,
+                        // 'threshold' => $dateThreshold
                     ],
                     'suggestions' => [
                         'Try different pair/timeframe',
@@ -1279,7 +1282,7 @@ class MobileController extends Controller
     public function actionIndex()
     {
         Yii::debug('debug index mobile controller'); // Use Yii's logging
-        return 'index';
+        return 'index mobile';
     }
 
     public function actionLogin()
@@ -1376,8 +1379,8 @@ class MobileController extends Controller
         $expire = $issuedAt + (60 * 60 * 24 * 7); // Token valid for 7 days
 
         $payload = [
-            'iss' => 'IskandarMudaGreen', // Issuer
-            'aud' => 'Johor Bahru', // Audience
+            'iss' => Yii::$app->params['jwtIssuer'], // Issuer
+            'aud' => Yii::$app->params['jwtAudience'], // Audience
             'iat' => $issuedAt, // Issued at
             'exp' => $expire, // Expire time
             'data' => [
@@ -3760,7 +3763,7 @@ class MobileController extends Controller
                 'rows_count' => isset($techIndicators['rows']) ? count($techIndicators['rows']) : 0,
                 'sample' => isset($techIndicators['rows']) && count($techIndicators['rows']) > 0 ?
                     $techIndicators['rows'] : []
-                    // array_slice($techIndicators['rows'], 0, 3) : []
+                // array_slice($techIndicators['rows'], 0, 3) : []
             ];
             $availableSections[] = 'technical_indicators';
         }
@@ -4024,7 +4027,524 @@ class MobileController extends Controller
      */
     public function actionOptions()
     {
+        // Yii::$app->response->statusCode = 200;
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
         Yii::$app->response->statusCode = 200;
         return [];
     }
+
+ /**
+     * User Registration Endpoint
+     */
+    public function actionRegister()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get POST data
+            $request = Yii::$app->request;
+            $firstName = $request->post('first_name');
+            $lastName = $request->post('last_name');
+            $email = $request->post('email');
+            $username = $request->post('username');
+            $password = $request->post('password');
+            $confirmPassword = $request->post('confirm_password');
+            $phone = $request->post('phone', '');
+            $userType = $request->post('user_type', 'user'); // Default to 'user'
+            $acceptTerms = $request->post('accept_terms', '0');
+
+            // Validate input
+            $errors = [];
+
+            // Required fields
+            if (empty($firstName)) $errors[] = 'First name is required';
+            if (empty($lastName)) $errors[] = 'Last name is required';
+            if (empty($email)) $errors[] = 'Email is required';
+            if (empty($username)) $errors[] = 'Username is required';
+            if (empty($password)) $errors[] = 'Password is required';
+            if (empty($confirmPassword)) $errors[] = 'Confirm password is required';
+
+            if (!empty($errors)) {
+                return [
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $errors
+                ];
+            }
+
+            // Validate email format
+            $emailValidator = new EmailValidator();
+            if (!$emailValidator->validate($email, $error)) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid email format',
+                    'errors' => ['email' => $error]
+                ];
+            }
+
+            // Validate password length
+            if (strlen($password) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'Password must be at least 8 characters long',
+                    'errors' => ['password' => 'Minimum 8 characters required']
+                ];
+            }
+
+            // Check password match
+            if ($password !== $confirmPassword) {
+                return [
+                    'success' => false,
+                    'message' => 'Passwords do not match',
+                    'errors' => ['confirm_password' => 'Passwords do not match']
+                ];
+            }
+
+            // Check terms acceptance
+            if ($acceptTerms !== '1' && $acceptTerms !== true && $acceptTerms !== 1) {
+                return [
+                    'success' => false,
+                    'message' => 'You must accept the terms and conditions',
+                    'errors' => ['terms' => 'Terms must be accepted']
+                ];
+            }
+
+            // Check if username already exists
+            if (Users::find()->where(['user_name' => $username])->exists()) {
+                return [
+                    'success' => false,
+                    'message' => 'Username already taken',
+                    'errors' => ['username' => 'Username already exists']
+                ];
+            }
+
+            // Check if email already exists
+            if (Users::find()->where(['user_email' => $email])->exists()) {
+                return [
+                    'success' => false,
+                    'message' => 'Email already registered',
+                    'errors' => ['email' => 'Email already exists']
+                ];
+            }
+
+            // Create new user
+            $user = new Users();
+            $user->scenario = Users::SCENARIO_DEFAULT;
+            $user->user_name = $username;
+            $user->user_nama = $firstName . ' ' . $lastName;
+            $user->user_email = $email;
+            $user->user_hp = $phone;
+            $user->user_tipe = $userType;
+            $user->user_pass = Yii::$app->security->generatePasswordHash($password);
+            $user->user_status = 1; // Active
+            $user->user_foto = 'default.jpg'; // Default photo
+            $user->is_deleted = 0;
+            
+            // Generate token for future use (optional)
+            $user->user_token = Yii::$app->security->generateRandomString(15);
+
+            // Save user
+            if ($user->save()) {
+                // Log the registration activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+                
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "📝 New User Registration\n" .
+                                 "Name: " . $firstName . " " . $lastName . "\n" .
+                                 "Username: " . $username . "\n" .
+                                 "Email: " . $email . "\n" .
+                                 "Phone: " . $phone . "\n" .
+                                 "Type: " . $userType . "\n" .
+                                 "IP: " . $clientIp,
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                // Auto-login after registration (optional)
+                $token = $this->generateJwtToken($user);
+
+                return [
+                    'success' => true,
+                    'message' => 'Registration successful',
+                    'token' => $token,
+                    'user' => [
+                        'id' => $user->user_id,
+                        'name' => $user->user_nama,
+                        'username' => $user->user_name,
+                        'email' => $user->user_email,
+                        'phone' => $user->user_hp,
+                        'user_tipe' => $user->user_tipe,
+                        'photo' => $user->user_foto,
+                        'status' => $user->user_status
+                    ]
+                ];
+            } else {
+                // Get validation errors
+                $errors = [];
+                foreach ($user->errors as $attribute => $errorMessages) {
+                    $errors[$attribute] = $errorMessages;
+                }
+                
+                return [
+                    'success' => false,
+                    'message' => 'Registration failed',
+                    'errors' => $errors
+                ];
+            }
+
+        } catch (\Exception $e) {
+            Yii::error('Mobile registration error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return [
+                'success' => false,
+                'message' => 'Registration failed. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null
+            ];
+        }
+    }
+
+    /**
+     * Forgot Password Endpoint - Send reset link
+     */
+    public function actionForgotPassword()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get POST data
+            $request = Yii::$app->request;
+            $email = $request->post('email');
+
+            // Validate input
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required'
+                ];
+            }
+
+            // Validate email format
+            $emailValidator = new EmailValidator();
+            if (!$emailValidator->validate($email, $error)) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid email format'
+                ];
+            }
+
+            // Find user by email
+            $user = Users::find()->where(['user_email' => $email])->one();
+
+            // For security, always return success even if email not found
+            if (!$user) {
+                // Log the attempt but don't reveal that email doesn't exist
+                Yii::info('Password reset attempted for non-existent email: ' . $email);
+                
+                return [
+                    'success' => true,
+                    'message' => 'If the email exists, a reset link has been sent'
+                ];
+            }
+
+            // Generate password reset token
+            $resetToken = Yii::$app->security->generateRandomString(15); // user_token field is max 15 chars
+            
+            // Save token to user_token field with expiration info embedded
+            // Format: token_timestamp (e.g., abc123_1641234567)
+            $tokenWithExpiry = $resetToken . '_' . time();
+            
+            // Since we don't have dedicated reset token fields, we'll use user_token
+            // You may want to add dedicated fields later
+            $user->user_token = $tokenWithExpiry;
+            
+            if (!$user->save()) {
+                Yii::error('Failed to save reset token for user: ' . $user->user_id);
+                throw new \Exception('Failed to generate reset token');
+            }
+
+            // Build reset link
+            $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $resetToken]);
+            
+            // Send email with reset link
+            $this->sendPasswordResetEmail($user, $resetLink);
+
+            // Log the activity
+            $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+            
+            TelegramHelper::sendSimpleMessage(
+                [
+                    'text' => "🔐 Password Reset Request\n" .
+                             "Email: " . $email . "\n" .
+                             "Username: " . $user->user_name . "\n" .
+                             "Name: " . $user->user_nama . "\n" .
+                             "IP: " . $clientIp,
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Password reset link has been sent to your email'
+            ];
+
+        } catch (\Exception $e) {
+            Yii::error('Mobile forgot password error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return [
+                'success' => false,
+                'message' => 'Failed to process request. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null
+            ];
+        }
+    }
+
+    /**
+     * Reset Password Endpoint - Actually reset the password using token
+     */
+    public function actionResetPassword()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get POST data
+            $request = Yii::$app->request;
+            $token = $request->post('token');
+            $newPassword = $request->post('new_password');
+            $confirmPassword = $request->post('confirm_password');
+
+            // Validate input
+            if (empty($token)) {
+                return [
+                    'success' => false,
+                    'message' => 'Reset token is required'
+                ];
+            }
+
+            if (empty($newPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'New password is required'
+                ];
+            }
+
+            if (empty($confirmPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'Confirm password is required'
+                ];
+            }
+
+            // Check password length
+            if (strlen($newPassword) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'Password must be at least 8 characters long'
+                ];
+            }
+
+            // Check password match
+            if ($newPassword !== $confirmPassword) {
+                return [
+                    'success' => false,
+                    'message' => 'Passwords do not match'
+                ];
+            }
+
+            // Find user by reset token (search in user_token field)
+            // Since we stored token_timestamp in user_token, we need to find all users
+            // with token starting with the reset token
+            $users = Users::find()
+                ->where(['like', 'user_token', $token . '_%', false])
+                ->all();
+            
+            $user = null;
+            $currentTime = time();
+            
+            foreach ($users as $potentialUser) {
+                $parts = explode('_', $potentialUser->user_token);
+                if (count($parts) == 2 && $parts[0] === $token) {
+                    $timestamp = (int)$parts[1];
+                    // Check if token is not expired (1 hour = 3600 seconds)
+                    if ($currentTime - $timestamp <= 3600) {
+                        $user = $potentialUser;
+                        break;
+                    }
+                }
+            }
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid or expired reset token'
+                ];
+            }
+
+            // Update password
+            $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
+            $user->user_token = null; // Clear the token
+            
+            if ($user->save()) {
+                // Log the activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+                
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "✅ Password Reset Successful\n" .
+                                 "Username: " . $user->user_name . "\n" .
+                                 "Name: " . $user->user_nama . "\n" .
+                                 "Email: " . $user->user_email . "\n" .
+                                 "IP: " . $clientIp,
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'Password has been reset successfully'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to reset password'
+                ];
+            }
+
+        } catch (\Exception $e) {
+            Yii::error('Mobile reset password error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return [
+                'success' => false,
+                'message' => 'Failed to reset password. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null
+            ];
+        }
+    }
+
+    /**
+     * Send password reset email
+     */
+    private function sendPasswordResetEmail($user, $resetLink)
+    {
+        // Implement your email sending logic here
+        // Using Yii's mailer as an example
+        
+        $subject = 'Reset Your Password - Geran Komuniti Iskandar Puteri';
+        
+        $htmlBody = "<h2>Password Reset Request</h2>";
+        $htmlBody .= "<p>Hello <strong>" . $user->user_nama . "</strong>,</p>";
+        $htmlBody .= "<p>We received a request to reset your password. Click the link below to set a new password:</p>";
+        $htmlBody .= "<p style='margin: 30px 0;'><a href='" . $resetLink . "' style='background-color: #FDA300; color: #2C5282; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Reset Password</a></p>";
+        $htmlBody .= "<p>This link will expire in 1 hour.</p>";
+        $htmlBody .= "<p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>";
+        $htmlBody .= "<hr>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
+        
+        $textBody = "Password Reset Request\n\n";
+        $textBody .= "Hello " . $user->user_nama . ",\n\n";
+        $textBody .= "We received a request to reset your password. Click the link below to set a new password:\n";
+        $textBody .= $resetLink . "\n\n";
+        $textBody .= "This link will expire in 1 hour.\n\n";
+        $textBody .= "If you didn't request this, please ignore this email and your password will remain unchanged.\n\n";
+        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0";
+        
+        // Send email using Yii's mailer
+        try {
+            Yii::$app->mailer->compose()
+                ->setFrom([Yii::$app->params['adminEmail'] => 'Geran Komuniti Iskandar Puteri'])
+                ->setTo($user->user_email)
+                ->setSubject($subject)
+                ->setTextBody($textBody)
+                ->setHtmlBody($htmlBody)
+                ->send();
+                
+            Yii::info('Password reset email sent to: ' . $user->user_email);
+        } catch (\Exception $e) {
+            Yii::error('Failed to send password reset email: ' . $e->getMessage());
+            // Don't throw exception - we don't want to break the response
+        }
+    }
+
+    /**
+     * Verify Reset Token (optional endpoint)
+     */
+    public function actionVerifyResetToken()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        $token = Yii::$app->request->post('token');
+        
+        if (empty($token)) {
+            return [
+                'success' => false,
+                'message' => 'Token is required'
+            ];
+        }
+        
+        $users = Users::find()
+            ->where(['like', 'user_token', $token . '_%', false])
+            ->all();
+        
+        $currentTime = time();
+        
+        foreach ($users as $user) {
+            $parts = explode('_', $user->user_token);
+            if (count($parts) == 2 && $parts[0] === $token) {
+                $timestamp = (int)$parts[1];
+                if ($currentTime - $timestamp <= 3600) {
+                    return [
+                        'success' => true,
+                        'message' => 'Token is valid'
+                    ];
+                }
+            }
+        }
+        
+        return [
+            'success' => false,
+            'message' => 'Invalid or expired token'
+        ];
+    }
+
 }

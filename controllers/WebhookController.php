@@ -60,6 +60,13 @@ class WebhookController extends Controller
     private $is_admin = false;
     private static $defaultChatId =  -1002149598297; //bot common
 
+
+    public function actionIndex()
+    {
+        Yii::debug('debug index webhook controller'); // Use Yii's logging
+        return 'index webhook';
+    }
+
     public function actionTelegram()
     {
 
