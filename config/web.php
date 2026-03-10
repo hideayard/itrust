@@ -58,6 +58,9 @@ $config = [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
             'rules' => [
+                //webhook telegram
+                'webhook/telegram' => 'webhook/telegram',
+
                 // Myfxbook API endpoints
                 'POST mobile/save-scrape-data' => 'mobile/save-scrape-data',
                 'GET mobile/get-scrape-data' => 'mobile/get-scrape-data',
@@ -97,7 +100,7 @@ $config = [
                 // 'web/mobile/save-scrape-data-myfxbook' => 'mobile/save-myfxbook-data',
                 // 'web/mobile/get-myfxbook-data' => 'mobile/get-myfxbook-data',
                 // 'web/mobile/get-latest-myfxbook-data' => 'mobile/get-latest-myfxbook-data',
-                
+
                 // // Investing.com data endpoints
                 // 'web/mobile/save-scrape-data-investing' => 'mobile/save-investing-data',
                 // 'web/mobile/get-investing-data' => 'mobile/get-investing-data',
