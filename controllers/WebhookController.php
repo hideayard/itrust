@@ -7,35 +7,16 @@ use Yii;
 use DateTime;
 use Exception;
 use Throwable;
-use app\models\Pc;
-use ErrorException;
-use app\jobs\McaJob;
 use yii\helpers\Url;
-use app\models\Group;
 use app\models\Notif;
 use app\models\Users;
-use app\models\Answer;
-use app\models\GitLog;
-use app\models\Vendor;
 use app\models\Channel;
-use app\models\Prepaid;
 use app\models\Service;
 use yii\web\Controller;
-use app\models\Question;
 use app\models\UserTele;
-use app\models\VendorPr;
-use app\jobs\TelegramJob;
 use app\models\CloseOrder;
-use yii\rest\CreateAction;
-use app\models\GitStatistic;
 use yii\helpers\ArrayHelper;
-use app\helpers\CustomHelper;
-use app\models\TelegramToken;
-use app\models\VendorRequest;
-use app\helpers\SecurityHelper;
 use app\helpers\TelegramHelper;
-use app\models\VendorTeamMapping;
-use Google\Cloud\Firestore\FirestoreClient;
 
 $baseImageUrl = Url::base() . '/images';
 
@@ -58,7 +39,7 @@ class WebhookController extends Controller
     private $command;
     private $callback_query;
     private $is_admin = false;
-    private static $defaultChatId =  -1002149598297; //bot common
+    private static $defaultChatId =  -1002149598297; //try report general
 
 
     public function actionIndex()
@@ -66,23 +47,6 @@ class WebhookController extends Controller
         Yii::debug('debug index webhook controller'); // Use Yii's logging
         return 'index webhook';
     }
-
-    // public function actionTelegram()
-    // {
-    //     if (Yii::$app->request->isGet) {
-    //         return "Telegram webhook endpoint ready";
-    //     }
-
-    //     $update = json_decode(file_get_contents("php://input"), true);
-
-    //     if (!$update) {
-    //         return "Invalid request";
-    //     }
-
-    //     // process message
-
-    //     return "ok";
-    // }
 
     public function actionTelegram()
     {
@@ -136,8 +100,8 @@ class WebhookController extends Controller
 
             // file_put_contents("logs.txt", $content);
 
-            $this->bot_token        = Yii::$app->params['telegramBotWebhookToken'];
-            $this->bot_username     = Yii::$app->params['telegramBotWebhookUsername'];
+            $this->bot_token        = Yii::$app->params['telegramBotToken'];
+            $this->bot_username     = Yii::$app->params['telegramBotUsername'];
             $this->bot_admin        = Yii::$app->params['telegramBotAdmin'];
             $this->callback_query   = ArrayHelper::getValue($update, 'callback_query', null);
             $this->message_id       = ArrayHelper::getValue($update, 'message.message_id', null);
