@@ -91,6 +91,54 @@ class EaController extends Controller
 
     public function actionGet()
     {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+            $license = $request->post('license', $request->get('license'));
+
+            // Validate required parameter
+            if (empty($license)) {
+                throw new \yii\web\BadRequestHttpException('License is required');
+            }
+
+            $order = CloseOrder::find()
+                ->where(['order_account' => $license, 'order_status' => 0])
+                ->orderBy(['order_date' => SORT_DESC])
+                ->one();
+
+            $data = "";
+            if ($order !== null) {
+                if ($order->order_cmd == "outlook") {
+                    $data =  1;
+                } else if ($order->order_cmd == "cr_off") {
+                    $data =  10;
+                } else if ($order->order_cmd == "cr_on") {
+                    $data =  11;
+                } else if ($order->order_cmd == "close_all") {
+                    $data =  99;
+                } else if (str_contains($order->order_cmd, 'OP') || ($order->order_cmd == "CLOSE_ALL") || ($order->order_cmd ==  "CLOSE_BUY") || ($order->order_cmd ==  "CLOSE_SELL") || ($order->order_cmd ==  "BUY") || ($order->order_cmd ==  "SELL")) {
+                    $data =  $order->order_cmd;
+                } else {
+                    $data =  0;
+                }
+            } else {
+                $data =  0;
+            }
+
+            return [
+                'status' => 'success',
+                'message' => 'get Command successfully',
+                'data' => $data
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGet command: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+
         Yii::$app->response->format = Response::FORMAT_JSON;
         $account = Yii::$app->request->post('id');
 
