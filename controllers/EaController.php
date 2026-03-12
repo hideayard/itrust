@@ -95,15 +95,15 @@ class EaController extends Controller
 
         try {
             $request = Yii::$app->request;
-            $license = $request->post('license', $request->get('license'));
+            $accountID = $request->post('id', $request->get('id'));
 
             // Validate required parameter
-            if (empty($license)) {
-                throw new \yii\web\BadRequestHttpException('License is required');
+            if (empty($accountID)) {
+                throw new \yii\web\BadRequestHttpException('account id is required');
             }
 
             $order = CloseOrder::find()
-                ->where(['order_account' => $license, 'order_status' => 0])
+                ->where(['order_account' => $accountID, 'order_status' => 0])
                 ->orderBy(['order_date' => SORT_DESC])
                 ->one();
 
