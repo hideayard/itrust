@@ -111,7 +111,7 @@ class EaController extends Controller
                     return 11;
                 } else if ($order->order_cmd == "close_all") {
                     return 99;
-                } else if (str_contains($order->order_cmd, 'OP')) {
+                } else if (str_contains($order->order_cmd, 'OP') || str_contains($order->order_cmd, 'CLOSE_ALL') || str_contains($order->order_cmd, 'CLOSE_BUY') || str_contains($order->order_cmd, 'CLOSE_SELL') || str_contains($order->order_cmd, 'BUY') || str_contains($order->order_cmd, 'SELL')) {
                     return $order->order_cmd;
                 } else {
                     return 0;
