@@ -36,7 +36,7 @@ class Mt4AccountController extends Controller
             $account_balance = Yii::$app->request->post('account_balance', 0);
             $account_equity = Yii::$app->request->post('account_equity', 0);
             $floating_value = Yii::$app->request->post('floating_value', 0);
-            
+
             // Optional parameters that might be sent
             $bot_name = Yii::$app->request->post('bot_name');
             $leverage = Yii::$app->request->post('leverage', 100);
@@ -84,15 +84,15 @@ class Mt4AccountController extends Controller
             $mt4Account->account_balance = (float)$account_balance;
             $mt4Account->account_equity = (float)$account_equity;
             $mt4Account->last_sync = date('Y-m-d H:i:s');
-            
+
             // Update total_profit and floating_value
             $mt4Account->total_profit = (float)$total_profit;
             $mt4Account->floating_value = (float)$floating_value;
-            
+
             // Calculate profit percentage based on balance
             if ($mt4Account->account_balance > 0) {
                 $mt4Account->total_profit_percentage = round(
-                    ($mt4Account->total_profit / $mt4Account->account_balance) * 100, 
+                    ($mt4Account->total_profit / $mt4Account->account_balance) * 100,
                     2
                 );
             } else {
@@ -103,27 +103,27 @@ class Mt4AccountController extends Controller
             if ($bot_name !== null) {
                 $mt4Account->bot_name = $bot_name;
             }
-            
+
             if ($leverage !== null) {
                 $mt4Account->leverage = (int)$leverage;
             }
-            
+
             if ($currency !== null) {
                 $mt4Account->currency = $currency;
             }
-            
+
             if ($server !== null) {
                 $mt4Account->server = $server;
             }
-            
+
             if ($broker !== null) {
                 $mt4Account->broker = $broker;
             }
-            
+
             if ($account_type !== null) {
                 $mt4Account->account_type = $account_type;
             }
-            
+
             if ($status !== null) {
                 $mt4Account->status = $status;
             }
@@ -165,7 +165,6 @@ class Mt4AccountController extends Controller
                 Yii::error('Failed to save MT4 account: ' . json_encode($mt4Account->errors));
                 throw new ServerErrorHttpException('Failed to save account data: ' . json_encode($mt4Account->errors));
             }
-
         } catch (\Exception $e) {
             Yii::error('Error in actionSaveAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return [
@@ -194,7 +193,7 @@ class Mt4AccountController extends Controller
             $account_balance = Yii::$app->request->post('account_balance', 0);
             $account_equity = Yii::$app->request->post('account_equity', 0);
             $floating_value = Yii::$app->request->post('floating_value', 0);
-            
+
             // Optional parameters
             $bot_name = Yii::$app->request->post('bot_name');
             $server = Yii::$app->request->post('server');
@@ -238,11 +237,11 @@ class Mt4AccountController extends Controller
             $mt4Account->account_balance = (float)$account_balance;
             $mt4Account->account_equity = (float)$account_equity;
             $mt4Account->floating_value = (float)$floating_value;
-            
+
             // Calculate profit percentage
             if ($mt4Account->account_balance > 0) {
                 $mt4Account->total_profit_percentage = round(
-                    ($mt4Account->total_profit / $mt4Account->account_balance) * 100, 
+                    ($mt4Account->total_profit / $mt4Account->account_balance) * 100,
                     2
                 );
             }
@@ -288,7 +287,6 @@ class Mt4AccountController extends Controller
                 Yii::error('Failed to save MT4 account: ' . json_encode($mt4Account->errors));
                 throw new ServerErrorHttpException('Failed to save account data');
             }
-
         } catch (\Exception $e) {
             Yii::error('Error in actionSaveAccountByLicense: ' . $e->getMessage());
             return [
@@ -308,22 +306,22 @@ class Mt4AccountController extends Controller
         if (!Yii::$app->user->isGuest) {
             return Yii::$app->user->identity;
         }
-        
+
         // Option 2: Get from auth token (Bearer token)
         $authHeader = Yii::$app->request->headers->get('Authorization');
         if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
             $token = $matches[1];
             // Find user by token - implement based on your auth system
-            // return User::findIdentityByAccessToken($token);
+            // return Users::findIdentityByAccessToken($token);
         }
-        
+
         // Option 3: Get from API key
         $apiKey = Yii::$app->request->headers->get('X-API-Key');
         if ($apiKey) {
             // Find user by API key
             return Users::findOne(['api_key' => $apiKey]);
         }
-        
+
         return null;
     }
 
@@ -336,7 +334,7 @@ class Mt4AccountController extends Controller
 
         try {
             $accounts = Yii::$app->request->post('accounts', []);
-            
+
             if (empty($accounts)) {
                 throw new BadRequestHttpException('Accounts data is required');
             }
@@ -353,7 +351,7 @@ class Mt4AccountController extends Controller
                 try {
                     // Extract data for each account
                     $account_id = $accountData['account_id'] ?? null;
-                    
+
                     if (!$account_id) {
                         $errors[] = ['error' => 'Account ID missing', 'data' => $accountData];
                         continue;
@@ -382,7 +380,7 @@ class Mt4AccountController extends Controller
                     $mt4Account->account_balance = (float)($accountData['account_balance'] ?? 0);
                     $mt4Account->account_equity = (float)($accountData['account_equity'] ?? 0);
                     $mt4Account->floating_value = (float)($accountData['floating_value'] ?? 0);
-                    
+
                     // Optional fields
                     if (isset($accountData['bot_name'])) {
                         $mt4Account->bot_name = $accountData['bot_name'];
@@ -397,7 +395,7 @@ class Mt4AccountController extends Controller
                     // Calculate profit percentage
                     if ($mt4Account->account_balance > 0) {
                         $mt4Account->total_profit_percentage = round(
-                            ($mt4Account->total_profit / $mt4Account->account_balance) * 100, 
+                            ($mt4Account->total_profit / $mt4Account->account_balance) * 100,
                             2
                         );
                     }
@@ -419,7 +417,6 @@ class Mt4AccountController extends Controller
                             'errors' => $mt4Account->errors
                         ];
                     }
-
                 } catch (\Exception $e) {
                     $errors[] = [
                         'account_id' => $accountData['account_id'] ?? 'unknown',
@@ -436,7 +433,6 @@ class Mt4AccountController extends Controller
                     'errors' => $errors
                 ]
             ];
-
         } catch (\Exception $e) {
             Yii::error('Error in actionBatchSaveAccounts: ' . $e->getMessage());
             return [
@@ -444,5 +440,895 @@ class Mt4AccountController extends Controller
                 'message' => $e->getMessage()
             ];
         }
+    }
+
+    /**
+     * Action to get accounts by user_id or search by path containing text
+     * GET parameters: 
+     *   - user_id (optional) - filter by user ID
+     *   - path (optional) - search text in path field (partial match)
+     *   - search (optional) - search across multiple fields
+     *   - status (optional) - filter by status
+     *   - account_type (optional) - filter by account type
+     */
+    public function actionGetAccounts()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get query parameters
+            $userId = Yii::$app->request->get('user_id');
+            $pathSearch = Yii::$app->request->get('path');
+            $searchText = Yii::$app->request->get('search');
+            $status = Yii::$app->request->get('status');
+            $accountType = Yii::$app->request->get('account_type');
+
+            // Pagination parameters
+            $page = (int)Yii::$app->request->get('page', 1);
+            $limit = (int)Yii::$app->request->get('limit', 20);
+            $sortBy = Yii::$app->request->get('sort_by', 'created_at');
+            $sortOrder = Yii::$app->request->get('sort_order', 'DESC');
+
+            // Validate sort order
+            $sortOrder = in_array(strtoupper($sortOrder), ['ASC', 'DESC']) ? strtoupper($sortOrder) : 'DESC';
+
+            // Build query
+            $query = Mt4Account::find();
+
+            // Filter by user_id if provided
+            if ($userId !== null) {
+                // Check if user exists
+                $user = Users::findOne($userId);
+                if (!$user) {
+                    throw new NotFoundHttpException('User not found');
+                }
+                $query->andWhere(['user_id' => $userId]);
+            }
+
+            // Search in path field (partial match)
+            if (!empty($pathSearch)) {
+                $query->andWhere(['like', 'path', $pathSearch]);
+            }
+
+            // General search across multiple fields
+            if (!empty($searchText)) {
+                $query->andWhere([
+                    'or',
+                    ['like', 'account_id', $searchText],
+                    ['like', 'bot_name', $searchText],
+                    ['like', 'server', $searchText],
+                    ['like', 'broker', $searchText],
+                    ['like', 'path', $searchText],
+                    ['like', 'remark', $searchText],
+                ]);
+            }
+
+            // Filter by status
+            if (!empty($status)) {
+                $statuses = is_array($status) ? $status : explode(',', $status);
+                $query->andWhere(['in', 'status', $statuses]);
+            }
+
+            // Filter by account type
+            if (!empty($accountType)) {
+                $types = is_array($accountType) ? $accountType : explode(',', $accountType);
+                $query->andWhere(['in', 'account_type', $types]);
+            }
+
+            // Get total count before pagination
+            $totalCount = $query->count();
+
+            // Apply sorting
+            $query->orderBy([$sortBy => $sortOrder === 'ASC' ? SORT_ASC : SORT_DESC]);
+
+            // Apply pagination
+            $offset = ($page - 1) * $limit;
+            $query->offset($offset)->limit($limit);
+
+            // Get results
+            $accounts = $query->all();
+
+            // Format response data
+            $accountData = [];
+            foreach ($accounts as $account) {
+                $accountData[] = $this->formatAccountData($account);
+            }
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'accounts' => $accountData,
+                    'pagination' => [
+                        'total' => (int)$totalCount,
+                        'page' => $page,
+                        'limit' => $limit,
+                        'total_pages' => ceil($totalCount / $limit),
+                    ],
+                    'filters' => [
+                        'user_id' => $userId,
+                        'path_search' => $pathSearch,
+                        'search_text' => $searchText,
+                        'status' => $status,
+                        'account_type' => $accountType,
+                    ]
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccounts: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Action to get a single account by ID
+     */
+    public function actionGetAccount($id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $account = Mt4Account::findOne($id);
+
+            if (!$account) {
+                throw new NotFoundHttpException('Account not found');
+            }
+
+            return [
+                'status' => 'success',
+                'data' => $this->formatAccountData($account)
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccount: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Action to get accounts by user with license (like your example)
+     */
+    public function actionGetAccountsByLicense()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->get('license');
+            $pathSearch = Yii::$app->request->get('path');
+            $searchText = Yii::$app->request->get('search');
+
+            if (empty($license)) {
+                throw new BadRequestHttpException('License is required');
+            }
+
+            // Find user by license
+            $user = Users::findOne(['user_license' => $license]);
+            if (!$user) {
+                throw new NotFoundHttpException('User not found for the provided license');
+            }
+
+            // Build query
+            $query = Mt4Account::find()->where(['user_id' => $user->id]);
+
+            // Search in path field
+            if (!empty($pathSearch)) {
+                $query->andWhere(['like', 'path', $pathSearch]);
+            }
+
+            // General search
+            if (!empty($searchText)) {
+                $query->andWhere([
+                    'or',
+                    ['like', 'account_id', $searchText],
+                    ['like', 'bot_name', $searchText],
+                    ['like', 'server', $searchText],
+                    ['like', 'broker', $searchText],
+                ]);
+            }
+
+            $accounts = $query->all();
+
+            $accountData = [];
+            foreach ($accounts as $account) {
+                $accountData[] = $this->formatAccountData($account);
+            }
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                        'email' => $user->email,
+                    ],
+                    'accounts' => $accountData,
+                    'total' => count($accountData)
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccountsByLicense: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Action to search accounts by path (advanced)
+     */
+    public function actionSearchByPath()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $pathQuery = Yii::$app->request->get('q');
+            $exactMatch = Yii::$app->request->get('exact', false);
+            $userId = Yii::$app->request->get('user_id');
+
+            if (empty($pathQuery)) {
+                throw new BadRequestHttpException('Search query is required');
+            }
+
+            $query = Mt4Account::find();
+
+            // Filter by user if provided
+            if ($userId) {
+                $query->andWhere(['user_id' => $userId]);
+            }
+
+            // Path search
+            if ($exactMatch) {
+                $query->andWhere(['path' => $pathQuery]);
+            } else {
+                $query->andWhere(['like', 'path', $pathQuery]);
+            }
+
+            $accounts = $query->all();
+
+            // Group results by path similarity
+            $results = [];
+            foreach ($accounts as $account) {
+                $path = $account->path;
+                if (!isset($results[$path])) {
+                    $results[$path] = [
+                        'path' => $path,
+                        'count' => 0,
+                        'accounts' => []
+                    ];
+                }
+                $results[$path]['count']++;
+                $results[$path]['accounts'][] = $this->formatAccountData($account);
+            }
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'query' => $pathQuery,
+                    'exact_match' => $exactMatch,
+                    'total_results' => count($accounts),
+                    'unique_paths' => count($results),
+                    'results' => array_values($results)
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionSearchByPath: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Action to get accounts summary by user
+     */
+    public function actionGetAccountsSummary($userId = null)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $query = Mt4Account::find();
+
+            if ($userId) {
+                $query->where(['user_id' => $userId]);
+            }
+
+            $accounts = $query->all();
+
+            $summary = [
+                'total_accounts' => count($accounts),
+                'total_balance' => 0,
+                'total_equity' => 0,
+                'total_profit' => 0,
+                'total_floating' => 0,
+                'by_status' => [],
+                'by_type' => [],
+                'profitable_accounts' => 0,
+                'losing_accounts' => 0,
+            ];
+
+            foreach ($accounts as $account) {
+                // Sum totals
+                $summary['total_balance'] += $account->account_balance;
+                $summary['total_equity'] += $account->account_equity;
+                $summary['total_profit'] += $account->total_profit;
+                $summary['total_floating'] += $account->floating_value;
+
+                // Count by status
+                if (!isset($summary['by_status'][$account->status])) {
+                    $summary['by_status'][$account->status] = 0;
+                }
+                $summary['by_status'][$account->status]++;
+
+                // Count by type
+                if (!isset($summary['by_type'][$account->account_type])) {
+                    $summary['by_type'][$account->account_type] = 0;
+                }
+                $summary['by_type'][$account->account_type]++;
+
+                // Count profitable/losing
+                if ($account->total_profit > 0) {
+                    $summary['profitable_accounts']++;
+                } elseif ($account->total_profit < 0) {
+                    $summary['losing_accounts']++;
+                }
+            }
+
+            // Calculate averages
+            if ($summary['total_accounts'] > 0) {
+                $summary['avg_balance'] = $summary['total_balance'] / $summary['total_accounts'];
+                $summary['avg_profit'] = $summary['total_profit'] / $summary['total_accounts'];
+            } else {
+                $summary['avg_balance'] = 0;
+                $summary['avg_profit'] = 0;
+            }
+
+            return [
+                'status' => 'success',
+                'data' => $summary
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccountsSummary: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Format account data for consistent response
+     */
+    private function formatAccountData($account)
+    {
+        // Parse path to get hierarchy info
+        $pathIds = $account->path ? explode('.', $account->path) : [];
+        $parentPath = count($pathIds) > 1 ? implode('.', array_slice($pathIds, 0, -1)) : null;
+
+        return [
+            'id' => $account->id,
+            'user_id' => $account->user_id,
+            'account_id' => $account->account_id,
+            'bot_name' => $account->bot_name,
+            'buy_order_count' => (int)$account->buy_order_count,
+            'total_buy_lot' => (float)$account->total_buy_lot,
+            'sell_order_count' => (int)$account->sell_order_count,
+            'total_sell_lot' => (float)$account->total_sell_lot,
+            'total_profit' => (float)$account->total_profit,
+            'total_profit_percentage' => (float)$account->total_profit_percentage,
+            'account_balance' => (float)$account->account_balance,
+            'account_equity' => (float)$account->account_equity,
+            'floating_value' => (float)$account->floating_value,
+            'leverage' => (int)$account->leverage,
+            'currency' => $account->currency,
+            'server' => $account->server,
+            'broker' => $account->broker,
+            'account_type' => $account->account_type,
+            'path' => $account->path,
+            'status' => $account->status,
+            'remark' => $account->remark,
+            'last_connected' => $account->last_connected,
+            'last_sync' => $account->last_sync,
+            'created_at' => $account->created_at,
+            'modified_at' => $account->modified_at,
+
+            // Computed fields
+            'total_orders' => $account->getTotalOrders(),
+            'total_lots' => $account->getTotalLots(),
+            'win_rate' => $account->getWinRate(),
+            'is_profitable' => $account->isProfitable(),
+            'is_connected' => $account->isConnected(),
+            'last_connected_formatted' => $account->getLastConnectedFormatted(),
+
+            // Path hierarchy info
+            'hierarchy' => [
+                'path_ids' => $pathIds,
+                'parent_path' => $parentPath,
+                'parent_user_id' => $pathIds[count($pathIds) - 2] ?? null,
+                'root_user_id' => $pathIds[0] ?? null,
+                'depth' => count($pathIds),
+            ],
+
+            // Formatted values for display
+            'formatted' => [
+                'balance' => Yii::$app->formatter->asCurrency($account->account_balance),
+                'equity' => Yii::$app->formatter->asCurrency($account->account_equity),
+                'profit' => $account->getFormattedProfit(),
+                'floating' => $account->getFormattedFloating(),
+                'profit_percentage' => $account->getProfitPercentageFormatted(),
+                'status_badge' => $account->getStatusBadge(),
+                'type_badge' => $account->getAccountTypeBadge(),
+            ]
+        ];
+    }
+
+    public function actionGetAccountsByPath()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $path = Yii::$app->request->get('path');
+            $includeChildren = Yii::$app->request->get('include_children', false);
+            $targetLevel = Yii::$app->request->get('level');
+            $searchText = Yii::$app->request->get('search');
+
+            if (empty($path)) {
+                throw new BadRequestHttpException('Path parameter is required');
+            }
+
+            // Parse the path into user IDs
+            $pathIds = explode('.', $path);
+
+            // Validate that all parts are numeric
+            foreach ($pathIds as $id) {
+                if (!is_numeric($id)) {
+                    throw new BadRequestHttpException('Path must contain only numeric values separated by dots');
+                }
+            }
+
+            // Get the last ID in the path (the target user)
+            $targetUserId = end($pathIds);
+
+            // Build the path patterns for searching
+            $pathPatterns = $this->buildPathPatterns($pathIds, $includeChildren, $targetLevel);
+
+            // Build query
+            $query = Mt4Account::find();
+
+            // Apply path filters
+            if (empty($pathPatterns)) {
+                // If no patterns, just find accounts for the target user
+                $query->andWhere(['user_id' => $targetUserId]);
+            } else {
+                // Apply all path patterns
+                $conditions = ['or'];
+                foreach ($pathPatterns as $pattern) {
+                    $conditions[] = ['like', 'path', $pattern, false];
+                }
+                $query->andWhere($conditions);
+            }
+
+            // Apply search filter if provided
+            if (!empty($searchText)) {
+                $query->andWhere([
+                    'or',
+                    ['like', 'account_id', $searchText],
+                    ['like', 'bot_name', $searchText],
+                    ['like', 'server', $searchText],
+                    ['like', 'broker', $searchText],
+                ]);
+            }
+
+            // Get results
+            $accounts = $query->all();
+
+            // Organize accounts by hierarchy
+            $hierarchicalData = $this->buildHierarchicalData($accounts, $pathIds);
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'request' => [
+                        'path' => $path,
+                        'parsed_ids' => $pathIds,
+                        'target_user_id' => (int)$targetUserId,
+                        'include_children' => $includeChildren,
+                        'level' => $targetLevel,
+                    ],
+                    'summary' => [
+                        'total_accounts' => count($accounts),
+                        'direct_accounts' => count($hierarchicalData['direct']),
+                        'child_accounts' => count($hierarchicalData['children']),
+                        'child_users' => $hierarchicalData['child_users'],
+                    ],
+                    'accounts' => [
+                        'direct' => $this->formatAccountsArray($hierarchicalData['direct']),
+                        'children' => $this->formatAccountsArray($hierarchicalData['children']),
+                    ],
+                    'hierarchy' => $hierarchicalData['tree'],
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccountsByPath: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Action to get accounts by path with license (like your example)
+     */
+    public function actionGetAccountsByPathLicense()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $license = Yii::$app->request->get('license');
+            $path = Yii::$app->request->get('path');
+            $includeChildren = Yii::$app->request->get('include_children', false);
+
+            if (empty($license)) {
+                throw new BadRequestHttpException('License is required');
+            }
+
+            if (empty($path)) {
+                throw new BadRequestHttpException('Path is required');
+            }
+
+            // Find user by license
+            $user = Users::findOne(['user_license' => $license]);
+            if (!$user) {
+                throw new NotFoundHttpException('User not found for the provided license');
+            }
+
+            // Parse the path
+            $pathIds = explode('.', $path);
+            $targetUserId = end($pathIds);
+
+            // Verify that the user has access to this path
+            // The user's ID should be in the path somewhere
+            if (!in_array($user->id, $pathIds)) {
+                throw new UnauthorizedHttpException('You do not have access to this path');
+            }
+
+            // Build path patterns
+            $pathPatterns = $this->buildPathPatterns($pathIds, $includeChildren);
+
+            // Build query
+            $query = Mt4Account::find();
+
+            if (empty($pathPatterns)) {
+                $query->andWhere(['user_id' => $targetUserId]);
+            } else {
+                $conditions = ['or'];
+                foreach ($pathPatterns as $pattern) {
+                    $conditions[] = ['like', 'path', $pattern, false];
+                }
+                $query->andWhere($conditions);
+            }
+
+            $accounts = $query->all();
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->username,
+                    ],
+                    'path_info' => [
+                        'requested_path' => $path,
+                        'parsed_ids' => $pathIds,
+                        'target_user' => (int)$targetUserId,
+                    ],
+                    'accounts' => $this->formatAccountsArray($accounts),
+                    'total' => count($accounts)
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccountsByPathLicense: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Action to get hierarchy tree for a path
+     */
+    public function actionGetPathHierarchy()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $path = Yii::$app->request->get('path');
+
+            if (empty($path)) {
+                throw new BadRequestHttpException('Path is required');
+            }
+
+            $pathIds = explode('.', $path);
+
+            // Get all accounts that belong to any user in this path
+            $accounts = Mt4Account::find()
+                ->where(['in', 'user_id', $pathIds])
+                ->all();
+
+            // Build hierarchy tree
+            $tree = [];
+            foreach ($pathIds as $index => $userId) {
+                $level = $index + 1;
+                $userAccounts = array_filter($accounts, function ($account) use ($userId) {
+                    return $account->user_id == $userId;
+                });
+
+                $tree[] = [
+                    'level' => $level,
+                    'user_id' => (int)$userId,
+                    'path_segment' => implode('.', array_slice($pathIds, 0, $level)),
+                    'account_count' => count($userAccounts),
+                    'accounts' => $this->formatAccountsArray($userAccounts),
+                    'children' => $index < count($pathIds) - 1 ? [] : null,
+                ];
+            }
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'path' => $path,
+                    'levels' => count($pathIds),
+                    'hierarchy' => $tree
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetPathHierarchy: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Build path patterns for searching
+     */
+    private function buildPathPatterns($pathIds, $includeChildren, $targetLevel = null)
+    {
+        $patterns = [];
+
+        if ($targetLevel !== null) {
+            // Query specific level
+            $level = (int)$targetLevel;
+            if ($level > 0 && $level <= count($pathIds)) {
+                $targetPath = implode('.', array_slice($pathIds, 0, $level));
+                $patterns[] = $targetPath . '.';
+                $patterns[] = $targetPath; // Exact match
+            }
+        } else {
+            // Get the target user path
+            $targetPath = implode('.', $pathIds);
+
+            if ($includeChildren) {
+                // Include all child paths
+                $patterns[] = $targetPath . '.%'; // All children
+                $patterns[] = $targetPath; // Exact match
+            } else {
+                // Only exact matches for this path
+                $patterns[] = $targetPath;
+
+                // Also match paths that end with this exact sequence
+                // This helps find accounts where this user is a parent
+                $patterns[] = '%.' . $targetPath;
+                $patterns[] = '%.' . $targetPath . '.%';
+            }
+        }
+
+        return $patterns;
+    }
+
+    /**
+     * Build hierarchical data structure
+     */
+    private function buildHierarchicalData($accounts, $pathIds)
+    {
+        $targetPath = implode('.', $pathIds);
+        $targetUserId = end($pathIds);
+
+        $direct = [];
+        $children = [];
+        $childUsers = [];
+        $tree = [];
+
+        foreach ($accounts as $account) {
+            $accountPath = $account->path;
+            $accountPathIds = $accountPath ? explode('.', $accountPath) : [];
+            $accountUserId = end($accountPathIds) ?: $account->user_id;
+
+            if ($accountPath === $targetPath || $account->user_id == $targetUserId) {
+                // Direct accounts for this user
+                $direct[] = $account;
+            } else if (strpos($accountPath, $targetPath . '.') === 0) {
+                // Child accounts
+                $children[] = $account;
+
+                // Track unique child users
+                if (!in_array($accountUserId, $childUsers)) {
+                    $childUsers[] = $accountUserId;
+                }
+
+                // Build tree structure
+                $this->addToTree($tree, explode('.', $accountPath), $account);
+            }
+        }
+
+        return [
+            'direct' => $direct,
+            'children' => $children,
+            'child_users' => $childUsers,
+            'tree' => $tree,
+        ];
+    }
+
+    /**
+     * Add account to hierarchical tree
+     */
+    private function addToTree(&$tree, $pathIds, $account, $level = 0)
+    {
+        if ($level >= count($pathIds)) {
+            return;
+        }
+
+        $currentId = $pathIds[$level];
+        $currentPath = implode('.', array_slice($pathIds, 0, $level + 1));
+
+        // Find or create node
+        $found = false;
+        foreach ($tree as &$node) {
+            if ($node['user_id'] == $currentId) {
+                $found = true;
+                if ($level == count($pathIds) - 1) {
+                    // This is the account owner
+                    if (!isset($node['accounts'])) {
+                        $node['accounts'] = [];
+                    }
+                    $node['accounts'][] = $this->formatAccountData($account);
+                } else {
+                    // Recurse to children
+                    if (!isset($node['children'])) {
+                        $node['children'] = [];
+                    }
+                    $this->addToTree($node['children'], $pathIds, $account, $level + 1);
+                }
+                break;
+            }
+        }
+
+        if (!$found) {
+            $newNode = [
+                'user_id' => (int)$currentId,
+                'path' => $currentPath,
+                'level' => $level + 1,
+            ];
+
+            if ($level == count($pathIds) - 1) {
+                $newNode['accounts'] = [$this->formatAccountData($account)];
+                $newNode['children'] = [];
+            } else {
+                $newNode['accounts'] = [];
+                $newNode['children'] = [];
+                $this->addToTree($newNode['children'], $pathIds, $account, $level + 1);
+            }
+
+            $tree[] = $newNode;
+        }
+    }
+
+    // In Mt4AccountController.php
+    public function actionGetAccountsByUser($userId)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Validate user exists
+            $user = Users::findOne($userId);
+            if (!$user) {
+                throw new NotFoundHttpException('User not found');
+            }
+
+            // Get accounts
+            $accounts = Mt4Account::find()
+                ->where(['user_id' => $userId])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            // Format response
+            $accountData = [];
+            foreach ($accounts as $account) {
+                $accountData[] = [
+                    'id' => $account->id,
+                    'account_id' => $account->account_id,
+                    'bot_name' => $account->bot_name,
+                    'buy_order_count' => (int)$account->buy_order_count,
+                    'total_buy_lot' => (float)$account->total_buy_lot,
+                    'sell_order_count' => (int)$account->sell_order_count,
+                    'total_sell_lot' => (float)$account->total_sell_lot,
+                    'total_profit' => (float)$account->total_profit,
+                    'total_profit_percentage' => (float)$account->total_profit_percentage,
+                    'account_balance' => (float)$account->account_balance,
+                    'account_equity' => (float)$account->account_equity,
+                    'floating_value' => (float)$account->floating_value,
+                    'leverage' => $account->leverage,
+                    'currency' => $account->currency,
+                    'server' => $account->server,
+                    'broker' => $account->broker,
+                    'account_type' => $account->account_type,
+                    'path' => $account->path,
+                    'status' => $account->status,
+                    'last_connected' => $account->last_connected,
+                    'last_sync' => $account->last_sync,
+                    'created_at' => $account->created_at,
+                    'total_orders' => ($account->buy_order_count + $account->sell_order_count),
+                    'total_lots' => ($account->total_buy_lot + $account->total_sell_lot),
+                ];
+            }
+
+            // Get summary
+            $summary = Mt4Account::find()
+                ->select([
+                    'COUNT(*) as total_accounts',
+                    'SUM(account_balance) as total_balance',
+                    'SUM(total_profit) as total_profit',
+                    'AVG(total_profit_percentage) as avg_profit_percentage',
+                    'SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_accounts',
+                ])
+                ->where(['user_id' => $userId])
+                ->asArray()
+                ->one();
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->user_name,
+                        'email' => $user->user_email,
+                    ],
+                    'summary' => [
+                        'total_accounts' => (int)$summary['total_accounts'],
+                        'total_balance' => (float)$summary['total_balance'],
+                        'total_profit' => (float)$summary['total_profit'],
+                        'avg_profit_percentage' => round((float)$summary['avg_profit_percentage'], 2),
+                        'active_accounts' => (int)$summary['active_accounts'],
+                    ],
+                    'accounts' => $accountData,
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error getting accounts: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Format array of accounts
+     */
+    private function formatAccountsArray($accounts)
+    {
+        $formatted = [];
+        foreach ($accounts as $account) {
+            $formatted[] = $this->formatAccountData($account);
+        }
+        return $formatted;
     }
 }
