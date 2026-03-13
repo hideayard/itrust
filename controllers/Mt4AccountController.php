@@ -1234,95 +1234,95 @@ class Mt4AccountController extends Controller
     }
 
     // In Mt4AccountController.php
-    // public function actionGetAccountsByUser($userId)
-    // {
-    //     Yii::$app->response->format = Response::FORMAT_JSON;
+    public function actionGetAccountsByUser($user_id)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
-    //     try {
-    //         // Validate user exists
-    //         $user = Users::findOne($userId);
-    //         if (!$user) {
-    //             throw new NotFoundHttpException('User not found');
-    //         }
+        try {
+            // Validate user exists
+            $user = Users::findOne($user_id);
+            if (!$user) {
+                throw new NotFoundHttpException('User not found');
+            }
 
-    //         // Get accounts
-    //         $accounts = Mt4Account::find()
-    //             ->where(['user_id' => $userId])
-    //             ->orderBy(['created_at' => SORT_DESC])
-    //             ->all();
+            // Get accounts
+            $accounts = Mt4Account::find()
+                ->where(['user_id' => $user_id])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
 
-    //         // Format response
-    //         $accountData = [];
-    //         foreach ($accounts as $account) {
-    //             $accountData[] = [
-    //                 'id' => $account->id,
-    //                 'account_id' => $account->account_id,
-    //                 'bot_name' => $account->bot_name,
-    //                 'buy_order_count' => (int)$account->buy_order_count,
-    //                 'total_buy_lot' => (float)$account->total_buy_lot,
-    //                 'sell_order_count' => (int)$account->sell_order_count,
-    //                 'total_sell_lot' => (float)$account->total_sell_lot,
-    //                 'total_profit' => (float)$account->total_profit,
-    //                 'total_profit_percentage' => (float)$account->total_profit_percentage,
-    //                 'account_balance' => (float)$account->account_balance,
-    //                 'account_equity' => (float)$account->account_equity,
-    //                 'floating_value' => (float)$account->floating_value,
-    //                 'leverage' => $account->leverage,
-    //                 'currency' => $account->currency,
-    //                 'server' => $account->server,
-    //                 'broker' => $account->broker,
-    //                 'account_type' => $account->account_type,
-    //                 'path' => $account->path,
-    //                 'status' => $account->status,
-    //                 'last_connected' => $account->last_connected,
-    //                 'last_sync' => $account->last_sync,
-    //                 'created_at' => $account->created_at,
-    //                 'total_orders' => ($account->buy_order_count + $account->sell_order_count),
-    //                 'total_lots' => ($account->total_buy_lot + $account->total_sell_lot),
-    //             ];
-    //         }
+            // Format response
+            $accountData = [];
+            foreach ($accounts as $account) {
+                $accountData[] = [
+                    'id' => $account->id,
+                    'account_id' => $account->account_id,
+                    'bot_name' => $account->bot_name,
+                    'buy_order_count' => (int)$account->buy_order_count,
+                    'total_buy_lot' => (float)$account->total_buy_lot,
+                    'sell_order_count' => (int)$account->sell_order_count,
+                    'total_sell_lot' => (float)$account->total_sell_lot,
+                    'total_profit' => (float)$account->total_profit,
+                    'total_profit_percentage' => (float)$account->total_profit_percentage,
+                    'account_balance' => (float)$account->account_balance,
+                    'account_equity' => (float)$account->account_equity,
+                    'floating_value' => (float)$account->floating_value,
+                    'leverage' => $account->leverage,
+                    'currency' => $account->currency,
+                    'server' => $account->server,
+                    'broker' => $account->broker,
+                    'account_type' => $account->account_type,
+                    'path' => $account->path,
+                    'status' => $account->status,
+                    'last_connected' => $account->last_connected,
+                    'last_sync' => $account->last_sync,
+                    'created_at' => $account->created_at,
+                    'total_orders' => ($account->buy_order_count + $account->sell_order_count),
+                    'total_lots' => ($account->total_buy_lot + $account->total_sell_lot),
+                ];
+            }
 
-    //         // Get summary
-    //         $summary = Mt4Account::find()
-    //             ->select([
-    //                 'COUNT(*) as total_accounts',
-    //                 'SUM(account_balance) as total_balance',
-    //                 'SUM(total_profit) as total_profit',
-    //                 'AVG(total_profit_percentage) as avg_profit_percentage',
-    //                 'SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_accounts',
-    //             ])
-    //             ->where(['user_id' => $userId])
-    //             ->asArray()
-    //             ->one();
+            // Get summary
+            $summary = Mt4Account::find()
+                ->select([
+                    'COUNT(*) as total_accounts',
+                    'SUM(account_balance) as total_balance',
+                    'SUM(total_profit) as total_profit',
+                    'AVG(total_profit_percentage) as avg_profit_percentage',
+                    'SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_accounts',
+                ])
+                ->where(['user_id' => $user_id])
+                ->asArray()
+                ->one();
 
-    //         return [
-    //             'status' => 'success',
-    //             'data' => [
-    //                 'user' => [
-    //                     'id' => $user->id,
-    //                     'username' => $user->user_name,
-    //                     'email' => $user->user_email,
-    //                 ],
-    //                 'summary' => [
-    //                     'total_accounts' => (int)$summary['total_accounts'],
-    //                     'total_balance' => (float)$summary['total_balance'],
-    //                     'total_profit' => (float)$summary['total_profit'],
-    //                     'avg_profit_percentage' => round((float)$summary['avg_profit_percentage'], 2),
-    //                     'active_accounts' => (int)$summary['active_accounts'],
-    //                 ],
-    //                 'accounts' => $accountData,
-    //             ]
-    //         ];
-    //     } catch (\Exception $e) {
-    //         Yii::error('Error getting accounts: ' . $e->getMessage());
-    //         return [
-    //             'status' => 'error',
-    //             'message' => $e->getMessage()
-    //         ];
-    //     }
-    // }
+            return [
+                'status' => 'success',
+                'data' => [
+                    'user' => [
+                        'id' => $user->id,
+                        'username' => $user->user_name,
+                        'email' => $user->user_email,
+                    ],
+                    'summary' => [
+                        'total_accounts' => (int)$summary['total_accounts'],
+                        'total_balance' => (float)$summary['total_balance'],
+                        'total_profit' => (float)$summary['total_profit'],
+                        'avg_profit_percentage' => round((float)$summary['avg_profit_percentage'], 2),
+                        'active_accounts' => (int)$summary['active_accounts'],
+                    ],
+                    'accounts' => $accountData,
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error getting accounts: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
 
-    public function actionGetAccountsByUser()
+    public function actionGetAccountsByUserPost()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
