@@ -1383,6 +1383,7 @@ class MobileController extends Controller
             'aud' => Yii::$app->params['jwtAudience'], // Audience
             'iat' => $issuedAt, // Issued at
             'exp' => $expire, // Expire time
+            'url' => Yii::$app->params['mobileServerUrl'],
             'data' => [
                 'id' => $user->user_id,
                 'name' => $user->user_nama,
