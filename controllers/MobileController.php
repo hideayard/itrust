@@ -5482,11 +5482,11 @@ class MobileController extends Controller
             }
 
             // Get statistics
-            $totalUsers = Users::find()->where(['is_deleted' => 0])->count();
-            $activeUsers = Users::find()->where(['user_status' => 1, 'is_deleted' => 0])->count();
-            $inactiveUsers = Users::find()->where(['user_status' => 0, 'is_deleted' => 0])->count();
-            $adminUsers = Users::find()->where(['user_tipe' => 'ADMIN', 'is_deleted' => 0])->count();
-            $regularUsers = Users::find()->where(['user_tipe' => 'USER', 'is_deleted' => 0])->count();
+            $totalUsers = Users::find()->where(['is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
+            $activeUsers = Users::find()->where(['user_status' => 1, 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
+            $inactiveUsers = Users::find()->where(['user_status' => 0, 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
+            $adminUsers = Users::find()->where(['user_tipe' => 'ADMIN', 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
+            $regularUsers = Users::find()->where(['user_tipe' => 'USER', 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
 
             $newUsersToday = Users::find()
                 ->where(['is_deleted' => 0])
@@ -5565,7 +5565,7 @@ class MobileController extends Controller
             $offset = ($page - 1) * $limit;
 
             // Build query
-            $query = Users::find()->where(['is_deleted' => 0]);
+            $query = Users::find()->where(['is_deleted' => 0,'user_account' => null,'user_license' => null]);
 
             if ($search) {
                 $query->andWhere([
