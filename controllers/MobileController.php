@@ -5111,7 +5111,7 @@ class MobileController extends Controller
 
             // Handle file upload if present
             if (!empty($_FILES['user_foto'])) {
-                $uploadPath = Yii::getAlias('@webroot/uploads/users/');
+                $uploadPath = Yii::getAlias('@webroot/');
                 if (!file_exists($uploadPath)) {
                     mkdir($uploadPath, 0777, true);
                 }
@@ -5143,7 +5143,7 @@ class MobileController extends Controller
                         'user_hp' => $user->user_hp,
                         'user_email' => $user->user_email,
                         'user_tipe' => $user->user_tipe,
-                        'user_foto' => $user->user_foto ? Yii::getAlias('@web/uploads/users/') . $user->user_foto : null,
+                        'user_foto' => $user->user_foto ? Yii::getAlias('@web/') . $user->user_foto : null,
                     ]
                 ];
             } else {
@@ -5215,7 +5215,7 @@ class MobileController extends Controller
                     'user_email' => $user->user_email,
                     'user_tipe' => $user->user_tipe,
                     'user_status' => $user->user_status,
-                    'user_foto' => $user->user_foto ? Yii::getAlias('@web/uploads/users/') . $user->user_foto : null,
+                    'user_foto' => $user->user_foto ? Yii::getAlias('@web/') . $user->user_foto : null,
                     'created_at' => $user->created_at,
                     'telegram_id' => $user->telegram_id,
                     'telegram_username' => $user->telegram_username,
@@ -5381,7 +5381,7 @@ class MobileController extends Controller
                 ];
             }
 
-            $uploadPath = Yii::getAlias('@webroot/uploads/users/');
+            $uploadPath = Yii::getAlias('@webroot/');
             if (!file_exists($uploadPath)) {
                 mkdir($uploadPath, 0777, true);
             }
@@ -5422,7 +5422,7 @@ class MobileController extends Controller
                         'success' => true,
                         'message' => 'Photo updated successfully',
                         'data' => [
-                            'user_foto' => Yii::getAlias('@web/uploads/users/') . $fileName
+                            'user_foto' => Yii::getAlias('@web/') . $fileName
                         ]
                     ];
                 }
@@ -5608,7 +5608,7 @@ class MobileController extends Controller
                     'device_count' => UserDevices::find()
                         ->where(['user_id' => $user->user_id, 'is_active' => 1])
                         ->count(),
-                    'user_foto' => $user->user_foto ? Yii::getAlias('@web/uploads/users/') . $user->user_foto : null,
+                    'user_foto' => $user->user_foto ? Yii::getAlias('@web/') . $user->user_foto : null,
                 ];
             }
 
