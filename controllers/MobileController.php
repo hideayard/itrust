@@ -4035,7 +4035,7 @@ class MobileController extends Controller
         return [];
     }
 
- /**
+    /**
      * User Registration Endpoint
      */
     public function actionRegister()
@@ -4152,7 +4152,7 @@ class MobileController extends Controller
             $user->user_status = 1; // Active
             $user->user_foto = 'default.jpg'; // Default photo
             $user->is_deleted = 0;
-            
+
             // Generate token for future use (optional)
             $user->user_token = Yii::$app->security->generateRandomString(15);
 
@@ -4160,16 +4160,16 @@ class MobileController extends Controller
             if ($user->save()) {
                 // Log the registration activity
                 $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
-                
+
                 TelegramHelper::sendSimpleMessage(
                     [
                         'text' => "📝 New User Registration\n" .
-                                 "Name: " . $firstName . " " . $lastName . "\n" .
-                                 "Username: " . $username . "\n" .
-                                 "Email: " . $email . "\n" .
-                                 "Phone: " . $phone . "\n" .
-                                 "Type: " . $userType . "\n" .
-                                 "IP: " . $clientIp,
+                            "Name: " . $firstName . " " . $lastName . "\n" .
+                            "Username: " . $username . "\n" .
+                            "Email: " . $email . "\n" .
+                            "Phone: " . $phone . "\n" .
+                            "Type: " . $userType . "\n" .
+                            "IP: " . $clientIp,
                         'parse_mode' => 'html'
                     ],
                     Yii::$app->params['group_id']
@@ -4199,18 +4199,17 @@ class MobileController extends Controller
                 foreach ($user->errors as $attribute => $errorMessages) {
                     $errors[$attribute] = $errorMessages;
                 }
-                
+
                 return [
                     'success' => false,
                     'message' => 'Registration failed',
                     'errors' => $errors
                 ];
             }
-
         } catch (\Exception $e) {
             Yii::error('Mobile registration error: ' . $e->getMessage());
             Yii::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return [
                 'success' => false,
                 'message' => 'Registration failed. Please try again.',
@@ -4266,7 +4265,7 @@ class MobileController extends Controller
             if (!$user) {
                 // Log the attempt but don't reveal that email doesn't exist
                 Yii::info('Password reset attempted for non-existent email: ' . $email);
-                
+
                 return [
                     'success' => true,
                     'message' => 'If the email exists, a reset link has been sent'
@@ -4275,15 +4274,15 @@ class MobileController extends Controller
 
             // Generate password reset token
             $resetToken = Yii::$app->security->generateRandomString(15); // user_token field is max 15 chars
-            
+
             // Save token to user_token field with expiration info embedded
             // Format: token_timestamp (e.g., abc123_1641234567)
             $tokenWithExpiry = $resetToken . '_' . time();
-            
+
             // Since we don't have dedicated reset token fields, we'll use user_token
             // You may want to add dedicated fields later
             $user->user_token = $tokenWithExpiry;
-            
+
             if (!$user->save()) {
                 Yii::error('Failed to save reset token for user: ' . $user->user_id);
                 throw new \Exception('Failed to generate reset token');
@@ -4291,20 +4290,20 @@ class MobileController extends Controller
 
             // Build reset link
             $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $resetToken]);
-            
+
             // Send email with reset link
             $this->sendPasswordResetEmail($user, $resetLink);
 
             // Log the activity
             $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
-            
+
             TelegramHelper::sendSimpleMessage(
                 [
                     'text' => "🔐 Password Reset Request\n" .
-                             "Email: " . $email . "\n" .
-                             "Username: " . $user->user_name . "\n" .
-                             "Name: " . $user->user_nama . "\n" .
-                             "IP: " . $clientIp,
+                        "Email: " . $email . "\n" .
+                        "Username: " . $user->user_name . "\n" .
+                        "Name: " . $user->user_nama . "\n" .
+                        "IP: " . $clientIp,
                     'parse_mode' => 'html'
                 ],
                 Yii::$app->params['group_id']
@@ -4314,11 +4313,10 @@ class MobileController extends Controller
                 'success' => true,
                 'message' => 'Password reset link has been sent to your email'
             ];
-
         } catch (\Exception $e) {
             Yii::error('Mobile forgot password error: ' . $e->getMessage());
             Yii::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return [
                 'success' => false,
                 'message' => 'Failed to process request. Please try again.',
@@ -4396,10 +4394,10 @@ class MobileController extends Controller
             $users = Users::find()
                 ->where(['like', 'user_token', $token . '_%', false])
                 ->all();
-            
+
             $user = null;
             $currentTime = time();
-            
+
             foreach ($users as $potentialUser) {
                 $parts = explode('_', $potentialUser->user_token);
                 if (count($parts) == 2 && $parts[0] === $token) {
@@ -4422,18 +4420,18 @@ class MobileController extends Controller
             // Update password
             $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
             $user->user_token = null; // Clear the token
-            
+
             if ($user->save()) {
                 // Log the activity
                 $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
-                
+
                 TelegramHelper::sendSimpleMessage(
                     [
                         'text' => "✅ Password Reset Successful\n" .
-                                 "Username: " . $user->user_name . "\n" .
-                                 "Name: " . $user->user_nama . "\n" .
-                                 "Email: " . $user->user_email . "\n" .
-                                 "IP: " . $clientIp,
+                            "Username: " . $user->user_name . "\n" .
+                            "Name: " . $user->user_nama . "\n" .
+                            "Email: " . $user->user_email . "\n" .
+                            "IP: " . $clientIp,
                         'parse_mode' => 'html'
                     ],
                     Yii::$app->params['group_id']
@@ -4449,11 +4447,10 @@ class MobileController extends Controller
                     'message' => 'Failed to reset password'
                 ];
             }
-
         } catch (\Exception $e) {
             Yii::error('Mobile reset password error: ' . $e->getMessage());
             Yii::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return [
                 'success' => false,
                 'message' => 'Failed to reset password. Please try again.',
@@ -4469,9 +4466,9 @@ class MobileController extends Controller
     {
         // Implement your email sending logic here
         // Using Yii's mailer as an example
-        
+
         $subject = 'Reset Your Password - Geran Komuniti Iskandar Puteri';
-        
+
         $htmlBody = "<h2>Password Reset Request</h2>";
         $htmlBody .= "<p>Hello <strong>" . $user->user_nama . "</strong>,</p>";
         $htmlBody .= "<p>We received a request to reset your password. Click the link below to set a new password:</p>";
@@ -4480,7 +4477,7 @@ class MobileController extends Controller
         $htmlBody .= "<p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>";
         $htmlBody .= "<hr>";
         $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
-        
+
         $textBody = "Password Reset Request\n\n";
         $textBody .= "Hello " . $user->user_nama . ",\n\n";
         $textBody .= "We received a request to reset your password. Click the link below to set a new password:\n";
@@ -4488,7 +4485,7 @@ class MobileController extends Controller
         $textBody .= "This link will expire in 1 hour.\n\n";
         $textBody .= "If you didn't request this, please ignore this email and your password will remain unchanged.\n\n";
         $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0";
-        
+
         // Send email using Yii's mailer
         try {
             Yii::$app->mailer->compose()
@@ -4498,7 +4495,7 @@ class MobileController extends Controller
                 ->setTextBody($textBody)
                 ->setHtmlBody($htmlBody)
                 ->send();
-                
+
             Yii::info('Password reset email sent to: ' . $user->user_email);
         } catch (\Exception $e) {
             Yii::error('Failed to send password reset email: ' . $e->getMessage());
@@ -4512,22 +4509,22 @@ class MobileController extends Controller
     public function actionVerifyResetToken()
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
-        
+
         $token = Yii::$app->request->post('token');
-        
+
         if (empty($token)) {
             return [
                 'success' => false,
                 'message' => 'Token is required'
             ];
         }
-        
+
         $users = Users::find()
             ->where(['like', 'user_token', $token . '_%', false])
             ->all();
-        
+
         $currentTime = time();
-        
+
         foreach ($users as $user) {
             $parts = explode('_', $user->user_token);
             if (count($parts) == 2 && $parts[0] === $token) {
@@ -4540,11 +4537,1102 @@ class MobileController extends Controller
                 }
             }
         }
-        
+
         return [
             'success' => false,
             'message' => 'Invalid or expired token'
         ];
     }
 
+    public function actionCreateDevice()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract current user ID from payload
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+
+            if (!$currentUser) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Get request data
+            $requestData = \Yii::$app->request->post();
+
+            // Determine target user ID
+            $targetUserId = $currentUserId;
+
+            // Check if current user is admin and trying to assign to another user
+            $isAdmin = ($currentUser->user_tipe === 'ADMIN');
+
+            if ($isAdmin && isset($requestData['user_id'])) {
+                $targetUserId = $requestData['user_id'];
+
+                // Verify target user exists
+                $targetUser = Users::findOne($targetUserId);
+                if (!$targetUser) {
+                    return [
+                        'success' => false,
+                        'message' => 'Target user not found'
+                    ];
+                }
+            }
+
+            // Check device limit for non-admin users
+            if (!$isAdmin) {
+                $deviceCount = UserDevices::find()
+                    ->where(['user_id' => $targetUserId, 'is_active' => 1])
+                    ->count();
+
+                if ($deviceCount >= 5) {
+                    return [
+                        'success' => false,
+                        'message' => 'Device limit reached. Maximum 5 devices allowed per user.'
+                    ];
+                }
+            }
+
+            // Validate required fields
+            if (empty($requestData['device_id']) || empty($requestData['device_name'])) {
+                return [
+                    'success' => false,
+                    'message' => 'Device ID and Device Name are required'
+                ];
+            }
+
+            // Check if device already exists for this user
+            $existingDevice = UserDevices::find()
+                ->where(['user_id' => $targetUserId, 'device_id' => $requestData['device_id']])
+                ->one();
+
+            if ($existingDevice) {
+                if ($existingDevice->is_active == 0) {
+                    // Reactivate the device
+                    $existingDevice->is_active = 1;
+                    $existingDevice->device_name = $requestData['device_name'];
+                    $existingDevice->device_alias = $requestData['device_alias'] ?? $requestData['device_name'];
+                    $existingDevice->device_description = $requestData['device_description'] ?? null;
+                    $existingDevice->device_remark = $requestData['device_remark'] ?? null;
+                    $existingDevice->modified_by = $currentUserId;
+
+                    if ($existingDevice->save()) {
+                        return [
+                            'success' => true,
+                            'message' => 'Device reactivated successfully',
+                            'data' => $this->formatDeviceData($existingDevice)
+                        ];
+                    } else {
+                        return [
+                            'success' => false,
+                            'message' => 'Failed to reactivate device',
+                            'errors' => $existingDevice->errors
+                        ];
+                    }
+                } else {
+                    return [
+                        'success' => false,
+                        'message' => 'Device with this ID already exists for the user'
+                    ];
+                }
+            }
+
+            // Create new device
+            $device = new UserDevices();
+            $device->user_id = $targetUserId;
+            $device->device_id = $requestData['device_id'];
+            $device->device_name = $requestData['device_name'];
+            $device->device_alias = $requestData['device_alias'] ?? $requestData['device_name'];
+            $device->device_description = $requestData['device_description'] ?? null;
+            $device->device_remark = $requestData['device_remark'] ?? null;
+            $device->is_active = 1;
+            $device->created_by = $currentUserId;
+            $device->modified_by = $currentUserId;
+
+            if ($device->save()) {
+                return [
+                    'success' => true,
+                    'message' => 'Device created successfully',
+                    'data' => $this->formatDeviceData($device)
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to create device',
+                    'errors' => $device->errors
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to create device',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionUpdateDevice($id)
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract current user ID from payload
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+
+            if (!$currentUser) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Find the device
+            $device = UserDevices::findOne($id);
+
+            if (!$device) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not found'
+                ];
+            }
+
+            // Check permission (user can only update their own devices, admin can update any)
+            $isAdmin = ($currentUser->user_tipe === 'ADMIN');
+            if (!$isAdmin && $device->user_id != $currentUserId) {
+                return [
+                    'success' => false,
+                    'message' => 'You do not have permission to update this device'
+                ];
+            }
+
+            // Get request data
+            $requestData = \Yii::$app->request->post();
+
+            // Allow admin to change user_id
+            if ($isAdmin && isset($requestData['user_id'])) {
+                // Verify target user exists
+                $targetUser = Users::findOne($requestData['user_id']);
+                if (!$targetUser) {
+                    return [
+                        'success' => false,
+                        'message' => 'Target user not found'
+                    ];
+                }
+
+                // Check device limit for non-admin target user
+                if ($targetUser->user_tipe !== 'ADMIN') {
+                    $deviceCount = UserDevices::find()
+                        ->where(['user_id' => $requestData['user_id'], 'is_active' => 1])
+                        ->andWhere(['!=', 'id', $id])
+                        ->count();
+
+                    if ($deviceCount >= 5) {
+                        return [
+                            'success' => false,
+                            'message' => 'Target user has reached the maximum device limit (5)'
+                        ];
+                    }
+                }
+
+                $device->user_id = $requestData['user_id'];
+            }
+
+            // Update fields
+            if (isset($requestData['device_name'])) {
+                $device->device_name = $requestData['device_name'];
+            }
+
+            if (isset($requestData['device_alias'])) {
+                $device->device_alias = $requestData['device_alias'];
+            }
+
+            if (isset($requestData['device_description'])) {
+                $device->device_description = $requestData['device_description'];
+            }
+
+            if (isset($requestData['device_remark'])) {
+                $device->device_remark = $requestData['device_remark'];
+            }
+
+            if (isset($requestData['is_active']) && $isAdmin) {
+                $device->is_active = $requestData['is_active'];
+            }
+
+            $device->modified_by = $currentUserId;
+
+            if ($device->save()) {
+                return [
+                    'success' => true,
+                    'message' => 'Device updated successfully',
+                    'data' => $this->formatDeviceData($device)
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to update device',
+                    'errors' => $device->errors
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to update device',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionDeleteDevice($id)
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract current user ID from payload
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+
+            if (!$currentUser) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Find the device
+            $device = UserDevices::findOne($id);
+
+            if (!$device) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not found'
+                ];
+            }
+
+            // Check permission (user can only delete their own devices, admin can delete any)
+            $isAdmin = ($currentUser->user_tipe === 'ADMIN');
+            if (!$isAdmin && $device->user_id != $currentUserId) {
+                return [
+                    'success' => false,
+                    'message' => 'You do not have permission to delete this device'
+                ];
+            }
+
+            // Soft delete - just set is_active to 0
+            $device->is_active = 0;
+            $device->modified_by = $currentUserId;
+
+            if ($device->save()) {
+                return [
+                    'success' => true,
+                    'message' => 'Device deleted successfully'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to delete device',
+                    'errors' => $device->errors
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to delete device',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+
+    public function actionGetUsersOld()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract current user ID from payload
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+
+            if (!$currentUser || $currentUser->user_tipe !== 'ADMIN') {
+                return [
+                    'success' => false,
+                    'message' => 'Admin access required'
+                ];
+            }
+
+            // Get all active users
+            $users = Users::find()
+                ->where(['is_deleted' => 0])
+                ->orderBy(['user_nama' => SORT_ASC])
+                ->all();
+
+            $formattedUsers = [];
+            foreach ($users as $user) {
+                $formattedUsers[] = [
+                    'user_id' => $user->user_id,
+                    'username' => $user->user_name,
+                    'name' => $user->user_nama,
+                    'email' => $user->user_email,
+                    'type' => $user->user_tipe,
+                    'phone' => $user->user_hp,
+                    'device_count' => UserDevices::find()
+                        ->where(['user_id' => $user->user_id, 'is_active' => 1])
+                        ->count()
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Users retrieved successfully',
+                'data' => $formattedUsers
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get users',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionGetDevice($id)
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract current user ID from payload
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+
+            if (!$currentUser) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Find the device
+            $device = UserDevices::find()
+                ->where(['id' => $id])
+                ->andWhere(['is_active' => 1])
+                ->one();
+
+            if (!$device) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not found'
+                ];
+            }
+
+            // Check permission
+            $isAdmin = ($currentUser->user_tipe === 'ADMIN');
+            if (!$isAdmin && $device->user_id != $currentUserId) {
+                return [
+                    'success' => false,
+                    'message' => 'You do not have permission to view this device'
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Device retrieved successfully',
+                'data' => $this->formatDeviceData($device)
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get device',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    private function formatDeviceData($device)
+    {
+        return [
+            'id' => $device->id,
+            'user_id' => $device->user_id,
+            'device_id' => $device->device_id,
+            'device_name' => $device->device_name,
+            'device_alias' => $device->device_alias,
+            'device_description' => $device->device_description,
+            'device_remark' => $device->device_remark,
+            'is_active' => (bool)$device->is_active,
+            'created_at' => $device->created_at,
+            'updated_at' => $device->updated_at,
+            'user' => $device->user ? [
+                'user_id' => $device->user->user_id,
+                'name' => $device->user->user_nama,
+                'username' => $device->user->user_name,
+                'email' => $device->user->user_email,
+                'type' => $device->user->user_tipe
+            ] : null
+        ];
+    }
+
+    public function actionUpdateUser()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Find the user
+            $user = Users::findOne($userId);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Set scenario for update
+            $user->scenario = Users::SCENARIO_UPDATE;
+
+            // Get request data
+            $requestData = \Yii::$app->request->post();
+
+            // Update user fields if provided
+            $allowedFields = ['user_name', 'user_nama', 'user_hp', 'user_email', 'user_tipe'];
+
+            foreach ($allowedFields as $field) {
+                if (isset($requestData[$field])) {
+                    $user->$field = $requestData[$field];
+                }
+            }
+
+            // Handle file upload if present
+            if (!empty($_FILES['user_foto'])) {
+                $uploadPath = Yii::getAlias('@webroot/uploads/users/');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0777, true);
+                }
+
+                $file = $_FILES['user_foto'];
+                $fileName = 'user_' . $userId . '_' . time() . '.' . pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filePath = $uploadPath . $fileName;
+
+                if (move_uploaded_file($file['tmp_name'], $filePath)) {
+                    // Delete old photo if exists
+                    if ($user->user_foto && file_exists($uploadPath . $user->user_foto)) {
+                        unlink($uploadPath . $user->user_foto);
+                    }
+
+                    $user->user_foto = $fileName;
+                }
+            }
+
+            // Save the user
+            if ($user->save()) {
+                // Return updated user data
+                return [
+                    'success' => true,
+                    'message' => 'User updated successfully',
+                    'data' => [
+                        'user_id' => $user->user_id,
+                        'user_name' => $user->user_name,
+                        'user_nama' => $user->user_nama,
+                        'user_hp' => $user->user_hp,
+                        'user_email' => $user->user_email,
+                        'user_tipe' => $user->user_tipe,
+                        'user_foto' => $user->user_foto ? Yii::getAlias('@web/uploads/users/') . $user->user_foto : null,
+                    ]
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to update user',
+                    'errors' => $user->errors
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to update user',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionGetUserProfile()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Find the user
+            $user = Users::findOne($userId);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Return user data
+            return [
+                'success' => true,
+                'message' => 'User profile retrieved successfully',
+                'data' => [
+                    'user_id' => $user->user_id,
+                    'user_name' => $user->user_name,
+                    'user_nama' => $user->user_nama,
+                    'user_hp' => $user->user_hp,
+                    'user_email' => $user->user_email,
+                    'user_tipe' => $user->user_tipe,
+                    'user_status' => $user->user_status,
+                    'user_foto' => $user->user_foto ? Yii::getAlias('@web/uploads/users/') . $user->user_foto : null,
+                    'created_at' => $user->created_at,
+                    'telegram_id' => $user->telegram_id,
+                    'telegram_username' => $user->telegram_username,
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get user profile',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionChangePassword()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Get request data
+            $requestData = \Yii::$app->request->post();
+
+            $currentPassword = $requestData['current_password'] ?? null;
+            $newPassword = $requestData['new_password'] ?? null;
+            $confirmPassword = $requestData['confirm_password'] ?? null;
+
+            // Validate input
+            if (!$currentPassword || !$newPassword || !$confirmPassword) {
+                return [
+                    'success' => false,
+                    'message' => 'All password fields are required'
+                ];
+            }
+
+            if ($newPassword !== $confirmPassword) {
+                return [
+                    'success' => false,
+                    'message' => 'New passwords do not match'
+                ];
+            }
+
+            if (strlen($newPassword) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'Password must be at least 8 characters long'
+                ];
+            }
+
+            // Find the user
+            $user = Users::findOne($userId);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Verify current password
+            if (!Yii::$app->security->validatePassword($currentPassword, $user->user_pass)) {
+                return [
+                    'success' => false,
+                    'message' => 'Current password is incorrect'
+                ];
+            }
+
+            // Update password
+            $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
+
+            if ($user->save()) {
+                return [
+                    'success' => true,
+                    'message' => 'Password changed successfully'
+                ];
+            } else {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to change password',
+                    'errors' => $user->errors
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to change password',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionUpdatePhoto()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Find the user
+            $user = Users::findOne($userId);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'User not found'
+                ];
+            }
+
+            // Handle file upload
+            if (empty($_FILES['user_foto'])) {
+                return [
+                    'success' => false,
+                    'message' => 'No photo uploaded'
+                ];
+            }
+
+            $uploadPath = Yii::getAlias('@webroot/uploads/users/');
+            if (!file_exists($uploadPath)) {
+                mkdir($uploadPath, 0777, true);
+            }
+
+            $file = $_FILES['user_foto'];
+
+            // Validate file type
+            $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+            if (!in_array($file['type'], $allowedTypes)) {
+                return [
+                    'success' => false,
+                    'message' => 'Only JPG and PNG files are allowed'
+                ];
+            }
+
+            // Validate file size (max 2MB)
+            if ($file['size'] > 2 * 1024 * 1024) {
+                return [
+                    'success' => false,
+                    'message' => 'File size must be less than 2MB'
+                ];
+            }
+
+            $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $fileName = 'user_' . $userId . '_' . time() . '.' . $extension;
+            $filePath = $uploadPath . $fileName;
+
+            if (move_uploaded_file($file['tmp_name'], $filePath)) {
+                // Delete old photo if exists
+                if ($user->user_foto && file_exists($uploadPath . $user->user_foto)) {
+                    unlink($uploadPath . $user->user_foto);
+                }
+
+                $user->user_foto = $fileName;
+
+                if ($user->save()) {
+                    return [
+                        'success' => true,
+                        'message' => 'Photo updated successfully',
+                        'data' => [
+                            'user_foto' => Yii::getAlias('@web/uploads/users/') . $fileName
+                        ]
+                    ];
+                }
+            }
+
+            return [
+                'success' => false,
+                'message' => 'Failed to upload photo'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to update photo',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionGetUserStats()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Check if user is admin
+            $currentUser = Users::findOne($userId);
+            if (!$currentUser || $currentUser->user_tipe !== 'ADMIN') {
+                return [
+                    'success' => false,
+                    'message' => 'Admin access required'
+                ];
+            }
+
+            // Get statistics
+            $totalUsers = Users::find()->where(['is_deleted' => 0])->count();
+            $activeUsers = Users::find()->where(['user_status' => 1, 'is_deleted' => 0])->count();
+            $inactiveUsers = Users::find()->where(['user_status' => 0, 'is_deleted' => 0])->count();
+            $adminUsers = Users::find()->where(['user_tipe' => 'ADMIN', 'is_deleted' => 0])->count();
+            $regularUsers = Users::find()->where(['user_tipe' => 'USER', 'is_deleted' => 0])->count();
+
+            $newUsersToday = Users::find()
+                ->where(['is_deleted' => 0])
+                ->andWhere(['>=', 'created_at', date('Y-m-d 00:00:00')])
+                ->count();
+
+            return [
+                'success' => true,
+                'message' => 'User statistics retrieved successfully',
+                'data' => [
+                    'total_users' => (int)$totalUsers,
+                    'active_users' => (int)$activeUsers,
+                    'inactive_users' => (int)$inactiveUsers,
+                    'admin_users' => (int)$adminUsers,
+                    'regular_users' => (int)$regularUsers,
+                    'new_users_today' => (int)$newUsersToday,
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get user statistics',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function actionGetUsers()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided'
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+
+            if (!$userId) {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Check if user is admin
+            $currentUser = Users::findOne($userId);
+            if (!$currentUser || $currentUser->user_tipe !== 'ADMIN') {
+                return [
+                    'success' => false,
+                    'message' => 'Admin access required'
+                ];
+            }
+
+            // Get request parameters
+            $requestData = \Yii::$app->request->get();
+            $page = $requestData['page'] ?? 1;
+            $limit = $requestData['limit'] ?? 20;
+            $search = $requestData['search'] ?? null;
+            $userType = $requestData['user_type'] ?? null;
+            $status = $requestData['status'] ?? null;
+
+            $offset = ($page - 1) * $limit;
+
+            // Build query
+            $query = Users::find()->where(['is_deleted' => 0]);
+
+            if ($search) {
+                $query->andWhere([
+                    'or',
+                    ['like', 'user_name', $search],
+                    ['like', 'user_nama', $search],
+                    ['like', 'user_email', $search],
+                    ['like', 'user_hp', $search],
+                ]);
+            }
+
+            if ($userType) {
+                $query->andWhere(['user_tipe' => $userType]);
+            }
+
+            if ($status !== null) {
+                $query->andWhere(['user_status' => $status]);
+            }
+
+            // Get total count
+            $total = $query->count();
+
+            // Get paginated results
+            $users = $query->orderBy(['created_at' => SORT_DESC])
+                ->offset($offset)
+                ->limit($limit)
+                ->all();
+
+            $formattedUsers = [];
+            foreach ($users as $user) {
+                $formattedUsers[] = [
+                    'user_id' => $user->user_id,
+                    'user_name' => $user->user_name,
+                    'user_nama' => $user->user_nama,
+                    'user_hp' => $user->user_hp,
+                    'user_email' => $user->user_email,
+                    'user_tipe' => $user->user_tipe,
+                    'user_status' => $user->user_status,
+                    'created_at' => $user->created_at,
+                    'device_count' => UserDevices::find()
+                        ->where(['user_id' => $user->user_id, 'is_active' => 1])
+                        ->count(),
+                    'user_foto' => $user->user_foto ? Yii::getAlias('@web/uploads/users/') . $user->user_foto : null,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Users retrieved successfully',
+                'data' => [
+                    'users' => $formattedUsers,
+                    'pagination' => [
+                        'page' => (int)$page,
+                        'limit' => (int)$limit,
+                        'total' => (int)$total,
+                        'total_pages' => ceil($total / $limit)
+                    ]
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get users',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    //end 
 }
