@@ -422,6 +422,7 @@ class EaController extends Controller
             $all_percentage_dd = Yii::$app->request->post('all_percentage_dd', 0);
             $all_date = Yii::$app->request->post('all_date');
             $all_equity = Yii::$app->request->post('all_equity', 0);
+            $disabled_ea = Yii::$app->request->post('disabled_ea', 0); // New parameter
 
             // Validate required parameters
             if (empty($license) || empty($account)) {
@@ -484,6 +485,9 @@ class EaController extends Controller
             $tradeDd->wk_date = $wk_date_converted;
             $tradeDd->wk_equity = (float)$wk_equity;
 
+            // Update disabled_ea status (assuming your Drawdown model has this field)
+            $tradeDd->disabled_ea = (int)$disabled_ea; // Store as integer (0 or 1)
+
             // For all-time data: only update if new all_dd is greater than existing
             // OR if it's a new record
             if ($isNewRecord || (float)$all_dd > (float)$tradeDd->all_dd) {
@@ -508,6 +512,7 @@ class EaController extends Controller
                         'all_date' => $tradeDd->all_date,
                         'wk_dd' => $tradeDd->wk_dd,
                         'all_dd' => $tradeDd->all_dd,
+                        'disabled_ea' => $tradeDd->disabled_ea, // Include in response
                         'all_dd_updated' => !$isNewRecord && (float)$all_dd > (float)$tradeDd->getOldAttribute('all_dd')
                     ]
                 ];

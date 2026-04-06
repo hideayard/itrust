@@ -40,11 +40,12 @@ class Drawdown extends \yii\db\ActiveRecord
     {
         return [
             [['user_id', 'license', 'account'], 'required'],
-            [['user_id'], 'integer'],
+            [['user_id', 'disabled_ea'], 'integer'],
             [['wk_dd', 'wk_percentage_dd', 'wk_equity', 'all_dd', 'all_percentage_dd', 'all_equity'], 'number'],
             [['wk_date', 'all_date', 'created_at'], 'safe'],
             [['license'], 'string', 'max' => 255],
             [['account'], 'string', 'max' => 100],
+            [['disabled_ea'], 'default', 'value' => 0],
             [['user_id'], 'exist', 'skipOnError' => true, 'targetClass' => Users::className(), 'targetAttribute' => ['user_id' => 'user_id']],
         ];
     }
@@ -68,6 +69,7 @@ class Drawdown extends \yii\db\ActiveRecord
             'all_date' => 'All Date',
             'all_equity' => 'All Equity',
             'created_at' => 'Created At',
+            'disabled_ea' => 'Disabled EA Status',
         ];
     }
 
