@@ -574,6 +574,7 @@ class EaController extends Controller
                     'all_percentage_dd' => $record->all_percentage_dd,
                     'all_date' => $record->all_date,
                     'all_equity' => $record->all_equity,
+                    'disabled_ea' => $record->disabled_ea,
                     'created_at' => $record->created_at
                 ];
             }
