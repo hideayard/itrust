@@ -2,15 +2,18 @@
 
 namespace app\controllers;
 
-use Yii;
-use DateTime;
-use app\models\Users;
-use app\models\Drawdown;
-use app\models\Withdraw;
-
-use yii\web\Response;
-use yii\web\Controller;
 use app\models\CloseOrder;
+use app\models\Drawdown;
+use app\models\Mt4Account;
+use app\models\Users;
+use app\models\Withdraw;
+use DateTime;
+use Yii;
+use yii\web\BadRequestHttpException;
+use yii\web\Controller;
+use yii\web\NotFoundHttpException;
+use yii\web\Response;
+use yii\web\ServerErrorHttpException;
 
 class EaController extends Controller
 {
@@ -527,6 +530,161 @@ class EaController extends Controller
         }
     }
 
+     public function actionSyncAccount()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            // Get POST parameters
+            $license = Yii::$app->request->post('license');
+            $accountId = Yii::$app->request->post('account_id');
+            
+            // Get account metrics
+            $buyOrderCount = Yii::$app->request->post('buy_order_count', 0);
+            $totalBuyLot = Yii::$app->request->post('total_buy_lot', 0);
+            $sellOrderCount = Yii::$app->request->post('sell_order_count', 0);
+            $totalSellLot = Yii::$app->request->post('total_sell_lot', 0);
+            $totalProfit = Yii::$app->request->post('total_profit', 0);
+            $accountBalance = Yii::$app->request->post('account_balance', 0);
+            $accountEquity = Yii::$app->request->post('account_equity', 0);
+            $floatingValue = Yii::$app->request->post('floating_value', 0);
+            $timestamp = Yii::$app->request->post('timestamp', time());
+            
+            // Validate required parameters
+            if (empty($license)) {
+                throw new BadRequestHttpException('License is required');
+            }
+            
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('Account ID is required');
+            }
+            
+            // Find user by license
+            $user = Users::findOne(['user_license' => $license]);
+            if (!$user) {
+                throw new NotFoundHttpException('User not found for the provided license');
+            }
+            
+            // Calculate profit percentage if balance > 0
+            $totalProfitPercentage = 0;
+            if ($accountBalance > 0 && $totalProfit != 0) {
+                $totalProfitPercentage = ($totalProfit / ($accountBalance - $totalProfit)) * 100;
+                if ($totalProfitPercentage > 999999) $totalProfitPercentage = 999999;
+                if ($totalProfitPercentage < -999999) $totalProfitPercentage = -999999;
+            }
+            
+            // Find existing account or create new one
+            // Search by user_id, account_id (assuming account_id is unique per user)
+            $mt4Account = Mt4Account::find()
+                ->where([
+                    'user_id' => $user->id,
+                    'account_id' => (string)$accountId
+                ])
+                ->one();
+            
+            $isNewRecord = false;
+            if (!$mt4Account) {
+                // Create new account record
+                $mt4Account = new Mt4Account();
+                $mt4Account->user_id = $user->id;
+                $mt4Account->account_id = (string)$accountId;
+                $mt4Account->status = Mt4Account::STATUS_ACTIVE;
+                $mt4Account->currency = 'USD'; // Default currency
+                $mt4Account->leverage = 100; // Default leverage
+                $mt4Account->account_type = Mt4Account::ACCOUNT_TYPE_STANDARD;
+                $isNewRecord = true;
+                
+                Yii::info("Creating new MT4 account record for user {$user->id}, account {$accountId}");
+            }
+            
+            // Store previous values for comparison
+            $previousBalance = $mt4Account->account_balance;
+            $previousEquity = $mt4Account->account_equity;
+            
+            // Update account metrics
+            $mt4Account->buy_order_count = (int)$buyOrderCount;
+            $mt4Account->total_buy_lot = (float)$totalBuyLot;
+            $mt4Account->sell_order_count = (int)$sellOrderCount;
+            $mt4Account->total_sell_lot = (float)$totalSellLot;
+            $mt4Account->total_profit = (float)$totalProfit;
+            $mt4Account->total_profit_percentage = (float)$totalProfitPercentage;
+            $mt4Account->account_balance = (float)$accountBalance;
+            $mt4Account->account_equity = (float)$accountEquity;
+            $mt4Account->floating_value = (float)$floatingValue;
+            
+            // Update timestamps
+            $mt4Account->last_sync = date('Y-m-d H:i:s', $timestamp);
+            
+            // If it's a new record, set last_connected
+            if ($isNewRecord) {
+                $mt4Account->last_connected = date('Y-m-d H:i:s', $timestamp);
+            }
+            
+            // Update status if equity > 0 (account is active)
+            if ($accountEquity > 0) {
+                $mt4Account->status = Mt4Account::STATUS_ACTIVE;
+            } elseif ($accountEquity <= 0 && $mt4Account->status == Mt4Account::STATUS_ACTIVE) {
+                // Check if account might be disconnected
+                $mt4Account->status = Mt4Account::STATUS_DISCONNECTED;
+            }
+            
+            // Save the record
+            if ($mt4Account->save()) {
+                // Prepare response data
+                $responseData = [
+                    'id' => $mt4Account->id,
+                    'account_id' => $mt4Account->account_id,
+                    'user_id' => $mt4Account->user_id,
+                    'status' => $mt4Account->status,
+                    'is_new_record' => $isNewRecord,
+                    'metrics' => [
+                        'buy_order_count' => $mt4Account->buy_order_count,
+                        'total_buy_lot' => $mt4Account->total_buy_lot,
+                        'sell_order_count' => $mt4Account->sell_order_count,
+                        'total_sell_lot' => $mt4Account->total_sell_lot,
+                        'total_orders' => $mt4Account->getTotalOrders(),
+                        'total_lots' => $mt4Account->getTotalLots(),
+                        'total_profit' => $mt4Account->total_profit,
+                        'total_profit_percentage' => $mt4Account->total_profit_percentage,
+                        'account_balance' => $mt4Account->account_balance,
+                        'account_equity' => $mt4Account->account_equity,
+                        'floating_value' => $mt4Account->floating_value,
+                    ],
+                    'changes' => [
+                        'balance_changed' => ($previousBalance != $accountBalance),
+                        'balance_previous' => $previousBalance,
+                        'balance_new' => $accountBalance,
+                        'equity_changed' => ($previousEquity != $accountEquity),
+                        'equity_previous' => $previousEquity,
+                        'equity_new' => $accountEquity,
+                    ],
+                    'last_sync' => $mt4Account->last_sync,
+                ];
+                
+                // Log successful sync
+                Yii::info("MT4 account synced successfully: user_id={$user->id}, account_id={$accountId}, is_new={$isNewRecord}");
+                
+                return [
+                    'status' => 'success',
+                    'message' => $isNewRecord ? 'MT4 account created and synced successfully' : 'MT4 account status updated successfully',
+                    'data' => $responseData
+                ];
+            } else {
+                $errors = $mt4Account->getErrors();
+                Yii::error('Failed to save MT4 account data: ' . json_encode($errors));
+                throw new ServerErrorHttpException('Failed to save MT4 account data: ' . json_encode($errors));
+            }
+            
+        } catch (\Exception $e) {
+            Yii::error('Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'code' => $e->getCode()
+            ];
+        }
+    }
+    
     /**
      * Get trade DD data by license
      * @return array

@@ -2,28 +2,30 @@
 
 namespace app\controllers;
 
-use Yii;
-use yii\web\Controller;
-use yii\web\Response;
-use yii\filters\Cors;
-use app\models\forms\LoginForm;
-use app\helpers\TelegramHelper;
 use app\helpers\JwtHelper;
-use app\models\MyfxbookScrapedDataNew;
+use app\helpers\TelegramHelper;
+use app\models\DualSourceScrapedData;
+use app\models\forms\LoginForm;
 use app\models\InvestingScrapedData;
-use app\models\MyfxbookScrapedData;
-use app\models\MyfxbookEconomicEvent;
-use app\models\MyfxbookTechnicalPattern;
-use app\models\MyfxbookInterestRate;
-use app\models\MyfxbookStatistics;
+use app\models\Mt4Account;
 use app\models\MyfxbookApiLog;
+use app\models\MyfxbookEconomicEvent;
+use app\models\MyfxbookInterestRate;
+use app\models\MyfxbookScrapedData;
+use app\models\MyfxbookScrapedDataNew;
+use app\models\MyfxbookStatistics;
+use app\models\MyfxbookTechnicalPattern;
+use app\models\ScrapedDataLog;
 use app\models\TelemetryData;
 use app\models\UserDevices;
 use app\models\Users;
-use app\models\ScrapedDataLog;
-use app\models\DualSourceScrapedData;
-use yii\web\BadRequestHttpException;
+use Yii;
+use yii\filters\Cors;
 use yii\validators\EmailValidator; // Add this import
+use yii\web\BadRequestHttpException;
+use yii\web\Controller;
+use yii\web\NotFoundHttpException;
+use yii\web\Response;
 use yii\web\UploadedFile;
 
 class MobileController extends Controller
@@ -5483,11 +5485,11 @@ class MobileController extends Controller
             }
 
             // Get statistics
-            $totalUsers = Users::find()->where(['is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
-            $activeUsers = Users::find()->where(['user_status' => 1, 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
-            $inactiveUsers = Users::find()->where(['user_status' => 0, 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
-            $adminUsers = Users::find()->where(['user_tipe' => 'ADMIN', 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
-            $regularUsers = Users::find()->where(['user_tipe' => 'USER', 'is_deleted' => 0,'user_account' => null,'user_license' => null])->count();
+            $totalUsers = Users::find()->where(['is_deleted' => 0, 'user_account' => null, 'user_license' => null])->count();
+            $activeUsers = Users::find()->where(['user_status' => 1, 'is_deleted' => 0, 'user_account' => null, 'user_license' => null])->count();
+            $inactiveUsers = Users::find()->where(['user_status' => 0, 'is_deleted' => 0, 'user_account' => null, 'user_license' => null])->count();
+            $adminUsers = Users::find()->where(['user_tipe' => 'ADMIN', 'is_deleted' => 0, 'user_account' => null, 'user_license' => null])->count();
+            $regularUsers = Users::find()->where(['user_tipe' => 'USER', 'is_deleted' => 0, 'user_account' => null, 'user_license' => null])->count();
 
             $newUsersToday = Users::find()
                 ->where(['is_deleted' => 0])
@@ -5566,7 +5568,7 @@ class MobileController extends Controller
             $offset = ($page - 1) * $limit;
 
             // Build query
-            $query = Users::find()->where(['is_deleted' => 0,'user_account' => null,'user_license' => null]);
+            $query = Users::find()->where(['is_deleted' => 0, 'user_account' => null, 'user_license' => null]);
 
             if ($search) {
                 $query->andWhere([
@@ -5635,5 +5637,69 @@ class MobileController extends Controller
         }
     }
 
+
+    public function actionGetAccountStatus($account_id, $license = null)
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            if (empty($account_id)) {
+                throw new BadRequestHttpException('Account ID is required');
+            }
+
+            $query = Mt4Account::find()->where(['account_id' => (string)$account_id]);
+
+            // If license is provided, verify user
+            if ($license) {
+                $user = Users::findOne(['user_license' => $license]);
+                if (!$user) {
+                    throw new NotFoundHttpException('User not found for the provided license');
+                }
+                $query->andWhere(['user_id' => $user->id]);
+            }
+
+            $mt4Account = $query->one();
+
+            if (!$mt4Account) {
+                throw new NotFoundHttpException('MT4 account not found');
+            }
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'id' => $mt4Account->id,
+                    'account_id' => $mt4Account->account_id,
+                    'user_id' => $mt4Account->user_id,
+                    'bot_name' => $mt4Account->bot_name,
+                    'buy_order_count' => $mt4Account->buy_order_count,
+                    'total_buy_lot' => $mt4Account->total_buy_lot,
+                    'sell_order_count' => $mt4Account->sell_order_count,
+                    'total_sell_lot' => $mt4Account->total_sell_lot,
+                    'total_profit' => $mt4Account->total_profit,
+                    'total_profit_percentage' => $mt4Account->total_profit_percentage,
+                    'account_balance' => $mt4Account->account_balance,
+                    'account_equity' => $mt4Account->account_equity,
+                    'floating_value' => $mt4Account->floating_value,
+                    'leverage' => $mt4Account->leverage,
+                    'currency' => $mt4Account->currency,
+                    'server' => $mt4Account->server,
+                    'broker' => $mt4Account->broker,
+                    'account_type' => $mt4Account->account_type,
+                    'status' => $mt4Account->status,
+                    'last_connected' => $mt4Account->last_connected,
+                    'last_sync' => $mt4Account->last_sync,
+                    'total_orders' => $mt4Account->getTotalOrders(),
+                    'total_lots' => $mt4Account->getTotalLots(),
+                    'is_profitable' => $mt4Account->isProfitable(),
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccountStatus: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
     //end 
 }
