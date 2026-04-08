@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\helpers\TelegramHelper;
 use app\models\CloseOrder;
 use app\models\Drawdown;
 use app\models\Mt4Account;
@@ -687,6 +688,15 @@ class EaController extends Controller
             }
         } catch (\Exception $e) {
             Yii::error('Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            TelegramHelper::sendSimpleError('Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString()
+            );
+            // TelegramHelper::sendSimpleMessage(
+            //         [
+            //             'text' => $summary,
+            //             'parse_mode' => 'html'
+            //         ],
+            //         Yii::$app->params['group_id']
+            //     );
             return [
                 'status' => 'error',
                 'message' => $e->getMessage(),
