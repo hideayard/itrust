@@ -705,6 +705,17 @@ class EaController extends Controller
         }
     }
 
+    public function actionTestError()
+    {
+        TelegramHelper::sendSimpleError("Test send error");
+    }
+
+    public function actionTestMessage()
+    {
+        TelegramHelper::sendSimpleMessage("Test send simple message");
+    }
+    
+
     /**
      * Get trade DD data by license
      * @return array
