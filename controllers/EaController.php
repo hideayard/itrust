@@ -545,10 +545,6 @@ class EaController extends Controller
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
-        // Enable error reporting for debugging
-        error_reporting(E_ALL);
-        ini_set('display_errors', 1);
-        
         try {
             // Get POST parameters
             $license = Yii::$app->request->post('license');
