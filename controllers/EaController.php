@@ -1162,7 +1162,7 @@ class EaController extends Controller
         foreach ($orders as $orderData) {
             try {
                 // Validate required fields for each order
-                $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price'];
+                $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'open_time'];
                 $missing = [];
 
                 foreach ($required as $field) {
@@ -1186,32 +1186,89 @@ class EaController extends Controller
                     ->one();
 
                 $isNew = false;
+                $previousStatus = null;
                 $status = null;
 
                 if ($order) {
-                    // Update existing order
+                    // Order exists
                     $isNew = false;
-
-                    // Determine status based on data
-                    if (isset($orderData['close_time']) && $orderData['close_time'] > 0) {
-                        $status = AccountOrders::STATUS_CLOSED;
-                        $stats['closed']++;
-                    } elseif ($this->hasOrderChanged($order, $orderData)) {
-                        $status = AccountOrders::STATUS_MODIFIED;
-                        $stats['modified']++;
-                    } else {
-                        $status = AccountOrders::STATUS_OPEN;
-                        $stats['updated']++;
-                    }
+                    $previousStatus = $order->status;
+                    Yii::info("Updating existing order in batch: Ticket {$orderData['ticket']}, Current Status: {$previousStatus}");
                 } else {
-                    // Create new order
+                    // Order doesn't exist - create new
                     $order = new AccountOrders();
                     $isNew = true;
-                    $status = AccountOrders::STATUS_OPEN;
-                    $stats['new']++;
+                    Yii::info("Creating new order in batch: Ticket {$orderData['ticket']}");
                 }
 
-                // Populate/Update the order
+                // CRITICAL FIX: Set status based on event_type (same as single order sync)
+                if (isset($orderData['event_type'])) {
+                    // Handle based on event_type from MT4
+                    $eventType = $orderData['event_type'];
+                    Yii::info("Event type detected in batch: {$eventType} for ticket {$orderData['ticket']}");
+
+                    switch ($eventType) {
+                        case 'ORDER_OPEN':
+                            $status = AccountOrders::STATUS_OPEN;
+                            Yii::info("Setting status to OPEN for ticket {$orderData['ticket']}");
+                            break;
+                        case 'ORDER_MODIFY':
+                            $status = AccountOrders::STATUS_MODIFIED;
+                            Yii::info("Setting status to MODIFIED for ticket {$orderData['ticket']}");
+                            break;
+                        case 'ORDER_CLOSE':
+                            $status = AccountOrders::STATUS_CLOSED;
+                            Yii::info("Setting status to CLOSED for ticket {$orderData['ticket']}");
+                            break;
+                        default:
+                            // Unknown event type, try to auto-detect
+                            Yii::warning("Unknown event type: {$eventType} for ticket {$orderData['ticket']}, auto-detecting");
+                            if (isset($orderData['close_time']) && $orderData['close_time'] > 0) {
+                                $status = AccountOrders::STATUS_CLOSED;
+                            } else {
+                                $status = AccountOrders::STATUS_OPEN;
+                            }
+                    }
+                } else {
+                    // No event_type provided, auto-detect based on data (same logic as single order sync)
+                    Yii::info("No event_type provided for ticket {$orderData['ticket']} in batch, auto-detecting");
+
+                    if (isset($orderData['close_time']) && $orderData['close_time'] > 0) {
+                        $status = AccountOrders::STATUS_CLOSED;
+                        Yii::info("Auto-detected CLOSED status for ticket {$orderData['ticket']}");
+                    } elseif (!$isNew && $this->hasOrderChanged($order, $orderData)) {
+                        $status = AccountOrders::STATUS_MODIFIED;
+                        Yii::info("Auto-detected MODIFIED status for ticket {$orderData['ticket']}");
+                    } else {
+                        $status = AccountOrders::STATUS_OPEN;
+                        Yii::info("Auto-detected OPEN status for ticket {$orderData['ticket']}");
+                    }
+                }
+
+                // Ensure status is never empty (fallback)
+                if (empty($status)) {
+                    $status = AccountOrders::STATUS_OPEN;
+                    Yii::warning("Status was empty, set to OPEN for ticket {$orderData['ticket']}");
+                }
+
+                // Update statistics based on status
+                if ($isNew) {
+                    $stats['new']++;
+                } else {
+                    switch ($status) {
+                        case AccountOrders::STATUS_MODIFIED:
+                            $stats['modified']++;
+                            break;
+                        case AccountOrders::STATUS_CLOSED:
+                            $stats['closed']++;
+                            break;
+                        default:
+                            $stats['updated']++;
+                            break;
+                    }
+                }
+
+                // Populate/Update the order (always update these fields)
                 $order->account_id = (string)$orderData['account_id'];
                 $order->ticket = (int)$orderData['ticket'];
                 $order->symbol = $orderData['symbol'];
@@ -1219,15 +1276,16 @@ class EaController extends Controller
                 $order->type_desc = isset($orderData['type_desc']) ? $orderData['type_desc'] : AccountOrders::getOrderTypeDescription($orderData['type']);
                 $order->lots = (float)$orderData['lots'];
                 $order->open_price = (float)$orderData['open_price'];
-                $order->close_price = (float)$orderData['close_price'];
+                $order->open_time = (int)$orderData['open_time'];
+                $order->magic = isset($orderData['magic']) ? (int)$orderData['magic'] : 0;
+                $order->comment = isset($orderData['comment']) ? $orderData['comment'] : null;
+
+                // Set close-related fields (may be 0 or null for open orders)
+                $order->close_price = isset($orderData['close_price']) ? (float)$orderData['close_price'] : 0;
                 $order->profit = isset($orderData['profit']) ? (float)$orderData['profit'] : 0;
                 $order->swap = isset($orderData['swap']) ? (float)$orderData['swap'] : 0;
                 $order->commission = isset($orderData['commission']) ? (float)$orderData['commission'] : 0;
-                $order->open_time = (int)$orderData['open_time'];
-                $order->close_time = (int)$orderData['close_time'];
-                $order->magic = isset($orderData['magic']) ? (int)$orderData['magic'] : 0;
-                $order->comment = isset($orderData['comment']) ? $orderData['comment'] : null;
-                $order->status = $status;
+                $order->close_time = isset($orderData['close_time']) ? (int)$orderData['close_time'] : 0;
 
                 // Handle SL and TP if provided
                 if (isset($orderData['stop_loss'])) {
@@ -1242,22 +1300,38 @@ class EaController extends Controller
                     $order->modification_details = $orderData['changes'];
                 }
 
+                $order->status = $status;
                 $order->synced_at = date('Y-m-d H:i:s');
 
-                if (!$order->save()) {
-                    $stats['failed']++;
+                // Log final status before save
+                Yii::info("Final status for ticket {$orderData['ticket']} in batch: {$order->status}");
+
+                if ($order->save()) {
+                    // Log status change
+                    if ($previousStatus && $previousStatus != $order->status) {
+                        Yii::info("Status changed in batch: Ticket {$orderData['ticket']} from {$previousStatus} to {$order->status}");
+                    }
+
+                    Yii::info("Order processed in batch: Ticket {$orderData['ticket']}, Action: " . ($isNew ? "NEW" : "UPDATE") . ", Status: {$status}");
+                } else {
+                    // Revert statistics on save failure
                     if ($isNew) {
                         $stats['new']--;
-                    } elseif ($status == AccountOrders::STATUS_MODIFIED) {
-                        $stats['modified']--;
-                    } elseif ($status == AccountOrders::STATUS_CLOSED) {
-                        $stats['closed']--;
                     } else {
-                        $stats['updated']--;
+                        switch ($status) {
+                            case AccountOrders::STATUS_MODIFIED:
+                                $stats['modified']--;
+                                break;
+                            case AccountOrders::STATUS_CLOSED:
+                                $stats['closed']--;
+                                break;
+                            default:
+                                $stats['updated']--;
+                                break;
+                        }
                     }
+                    $stats['failed']++;
                     $stats['errors'][] = "Failed to save order {$orderData['ticket']}: " . json_encode($order->getErrors());
-                } else {
-                    Yii::info("Order processed: Ticket {$orderData['ticket']}, Action: " . ($isNew ? "NEW" : "UPDATE") . ", Status: {$status}");
                 }
             } catch (\Exception $e) {
                 $stats['failed']++;
@@ -1267,6 +1341,10 @@ class EaController extends Controller
 
         // Log summary
         Yii::info("Batch sync completed - Total: {$stats['total']}, New: {$stats['new']}, Updated: {$stats['updated']}, Modified: {$stats['modified']}, Closed: {$stats['closed']}, Failed: {$stats['failed']}");
+
+        if (!empty($stats['errors'])) {
+            Yii::warning("Batch sync errors: " . json_encode($stats['errors']));
+        }
 
         return [
             'status' => 'success',
