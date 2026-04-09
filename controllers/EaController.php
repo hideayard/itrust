@@ -1006,19 +1006,27 @@ class EaController extends Controller
         }
 
         // Check if order already exists
-        $existing = AccountOrders::find()
-            ->where(['account_id' => (string)$data['account_id'], 'ticket' => (int)$data['ticket']])
+        $order = AccountOrders::find()
+            ->where([
+                'account_id' => (string)$data['account_id'],
+                'ticket' => (int)$data['ticket']
+            ])
             ->one();
 
-        if ($existing) {
-            $order = $existing;
+        $isNew = false;
+
+        if ($order) {
+            // Order exists - update it
             $isNew = false;
+            Yii::info("Updating existing order: Ticket {$data['ticket']}, Account {$data['account_id']}");
         } else {
+            // Order doesn't exist - create new
             $order = new AccountOrders();
             $isNew = true;
+            Yii::info("Creating new order: Ticket {$data['ticket']}, Account {$data['account_id']}");
         }
 
-        // Populate the order
+        // Populate/Update the order
         $order->account_id = (string)$data['account_id'];
         $order->ticket = (int)$data['ticket'];
         $order->symbol = $data['symbol'];
@@ -1034,7 +1042,14 @@ class EaController extends Controller
         $order->close_time = (int)$data['close_time'];
         $order->magic = isset($data['magic']) ? (int)$data['magic'] : 0;
         $order->comment = isset($data['comment']) ? $data['comment'] : null;
-        $order->status = AccountOrders::STATUS_CLOSED;
+
+        // Set status: if close_time is present and > 0, it's closed
+        if (isset($data['close_time']) && $data['close_time'] > 0) {
+            $order->status = AccountOrders::STATUS_CLOSED;
+        } else {
+            $order->status = AccountOrders::STATUS_OPEN; // You need to add this constant
+        }
+
         $order->synced_at = date('Y-m-d H:i:s');
 
         if ($order->save()) {
@@ -1045,13 +1060,15 @@ class EaController extends Controller
                     'id' => $order->id,
                     'ticket' => $order->ticket,
                     'account_id' => $order->account_id,
-                    'is_new' => $isNew
+                    'is_new' => $isNew,
+                    'was_updated' => !$isNew
                 ]
             ];
         } else {
             throw new \yii\web\ServerErrorHttpException('Failed to save order: ' . json_encode($order->getErrors()));
         }
     }
+
 
     private function handleBatchSync($orders)
     {
@@ -1066,6 +1083,7 @@ class EaController extends Controller
             'new' => 0,
             'updated' => 0,
             'failed' => 0,
+            'skipped' => 0,
             'errors' => []
         ];
 
@@ -1088,21 +1106,27 @@ class EaController extends Controller
                 }
 
                 // Check if order exists
-                $existing = AccountOrders::find()
-                    ->where(['account_id' => (string)$orderData['account_id'], 'ticket' => (int)$orderData['ticket']])
+                $order = AccountOrders::find()
+                    ->where([
+                        'account_id' => (string)$orderData['account_id'],
+                        'ticket' => (int)$orderData['ticket']
+                    ])
                     ->one();
 
-                if ($existing) {
-                    $order = $existing;
+                $isNew = false;
+
+                if ($order) {
+                    // Update existing order
                     $isNew = false;
                     $stats['updated']++;
                 } else {
+                    // Create new order
                     $order = new AccountOrders();
                     $isNew = true;
                     $stats['new']++;
                 }
 
-                // Populate the order
+                // Populate/Update the order
                 $order->account_id = (string)$orderData['account_id'];
                 $order->ticket = (int)$orderData['ticket'];
                 $order->symbol = $orderData['symbol'];
@@ -1118,20 +1142,35 @@ class EaController extends Controller
                 $order->close_time = (int)$orderData['close_time'];
                 $order->magic = isset($orderData['magic']) ? (int)$orderData['magic'] : 0;
                 $order->comment = isset($orderData['comment']) ? $orderData['comment'] : null;
-                $order->status = AccountOrders::STATUS_CLOSED;
+
+                // Set status based on close_time
+                if (isset($orderData['close_time']) && $orderData['close_time'] > 0) {
+                    $order->status = AccountOrders::STATUS_CLOSED;
+                } else {
+                    $order->status = AccountOrders::STATUS_OPEN;
+                }
+
                 $order->synced_at = date('Y-m-d H:i:s');
 
                 if (!$order->save()) {
                     $stats['failed']++;
-                    $stats['updated']--; // Revert the increment if it was an update
-                    $stats['new']--; // Revert the increment if it was new
+                    if ($isNew) {
+                        $stats['new']--;
+                    } else {
+                        $stats['updated']--;
+                    }
                     $stats['errors'][] = "Failed to save order {$orderData['ticket']}: " . json_encode($order->getErrors());
+                } else {
+                    Yii::info("Order processed: Ticket {$orderData['ticket']}, Action: " . ($isNew ? "NEW" : "UPDATE"));
                 }
             } catch (\Exception $e) {
                 $stats['failed']++;
                 $stats['errors'][] = "Error processing order {$orderData['ticket']}: " . $e->getMessage();
             }
         }
+
+        // Log summary
+        Yii::info("Batch sync completed - Total: {$stats['total']}, New: {$stats['new']}, Updated: {$stats['updated']}, Failed: {$stats['failed']}");
 
         return [
             'status' => 'success',

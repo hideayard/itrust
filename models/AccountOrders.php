@@ -40,10 +40,12 @@ class AccountOrders extends ActiveRecord
     const TYPE_SELL_LIMIT = 3;
     const TYPE_BUY_STOP = 4;
     const TYPE_SELL_STOP = 5;
-    
+
     /**
      * Status constants
      */
+    const STATUS_OPEN = 'open';      
+    const STATUS_MODIFIED = 'modified';      
     const STATUS_CLOSED = 'closed';
     const STATUS_DELETED = 'deleted';
 
@@ -117,7 +119,7 @@ class AccountOrders extends ActiveRecord
             self::TYPE_BUY_STOP => 'Buy Stop',
             self::TYPE_SELL_STOP => 'Sell Stop',
         ];
-        
+
         return $types[$type] ?? 'Unknown';
     }
 
@@ -136,10 +138,10 @@ class AccountOrders extends ActiveRecord
             self::TYPE_BUY_STOP => 'primary',
             self::TYPE_SELL_STOP => 'secondary',
         ];
-        
+
         $class = $badges[$this->type] ?? 'secondary';
         $typeName = $this->type_desc ?? self::getOrderTypeDescription($this->type);
-        
+
         return "<span class='badge badge-{$class}'>{$typeName}</span>";
     }
 
@@ -152,7 +154,7 @@ class AccountOrders extends ActiveRecord
     {
         $class = $this->profit >= 0 ? 'text-success' : 'text-danger';
         $sign = $this->profit >= 0 ? '+' : '';
-        
+
         return "<span class='{$class} font-weight-bold'>{$sign}" . number_format($this->profit, 2) . "</span>";
     }
 
@@ -219,16 +221,16 @@ class AccountOrders extends ActiveRecord
         $total = self::find()
             ->where(['account_id' => $accountId, 'status' => self::STATUS_CLOSED])
             ->count();
-        
+
         if ($total == 0) {
             return ['total' => 0, 'wins' => 0, 'win_rate' => 0];
         }
-        
+
         $wins = self::find()
             ->where(['account_id' => $accountId, 'status' => self::STATUS_CLOSED])
             ->andWhere(['>', 'profit', 0])
             ->count();
-        
+
         return [
             'total' => $total,
             'wins' => $wins,
