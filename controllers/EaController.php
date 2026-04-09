@@ -3,7 +3,7 @@
 namespace app\controllers;
 
 use app\helpers\TelegramHelper;
-use app\models\ClosedOrders;
+use app\models\AccountOrders;
 use app\models\CloseOrder;
 use app\models\Drawdown;
 use app\models\Mt4Account;
@@ -1006,7 +1006,7 @@ class EaController extends Controller
         }
 
         // Check if order already exists
-        $existing = ClosedOrders::find()
+        $existing = AccountOrders::find()
             ->where(['account_id' => (string)$data['account_id'], 'ticket' => (int)$data['ticket']])
             ->one();
 
@@ -1014,7 +1014,7 @@ class EaController extends Controller
             $order = $existing;
             $isNew = false;
         } else {
-            $order = new ClosedOrders();
+            $order = new AccountOrders();
             $isNew = true;
         }
 
@@ -1023,7 +1023,7 @@ class EaController extends Controller
         $order->ticket = (int)$data['ticket'];
         $order->symbol = $data['symbol'];
         $order->type = (int)$data['type'];
-        $order->type_desc = isset($data['type_desc']) ? $data['type_desc'] : ClosedOrders::getOrderTypeDescription($data['type']);
+        $order->type_desc = isset($data['type_desc']) ? $data['type_desc'] : AccountOrders::getOrderTypeDescription($data['type']);
         $order->lots = (float)$data['lots'];
         $order->open_price = (float)$data['open_price'];
         $order->close_price = (float)$data['close_price'];
@@ -1034,7 +1034,7 @@ class EaController extends Controller
         $order->close_time = (int)$data['close_time'];
         $order->magic = isset($data['magic']) ? (int)$data['magic'] : 0;
         $order->comment = isset($data['comment']) ? $data['comment'] : null;
-        $order->status = ClosedOrders::STATUS_CLOSED;
+        $order->status = AccountOrders::STATUS_CLOSED;
         $order->synced_at = date('Y-m-d H:i:s');
 
         if ($order->save()) {
@@ -1088,7 +1088,7 @@ class EaController extends Controller
                 }
 
                 // Check if order exists
-                $existing = ClosedOrders::find()
+                $existing = AccountOrders::find()
                     ->where(['account_id' => (string)$orderData['account_id'], 'ticket' => (int)$orderData['ticket']])
                     ->one();
 
@@ -1097,7 +1097,7 @@ class EaController extends Controller
                     $isNew = false;
                     $stats['updated']++;
                 } else {
-                    $order = new ClosedOrders();
+                    $order = new AccountOrders();
                     $isNew = true;
                     $stats['new']++;
                 }
@@ -1107,7 +1107,7 @@ class EaController extends Controller
                 $order->ticket = (int)$orderData['ticket'];
                 $order->symbol = $orderData['symbol'];
                 $order->type = (int)$orderData['type'];
-                $order->type_desc = isset($orderData['type_desc']) ? $orderData['type_desc'] : ClosedOrders::getOrderTypeDescription($orderData['type']);
+                $order->type_desc = isset($orderData['type_desc']) ? $orderData['type_desc'] : AccountOrders::getOrderTypeDescription($orderData['type']);
                 $order->lots = (float)$orderData['lots'];
                 $order->open_price = (float)$orderData['open_price'];
                 $order->close_price = (float)$orderData['close_price'];
@@ -1118,7 +1118,7 @@ class EaController extends Controller
                 $order->close_time = (int)$orderData['close_time'];
                 $order->magic = isset($orderData['magic']) ? (int)$orderData['magic'] : 0;
                 $order->comment = isset($orderData['comment']) ? $orderData['comment'] : null;
-                $order->status = ClosedOrders::STATUS_CLOSED;
+                $order->status = AccountOrders::STATUS_CLOSED;
                 $order->synced_at = date('Y-m-d H:i:s');
 
                 if (!$order->save()) {
@@ -1139,7 +1139,7 @@ class EaController extends Controller
             'stats' => $stats
         ];
     }
-    
+
     /**
      * Update order model with data
      */
@@ -1149,7 +1149,7 @@ class EaController extends Controller
         $model->ticket = (int)$data['ticket'];
         $model->symbol = $data['symbol'];
         $model->type = (int)$data['type'];
-        $model->type_desc = $data['type_desc'] ?? ClosedOrders::getOrderTypeDescription($data['type']);
+        $model->type_desc = $data['type_desc'] ?? AccountOrders::getOrderTypeDescription($data['type']);
         $model->lots = (float)$data['lots'];
         $model->open_price = (float)$data['open_price'];
         $model->close_price = (float)$data['close_price'];
@@ -1160,7 +1160,7 @@ class EaController extends Controller
         $model->close_time = (int)$data['close_time'];
         $model->magic = (int)($data['magic'] ?? 0);
         $model->comment = $data['comment'] ?? null;
-        $model->status = ClosedOrders::STATUS_CLOSED;
+        $model->status = AccountOrders::STATUS_CLOSED;
         $model->synced_at = date('Y-m-d H:i:s');
 
         return $model;
@@ -1184,7 +1184,7 @@ class EaController extends Controller
                 throw new \yii\web\BadRequestHttpException('Account ID is required');
             }
 
-            $query = ClosedOrders::find()
+            $query = AccountOrders::find()
                 ->where(['account_id' => $accountId])
                 ->orderBy(['close_time' => SORT_DESC]);
 
@@ -1200,8 +1200,8 @@ class EaController extends Controller
             $orders = $query->limit($limit)->offset($offset)->all();
 
             // Get statistics
-            $totalProfit = ClosedOrders::getTotalProfitByAccount($accountId);
-            $winRate = ClosedOrders::getWinRate($accountId);
+            $totalProfit = AccountOrders::getTotalProfitByAccount($accountId);
+            $winRate = AccountOrders::getWinRate($accountId);
 
             return [
                 'status' => 'success',
@@ -1244,17 +1244,17 @@ class EaController extends Controller
             }
 
             // Get statistics by symbol
-            $symbolStats = ClosedOrders::find()
+            $symbolStats = AccountOrders::find()
                 ->select(['symbol', 'SUM(profit) as total_profit', 'COUNT(*) as total_orders', 'SUM(lots) as total_lots'])
-                ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
                 ->groupBy('symbol')
                 ->asArray()
                 ->all();
 
             // Get monthly profit
-            $monthlyProfit = ClosedOrders::find()
+            $monthlyProfit = AccountOrders::find()
                 ->select(['FROM_UNIXTIME(close_time, "%Y-%m") as month', 'SUM(profit) as total_profit', 'COUNT(*) as order_count'])
-                ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
                 ->groupBy('month')
                 ->orderBy('month DESC')
                 ->limit(12)
@@ -1263,16 +1263,16 @@ class EaController extends Controller
 
             // Get profit distribution
             $profitDistribution = [
-                'profitable' => ClosedOrders::find()
-                    ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                'profitable' => AccountOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
                     ->andWhere(['>', 'profit', 0])
                     ->count(),
-                'loss' => ClosedOrders::find()
-                    ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                'loss' => AccountOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
                     ->andWhere(['<', 'profit', 0])
                     ->count(),
-                'breakeven' => ClosedOrders::find()
-                    ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                'breakeven' => AccountOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
                     ->andWhere(['profit' => 0])
                     ->count(),
             ];

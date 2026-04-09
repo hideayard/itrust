@@ -6,7 +6,7 @@ use Yii;
 use yii\db\ActiveRecord;
 
 /**
- * This is the model class for table "closed_orders".
+ * This is the model class for table "account_orders".
  *
  * @property int $id
  * @property string $account_id
@@ -29,7 +29,7 @@ use yii\db\ActiveRecord;
  * @property string $created_at
  * @property string $updated_at
  */
-class ClosedOrders extends ActiveRecord
+class AccountOrders extends ActiveRecord
 {
     /**
      * Order type constants
@@ -52,7 +52,7 @@ class ClosedOrders extends ActiveRecord
      */
     public static function tableName()
     {
-        return 'closed_orders';
+        return 'account_orders';
     }
 
     /**
