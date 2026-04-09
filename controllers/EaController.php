@@ -955,13 +955,23 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            // Get the raw input
+            // Try to get JSON data first
             $rawInput = Yii::$app->request->getRawBody();
             $data = json_decode($rawInput, true);
 
-            // If no JSON data, try POST parameters
+            // If not JSON, try POST parameters
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $data = Yii::$app->request->post();
+
+                // Check if it's a batch (has 'orders' key)
+                if (isset($data['orders']) && is_array($data['orders'])) {
+                    $data = $data['orders'];
+                }
+            }
+
+            // Check if it's empty
+            if (empty($data)) {
+                throw new \yii\web\BadRequestHttpException('No data received');
             }
 
             // Check if it's a batch or single order
@@ -988,13 +998,32 @@ class EaController extends Controller
      */
     private function handleSingleOrderSync($data)
     {
+        // Map form field names to expected field names (if needed)
+        if (isset($data['account_id']) && !isset($data['account_id']) && isset($data['account'])) {
+            $data['account_id'] = $data['account'];
+        }
+
         // Validate required fields
-        $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price', 'open_time', 'close_time'];
+        $required = ['account_id', 'ticket', 'symbol', 'open_time', 'close_time'];
+        $missing = [];
+
         foreach ($required as $field) {
-            if (empty($data[$field])) {
-                throw new \yii\web\BadRequestHttpException("Missing required field: {$field}");
+            if (!isset($data[$field]) || $data[$field] === '') {
+                $missing[] = $field;
             }
         }
+
+        // Special check: either 'type' OR 'ordertype' is required
+        if (!isset($data['type']) && !isset($data['ordertype'])) {
+            $missing[] = 'type';
+        }
+
+        if (!empty($missing)) {
+            throw new \yii\web\BadRequestHttpException('Missing required field(s): ' . implode(', ', $missing));
+        }
+
+        // Set type from either 'type' or 'ordertype'
+        $type = isset($data['type']) ? $data['type'] : $data['ordertype'];
 
         // Check if order already exists
         $existing = ClosedOrders::find()
@@ -1002,15 +1031,31 @@ class EaController extends Controller
             ->one();
 
         if ($existing) {
-            // Update existing order
-            $this->updateOrderModel($existing, $data);
+            $order = $existing;
             $isNew = false;
         } else {
-            // Create new order
             $order = new ClosedOrders();
-            $this->updateOrderModel($order, $data);
             $isNew = true;
         }
+
+        // Populate the order
+        $order->account_id = (string)$data['account_id'];
+        $order->ticket = (int)$data['ticket'];
+        $order->symbol = $data['symbol'];
+        $order->type = (int)$type;
+        $order->type_desc = isset($data['type_desc']) ? $data['type_desc'] : ClosedOrders::getOrderTypeDescription($type);
+        $order->lots = isset($data['lots']) ? (float)$data['lots'] : 0;
+        $order->open_price = isset($data['open_price']) ? (float)$data['open_price'] : 0;
+        $order->close_price = isset($data['close_price']) ? (float)$data['close_price'] : 0;
+        $order->profit = isset($data['profit']) ? (float)$data['profit'] : 0;
+        $order->swap = isset($data['swap']) ? (float)$data['swap'] : 0;
+        $order->commission = isset($data['commission']) ? (float)$data['commission'] : 0;
+        $order->open_time = (int)$data['open_time'];
+        $order->close_time = (int)$data['close_time'];
+        $order->magic = isset($data['magic']) ? (int)$data['magic'] : 0;
+        $order->comment = isset($data['comment']) ? $data['comment'] : null;
+        $order->status = ClosedOrders::STATUS_CLOSED;
+        $order->synced_at = date('Y-m-d H:i:s');
 
         if ($order->save()) {
             return [
