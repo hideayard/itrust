@@ -992,7 +992,7 @@ class EaController extends Controller
         Yii::info('Handling single order: ' . json_encode($data));
 
         // Validate required fields
-        $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price'];
+        $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price'];
         $missing = [];
 
         foreach ($required as $field) {
@@ -1018,44 +1018,18 @@ class EaController extends Controller
         $previousStatus = null;
 
         if ($order) {
-            // Order exists - check if it's a modification
+            // Order exists
             $isNew = false;
             $previousStatus = $order->status;
-
-            // Check if this is a modification (order exists and is being updated)
-            if ($order->status == AccountOrders::STATUS_OPEN || $order->status == AccountOrders::STATUS_MODIFIED) {
-                // If close_time is set, it's being closed
-                if (isset($data['close_time']) && $data['close_time'] > 0 && $data['close_time'] != $order->close_time) {
-                    $statusChanged = true;
-                    Yii::info("Order being closed: Ticket {$data['ticket']}, Account {$data['account_id']}");
-                }
-                // Otherwise, it's a modification
-                else {
-                    $statusChanged = true;
-                    Yii::info("Order modified: Ticket {$data['ticket']}, Account {$data['account_id']}");
-                }
-            }
+            Yii::info("Updating existing order: Ticket {$data['ticket']}, Current Status: {$previousStatus}");
         } else {
-            // Order doesn't exist - create new (OPEN status)
+            // Order doesn't exist - create new
             $order = new AccountOrders();
             $isNew = true;
-            Yii::info("Creating new order: Ticket {$data['ticket']}, Account {$data['account_id']}");
+            Yii::info("Creating new order: Ticket {$data['ticket']}");
         }
 
-        // Store old values for comparison (if updating)
-        $oldValues = [];
-        if (!$isNew) {
-            $oldValues = [
-                'lots' => $order->lots,
-                'open_price' => $order->open_price,
-                'close_price' => $order->close_price,
-                'profit' => $order->profit,
-                'stop_loss' => $order->stop_loss ?? null,
-                'take_profit' => $order->take_profit ?? null,
-            ];
-        }
-
-        // Populate/Update the order
+        // Populate/Update the order (always update these fields)
         $order->account_id = (string)$data['account_id'];
         $order->ticket = (int)$data['ticket'];
         $order->symbol = $data['symbol'];
@@ -1063,14 +1037,16 @@ class EaController extends Controller
         $order->type_desc = isset($data['type_desc']) ? $data['type_desc'] : AccountOrders::getOrderTypeDescription($data['type']);
         $order->lots = (float)$data['lots'];
         $order->open_price = (float)$data['open_price'];
-        $order->close_price = (float)$data['close_price'];
+        $order->open_time = (int)$data['open_time'];
+        $order->magic = isset($data['magic']) ? (int)$data['magic'] : 0;
+        $order->comment = isset($data['comment']) ? $data['comment'] : null;
+
+        // Set close-related fields (may be 0 or null for open orders)
+        $order->close_price = isset($data['close_price']) ? (float)$data['close_price'] : 0;
         $order->profit = isset($data['profit']) ? (float)$data['profit'] : 0;
         $order->swap = isset($data['swap']) ? (float)$data['swap'] : 0;
         $order->commission = isset($data['commission']) ? (float)$data['commission'] : 0;
-        $order->open_time = (int)$data['open_time'];
-        $order->close_time = (int)$data['close_time'];
-        $order->magic = isset($data['magic']) ? (int)$data['magic'] : 0;
-        $order->comment = isset($data['comment']) ? $data['comment'] : null;
+        $order->close_time = isset($data['close_time']) ? (int)$data['close_time'] : 0;
 
         // Handle SL and TP if provided
         if (isset($data['stop_loss'])) {
@@ -1080,15 +1056,20 @@ class EaController extends Controller
             $order->take_profit = (float)$data['take_profit'];
         }
 
-        // Set status based on event_type or data
+        // CRITICAL FIX: Set status based on event_type
         if (isset($data['event_type'])) {
             // Handle based on event_type from MT4
-            switch ($data['event_type']) {
+            $eventType = $data['event_type'];
+            Yii::info("Event type detected: {$eventType} for ticket {$data['ticket']}");
+
+            switch ($eventType) {
                 case 'ORDER_OPEN':
                     $order->status = AccountOrders::STATUS_OPEN;
+                    Yii::info("Setting status to OPEN for ticket {$data['ticket']}");
                     break;
                 case 'ORDER_MODIFY':
                     $order->status = AccountOrders::STATUS_MODIFIED;
+                    Yii::info("Setting status to MODIFIED for ticket {$data['ticket']}");
                     // Store modification details if provided
                     if (isset($data['changes'])) {
                         $order->modification_details = $data['changes'];
@@ -1096,26 +1077,47 @@ class EaController extends Controller
                     break;
                 case 'ORDER_CLOSE':
                     $order->status = AccountOrders::STATUS_CLOSED;
+                    Yii::info("Setting status to CLOSED for ticket {$data['ticket']}");
                     break;
                 default:
-                    $order->status = AccountOrders::STATUS_OPEN;
+                    // Unknown event type, try to auto-detect
+                    Yii::warning("Unknown event type: {$eventType} for ticket {$data['ticket']}, auto-detecting");
+                    if (isset($data['close_time']) && $data['close_time'] > 0) {
+                        $order->status = AccountOrders::STATUS_CLOSED;
+                    } else {
+                        $order->status = AccountOrders::STATUS_OPEN;
+                    }
             }
         } else {
-            // Auto-detect status based on data
+            // No event_type provided, auto-detect based on data
+            Yii::info("No event_type provided for ticket {$data['ticket']}, auto-detecting");
+
             if (isset($data['close_time']) && $data['close_time'] > 0) {
                 $order->status = AccountOrders::STATUS_CLOSED;
-            } elseif (!$isNew && ($statusChanged || $this->hasOrderChanged($order, $oldValues))) {
+                Yii::info("Auto-detected CLOSED status for ticket {$data['ticket']}");
+            } elseif (!$isNew && $this->hasOrderChanged($order, $data)) {
                 $order->status = AccountOrders::STATUS_MODIFIED;
+                Yii::info("Auto-detected MODIFIED status for ticket {$data['ticket']}");
             } else {
                 $order->status = AccountOrders::STATUS_OPEN;
+                Yii::info("Auto-detected OPEN status for ticket {$data['ticket']}");
             }
+        }
+
+        // Ensure status is never empty (fallback)
+        if (empty($order->status)) {
+            $order->status = AccountOrders::STATUS_OPEN;
+            Yii::warning("Status was empty, set to OPEN for ticket {$data['ticket']}");
         }
 
         $order->synced_at = date('Y-m-d H:i:s');
 
+        // Log final status before save
+        Yii::info("Final status for ticket {$data['ticket']}: {$order->status}");
+
         if ($order->save()) {
             // Log status change
-            if ($statusChanged && $previousStatus) {
+            if ($previousStatus && $previousStatus != $order->status) {
                 Yii::info("Status changed: Ticket {$data['ticket']} from {$previousStatus} to {$order->status}");
             }
 
@@ -1133,6 +1135,7 @@ class EaController extends Controller
                 ]
             ];
         } else {
+            Yii::error('Failed to save order: ' . json_encode($order->getErrors()));
             throw new \yii\web\ServerErrorHttpException('Failed to save order: ' . json_encode($order->getErrors()));
         }
     }
@@ -1275,46 +1278,20 @@ class EaController extends Controller
     /**
      * Helper method to check if order has changed
      */
-    private function hasOrderChanged($existingOrder, $newData)
+    private function hasOrderChanged($order, $newData)
     {
         // Check critical fields for changes
-        if ($existingOrder->lots != (float)$newData['lots']) return true;
-        if ($existingOrder->close_price != (float)$newData['close_price']) return true;
-        if ($existingOrder->profit != (float)($newData['profit'] ?? 0)) return true;
+        if ($order->lots != (float)($newData['lots'] ?? $order->lots)) return true;
+        if ($order->close_price != (float)($newData['close_price'] ?? $order->close_price)) return true;
+        if ($order->profit != (float)($newData['profit'] ?? $order->profit)) return true;
 
-        // Check SL/TP if they exist
-        if (isset($newData['stop_loss']) && $existingOrder->stop_loss != (float)$newData['stop_loss']) return true;
-        if (isset($newData['take_profit']) && $existingOrder->take_profit != (float)$newData['take_profit']) return true;
+        // Check SL/TP if they exist in new data
+        if (isset($newData['stop_loss']) && $order->stop_loss != (float)$newData['stop_loss']) return true;
+        if (isset($newData['take_profit']) && $order->take_profit != (float)$newData['take_profit']) return true;
 
         return false;
     }
 
-
-    /**
-     * Update order model with data
-     */
-    private function updateOrderModel($model, $data)
-    {
-        $model->account_id = (string)$data['account_id'];
-        $model->ticket = (int)$data['ticket'];
-        $model->symbol = $data['symbol'];
-        $model->type = (int)$data['type'];
-        $model->type_desc = $data['type_desc'] ?? AccountOrders::getOrderTypeDescription($data['type']);
-        $model->lots = (float)$data['lots'];
-        $model->open_price = (float)$data['open_price'];
-        $model->close_price = (float)$data['close_price'];
-        $model->profit = (float)($data['profit'] ?? 0);
-        $model->swap = (float)($data['swap'] ?? 0);
-        $model->commission = (float)($data['commission'] ?? 0);
-        $model->open_time = (int)$data['open_time'];
-        $model->close_time = (int)$data['close_time'];
-        $model->magic = (int)($data['magic'] ?? 0);
-        $model->comment = $data['comment'] ?? null;
-        $model->status = AccountOrders::STATUS_CLOSED;
-        $model->synced_at = date('Y-m-d H:i:s');
-
-        return $model;
-    }
 
     /**
      * Get orders for an account
