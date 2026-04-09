@@ -119,9 +119,9 @@ class Mt4Account extends ActiveRecord
             [['last_connected', 'last_sync', 'created_at', 'modified_at'], 'safe'],
             
             // Unique constraint
-            [['user_id', 'account_id', 'server'], 'unique', 
-                'targetAttribute' => ['user_id', 'account_id', 'server'],
-                'message' => 'This account already exists for this user on the specified server.'],
+            // [['user_id', 'account_id', 'server'], 'unique', 
+            //     'targetAttribute' => ['user_id', 'account_id', 'server'],
+            //     'message' => 'This account already exists for this user on the specified server.'],
             
             // Account ID format validation (optional)
             [['account_id'], 'match', 'pattern' => '/^[A-Za-z0-9\-_]+$/',
