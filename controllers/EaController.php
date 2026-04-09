@@ -950,32 +950,30 @@ class EaController extends Controller
             if (json_last_error() !== JSON_ERROR_NONE) {
                 $data = Yii::$app->request->post();
 
-                // Check if it's a batch (has 'orders' key)
-                if (isset($data['orders']) && is_array($data['orders'])) {
-                    $data = $data['orders'];
+                // If still empty, check if it's a batch
+                if (empty($data)) {
+                    throw new BadRequestHttpException('No data received');
                 }
             }
 
-            // Check if it's empty
-            if (empty($data)) {
-                throw new \yii\web\BadRequestHttpException('No data received');
-            }
+            // Log received data for debugging
+            Yii::info('Received orders data: ' . json_encode($data));
 
-            // Check if it's a batch or single order
+            // Handle batch or single
             if (isset($data[0]) && is_array($data[0])) {
-                // Batch sync
                 return $this->handleBatchSync($data);
             } else {
-                // Single order sync
+                // Make sure we have required fields
+                if (!isset($data['ticket']) && !isset($data['account_id'])) {
+                    throw new BadRequestHttpException('Invalid data format. Missing ticket or account_id');
+                }
                 return $this->handleSingleOrderSync($data);
             }
         } catch (\Exception $e) {
-            Yii::error('Error in actionSyncOrders: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-
+            Yii::error('Error in actionSyncOrders: ' . $e->getMessage());
             return [
                 'status' => 'error',
-                'message' => $e->getMessage(),
-                'code' => $e->getCode()
+                'message' => $e->getMessage()
             ];
         }
     }
