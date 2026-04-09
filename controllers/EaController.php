@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\helpers\TelegramHelper;
+use app\models\ClosedOrders;
 use app\models\CloseOrder;
 use app\models\Drawdown;
 use app\models\Mt4Account;
@@ -688,7 +689,8 @@ class EaController extends Controller
             }
         } catch (\Exception $e) {
             Yii::error('Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            TelegramHelper::sendSimpleError('Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString()
+            TelegramHelper::sendSimpleError(
+                'Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString()
             );
             // TelegramHelper::sendSimpleMessage(
             //         [
@@ -714,7 +716,7 @@ class EaController extends Controller
     {
         TelegramHelper::sendSimpleMessage("Test send simple message");
     }
-    
+
 
     /**
      * Get trade DD data by license
@@ -942,5 +944,314 @@ class EaController extends Controller
 
         $data = $request->getBodyParams(); //Yii::$app->request->post('data');
         return $data;
+    }
+
+    /**
+     * Sync closed orders from MT4
+     * Accepts single order or batch array
+     */
+    public function actionSyncOrders()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            // Get the raw input
+            $rawInput = Yii::$app->request->getRawBody();
+            $data = json_decode($rawInput, true);
+
+            // If no JSON data, try POST parameters
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                $data = Yii::$app->request->post();
+            }
+
+            // Check if it's a batch or single order
+            if (isset($data[0]) && is_array($data[0])) {
+                // Batch sync
+                return $this->handleBatchSync($data);
+            } else {
+                // Single order sync
+                return $this->handleSingleOrderSync($data);
+            }
+        } catch (\Exception $e) {
+            Yii::error('Error in actionSyncOrders: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+                'code' => $e->getCode()
+            ];
+        }
+    }
+
+    /**
+     * Handle single order sync
+     */
+    private function handleSingleOrderSync($data)
+    {
+        // Validate required fields
+        $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price', 'open_time', 'close_time'];
+        foreach ($required as $field) {
+            if (empty($data[$field])) {
+                throw new \yii\web\BadRequestHttpException("Missing required field: {$field}");
+            }
+        }
+
+        // Check if order already exists
+        $existing = ClosedOrders::find()
+            ->where(['account_id' => $data['account_id'], 'ticket' => $data['ticket']])
+            ->one();
+
+        if ($existing) {
+            // Update existing order
+            $this->updateOrderModel($existing, $data);
+            $isNew = false;
+        } else {
+            // Create new order
+            $order = new ClosedOrders();
+            $this->updateOrderModel($order, $data);
+            $isNew = true;
+        }
+
+        if ($order->save()) {
+            return [
+                'status' => 'success',
+                'message' => $isNew ? 'Order synced successfully' : 'Order updated successfully',
+                'data' => [
+                    'id' => $order->id,
+                    'ticket' => $order->ticket,
+                    'account_id' => $order->account_id,
+                    'is_new' => $isNew
+                ]
+            ];
+        } else {
+            throw new \yii\web\ServerErrorHttpException('Failed to save order: ' . json_encode($order->getErrors()));
+        }
+    }
+
+    /**
+     * Handle batch sync (multiple orders)
+     */
+    private function handleBatchSync($orders)
+    {
+        if (empty($orders)) {
+            throw new \yii\web\BadRequestHttpException('No orders provided for batch sync');
+        }
+
+        $stats = [
+            'total' => count($orders),
+            'new' => 0,
+            'updated' => 0,
+            'failed' => 0,
+            'errors' => []
+        ];
+
+        foreach ($orders as $orderData) {
+            try {
+                // Validate required fields for each order
+                $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price', 'open_time', 'close_time'];
+                $missing = [];
+                foreach ($required as $field) {
+                    if (empty($orderData[$field])) {
+                        $missing[] = $field;
+                    }
+                }
+
+                if (!empty($missing)) {
+                    $stats['failed']++;
+                    $stats['errors'][] = "Order ticket {$orderData['ticket']} missing fields: " . implode(', ', $missing);
+                    continue;
+                }
+
+                // Check if order exists
+                $existing = ClosedOrders::find()
+                    ->where(['account_id' => $orderData['account_id'], 'ticket' => $orderData['ticket']])
+                    ->one();
+
+                if ($existing) {
+                    $this->updateOrderModel($existing, $orderData);
+                    if ($existing->save()) {
+                        $stats['updated']++;
+                    } else {
+                        $stats['failed']++;
+                        $stats['errors'][] = "Failed to update order {$orderData['ticket']}: " . json_encode($existing->getErrors());
+                    }
+                } else {
+                    $order = new ClosedOrders();
+                    $this->updateOrderModel($order, $orderData);
+                    if ($order->save()) {
+                        $stats['new']++;
+                    } else {
+                        $stats['failed']++;
+                        $stats['errors'][] = "Failed to save order {$orderData['ticket']}: " . json_encode($order->getErrors());
+                    }
+                }
+            } catch (\Exception $e) {
+                $stats['failed']++;
+                $stats['errors'][] = "Error processing order {$orderData['ticket']}: " . $e->getMessage();
+            }
+        }
+
+        // Log the sync
+        Yii::info("Batch sync completed: total={$stats['total']}, new={$stats['new']}, updated={$stats['updated']}, failed={$stats['failed']}");
+
+        return [
+            'status' => 'success',
+            'message' => "Batch sync completed",
+            'stats' => $stats
+        ];
+    }
+
+    /**
+     * Update order model with data
+     */
+    private function updateOrderModel($model, $data)
+    {
+        $model->account_id = (string)$data['account_id'];
+        $model->ticket = (int)$data['ticket'];
+        $model->symbol = $data['symbol'];
+        $model->type = (int)$data['type'];
+        $model->type_desc = $data['type_desc'] ?? ClosedOrders::getOrderTypeDescription($data['type']);
+        $model->lots = (float)$data['lots'];
+        $model->open_price = (float)$data['open_price'];
+        $model->close_price = (float)$data['close_price'];
+        $model->profit = (float)($data['profit'] ?? 0);
+        $model->swap = (float)($data['swap'] ?? 0);
+        $model->commission = (float)($data['commission'] ?? 0);
+        $model->open_time = (int)$data['open_time'];
+        $model->close_time = (int)$data['close_time'];
+        $model->magic = (int)($data['magic'] ?? 0);
+        $model->comment = $data['comment'] ?? null;
+        $model->status = ClosedOrders::STATUS_CLOSED;
+        $model->synced_at = date('Y-m-d H:i:s');
+
+        return $model;
+    }
+
+    /**
+     * Get orders for an account
+     */
+    public function actionGetOrders()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $accountId = Yii::$app->request->get('account_id');
+            $limit = Yii::$app->request->get('limit', 100);
+            $offset = Yii::$app->request->get('offset', 0);
+            $fromDate = Yii::$app->request->get('from_date');
+            $toDate = Yii::$app->request->get('to_date');
+
+            if (empty($accountId)) {
+                throw new \yii\web\BadRequestHttpException('Account ID is required');
+            }
+
+            $query = ClosedOrders::find()
+                ->where(['account_id' => $accountId])
+                ->orderBy(['close_time' => SORT_DESC]);
+
+            // Apply date filters
+            if ($fromDate) {
+                $query->andWhere(['>=', 'close_time', strtotime($fromDate)]);
+            }
+            if ($toDate) {
+                $query->andWhere(['<=', 'close_time', strtotime($toDate)]);
+            }
+
+            $total = $query->count();
+            $orders = $query->limit($limit)->offset($offset)->all();
+
+            // Get statistics
+            $totalProfit = ClosedOrders::getTotalProfitByAccount($accountId);
+            $winRate = ClosedOrders::getWinRate($accountId);
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'orders' => $orders,
+                    'pagination' => [
+                        'total' => $total,
+                        'limit' => $limit,
+                        'offset' => $offset
+                    ],
+                    'statistics' => [
+                        'total_profit' => $totalProfit,
+                        'total_orders' => $winRate['total'],
+                        'winning_orders' => $winRate['wins'],
+                        'win_rate' => $winRate['win_rate']
+                    ]
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetOrders: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get order statistics for dashboard
+     */
+    public function actionOrderStats()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            $accountId = Yii::$app->request->get('account_id');
+
+            if (empty($accountId)) {
+                throw new \yii\web\BadRequestHttpException('Account ID is required');
+            }
+
+            // Get statistics by symbol
+            $symbolStats = ClosedOrders::find()
+                ->select(['symbol', 'SUM(profit) as total_profit', 'COUNT(*) as total_orders', 'SUM(lots) as total_lots'])
+                ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                ->groupBy('symbol')
+                ->asArray()
+                ->all();
+
+            // Get monthly profit
+            $monthlyProfit = ClosedOrders::find()
+                ->select(['FROM_UNIXTIME(close_time, "%Y-%m") as month', 'SUM(profit) as total_profit', 'COUNT(*) as order_count'])
+                ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                ->groupBy('month')
+                ->orderBy('month DESC')
+                ->limit(12)
+                ->asArray()
+                ->all();
+
+            // Get profit distribution
+            $profitDistribution = [
+                'profitable' => ClosedOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                    ->andWhere(['>', 'profit', 0])
+                    ->count(),
+                'loss' => ClosedOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                    ->andWhere(['<', 'profit', 0])
+                    ->count(),
+                'breakeven' => ClosedOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => ClosedOrders::STATUS_CLOSED])
+                    ->andWhere(['profit' => 0])
+                    ->count(),
+            ];
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'by_symbol' => $symbolStats,
+                    'monthly_profit' => $monthlyProfit,
+                    'profit_distribution' => $profitDistribution
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionOrderStats: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
     }
 }
