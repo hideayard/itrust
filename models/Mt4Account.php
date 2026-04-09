@@ -42,9 +42,9 @@ use yii\db\Expression;
  * @property string $modified_at
  * @property int|null $modified_by
  *
- * @property User $user
- * @property User $createdBy
- * @property User $modifiedBy
+ * @property Users $user
+ * @property Users $createdBy
+ * @property Users $modifiedBy
  */
 class Mt4Account extends ActiveRecord
 {
@@ -127,16 +127,16 @@ class Mt4Account extends ActiveRecord
             [['account_id'], 'match', 'pattern' => '/^[A-Za-z0-9\-_]+$/',
                 'message' => 'Account ID can only contain letters, numbers, hyphens and underscores.'],
             
-            // Foreign key validation
+            // Foreign key validation - FIXED: Changed from User::class to Users::class
             [['user_id'], 'exist', 'skipOnError' => true, 
-                'targetClass' => User::class, 
-                'targetAttribute' => ['user_id' => 'id']],
+                'targetClass' => Users::class, 
+                'targetAttribute' => ['user_id' => 'user_id']],  // FIXED: Changed 'id' to 'user_id'
             [['created_by'], 'exist', 'skipOnError' => true, 
-                'targetClass' => User::class, 
-                'targetAttribute' => ['created_by' => 'id']],
+                'targetClass' => Users::class, 
+                'targetAttribute' => ['created_by' => 'user_id']],  // FIXED: Changed from 'id' to 'user_id'
             [['modified_by'], 'exist', 'skipOnError' => true, 
-                'targetClass' => User::class, 
-                'targetAttribute' => ['modified_by' => 'id']],
+                'targetClass' => Users::class, 
+                'targetAttribute' => ['modified_by' => 'user_id']],  // FIXED: Changed from 'id' to 'user_id'
         ];
     }
 
@@ -201,32 +201,35 @@ class Mt4Account extends ActiveRecord
 
     /**
      * Gets query for [[User]].
+     * FIXED: Changed from User to Users
      *
      * @return \yii\db\ActiveQuery
      */
     public function getUser()
     {
-        return $this->hasOne(User::class, ['id' => 'user_id']);
+        return $this->hasOne(Users::class, ['user_id' => 'user_id']);  // FIXED: Changed 'id' to 'user_id'
     }
 
     /**
      * Gets query for [[CreatedBy]].
+     * FIXED: Changed from User to Users
      *
      * @return \yii\db\ActiveQuery
      */
     public function getCreatedBy()
     {
-        return $this->hasOne(User::class, ['id' => 'created_by']);
+        return $this->hasOne(Users::class, ['user_id' => 'created_by']);  // FIXED: Changed 'id' to 'user_id'
     }
 
     /**
      * Gets query for [[ModifiedBy]].
+     * FIXED: Changed from User to Users
      *
      * @return \yii\db\ActiveQuery
      */
     public function getModifiedBy()
     {
-        return $this->hasOne(User::class, ['id' => 'modified_by']);
+        return $this->hasOne(Users::class, ['user_id' => 'modified_by']);  // FIXED: Changed 'id' to 'user_id'
     }
 
     /**
