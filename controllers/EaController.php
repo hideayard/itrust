@@ -586,35 +586,40 @@ class EaController extends Controller
                 if ($totalProfitPercentage < -999999) $totalProfitPercentage = -999999;
             }
 
-            // Find existing account or create new one
-            // Search by user_id, account_id (assuming account_id is unique per user)
+            // Try to find existing account first
             $mt4Account = Mt4Account::find()
                 ->where([
-                    'user_id' => $user->id,
+                    'user_id' => $user->user_id,
                     'account_id' => (string)$accountId
                 ])
                 ->one();
 
             $isNewRecord = false;
-            if (!$mt4Account) {
-                // Create new account record
+
+            if ($mt4Account) {
+                // Account exists - just update it
+                $isNewRecord = false;
+                Yii::info("Updating existing MT4 account for user {$user->user_id}, account {$accountId}");
+            } else {
+                // Account doesn't exist - create new
                 $mt4Account = new Mt4Account();
-                $mt4Account->user_id = $user->id;
+                $mt4Account->user_id = $user->user_id;
                 $mt4Account->account_id = (string)$accountId;
                 $mt4Account->status = Mt4Account::STATUS_ACTIVE;
-                $mt4Account->currency = 'USD'; // Default currency
-                $mt4Account->leverage = 100; // Default leverage
+                $mt4Account->currency = 'USD';
+                $mt4Account->leverage = 100;
                 $mt4Account->account_type = Mt4Account::ACCOUNT_TYPE_STANDARD;
+                $mt4Account->last_connected = date('Y-m-d H:i:s', $timestamp);
                 $isNewRecord = true;
 
-                Yii::info("Creating new MT4 account record for user {$user->id}, account {$accountId}");
+                Yii::info("Creating new MT4 account record for user {$user->user_id}, account {$accountId}");
             }
 
             // Store previous values for comparison
             $previousBalance = $mt4Account->account_balance;
             $previousEquity = $mt4Account->account_equity;
 
-            // Update account metrics
+            // Update account metrics (for both existing and new)
             $mt4Account->buy_order_count = (int)$buyOrderCount;
             $mt4Account->total_buy_lot = (float)$totalBuyLot;
             $mt4Account->sell_order_count = (int)$sellOrderCount;
@@ -624,24 +629,16 @@ class EaController extends Controller
             $mt4Account->account_balance = (float)$accountBalance;
             $mt4Account->account_equity = (float)$accountEquity;
             $mt4Account->floating_value = (float)$floatingValue;
-
-            // Update timestamps
             $mt4Account->last_sync = date('Y-m-d H:i:s', $timestamp);
 
-            // If it's a new record, set last_connected
-            if ($isNewRecord) {
-                $mt4Account->last_connected = date('Y-m-d H:i:s', $timestamp);
-            }
-
-            // Update status if equity > 0 (account is active)
+            // Update status based on equity
             if ($accountEquity > 0) {
                 $mt4Account->status = Mt4Account::STATUS_ACTIVE;
             } elseif ($accountEquity <= 0 && $mt4Account->status == Mt4Account::STATUS_ACTIVE) {
-                // Check if account might be disconnected
                 $mt4Account->status = Mt4Account::STATUS_DISCONNECTED;
             }
 
-            // Save the record
+            // Save the record (validation will run)
             if ($mt4Account->save()) {
                 // Prepare response data
                 $responseData = [
@@ -674,8 +671,7 @@ class EaController extends Controller
                     'last_sync' => $mt4Account->last_sync,
                 ];
 
-                // Log successful sync
-                Yii::info("MT4 account synced successfully: user_id={$user->id}, account_id={$accountId}, is_new={$isNewRecord}");
+                Yii::info("MT4 account synced successfully: user_id={$user->user_id}, account_id={$accountId}, is_new={$isNewRecord}");
 
                 return [
                     'status' => 'success',
@@ -689,16 +685,7 @@ class EaController extends Controller
             }
         } catch (\Exception $e) {
             Yii::error('Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-            TelegramHelper::sendSimpleError(
-                'Error in actionSyncAccount: ' . $e->getMessage() . "\n" . $e->getTraceAsString()
-            );
-            // TelegramHelper::sendSimpleMessage(
-            //         [
-            //             'text' => $summary,
-            //             'parse_mode' => 'html'
-            //         ],
-            //         Yii::$app->params['group_id']
-            //     );
+
             return [
                 'status' => 'error',
                 'message' => $e->getMessage(),
