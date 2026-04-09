@@ -942,35 +942,43 @@ class EaController extends Controller
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
 
         try {
-            // Try to get JSON data first
+            // Get the raw POST body
             $rawInput = Yii::$app->request->getRawBody();
-            $data = json_decode($rawInput, true);
 
-            // If not JSON, try POST parameters
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                $data = Yii::$app->request->post();
+            // Log for debugging
+            Yii::info('Raw input length: ' . strlen($rawInput));
+            Yii::info('Raw input first 500 chars: ' . substr($rawInput, 0, 500));
 
-                // If still empty, check if it's a batch
-                if (empty($data)) {
-                    throw new BadRequestHttpException('No data received');
-                }
+            // Check if we have any data
+            if (empty($rawInput)) {
+                throw new \yii\web\BadRequestHttpException('No data received');
             }
 
-            // Log received data for debugging
-            Yii::info('Received orders data: ' . json_encode($data));
+            // Decode JSON
+            $data = json_decode($rawInput, true);
 
-            // Handle batch or single
+            // Check for JSON errors
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                Yii::error('JSON decode error: ' . json_last_error_msg());
+                Yii::error('Raw input: ' . $rawInput);
+                throw new \yii\web\BadRequestHttpException('Invalid JSON data: ' . json_last_error_msg());
+            }
+
+            // Check if data is empty after decode
+            if (empty($data)) {
+                throw new \yii\web\BadRequestHttpException('No data received after JSON decode');
+            }
+
+            // Handle batch or single order
             if (isset($data[0]) && is_array($data[0])) {
+                // It's a batch (array of orders)
                 return $this->handleBatchSync($data);
             } else {
-                // Make sure we have required fields
-                if (!isset($data['ticket']) && !isset($data['account_id'])) {
-                    throw new BadRequestHttpException('Invalid data format. Missing ticket or account_id');
-                }
+                // It's a single order
                 return $this->handleSingleOrderSync($data);
             }
         } catch (\Exception $e) {
-            Yii::error('Error in actionSyncOrders: ' . $e->getMessage());
+            Yii::error('Error in actionSyncOrders: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
             return [
                 'status' => 'error',
                 'message' => $e->getMessage()
@@ -978,41 +986,28 @@ class EaController extends Controller
         }
     }
 
-    /**
-     * Handle single order sync
-     */
     private function handleSingleOrderSync($data)
     {
-        // Map form field names to expected field names (if needed)
-        if (isset($data['account_id']) && !isset($data['account_id']) && isset($data['account'])) {
-            $data['account_id'] = $data['account'];
-        }
+        // Log received data
+        Yii::info('Handling single order: ' . json_encode($data));
 
         // Validate required fields
-        $required = ['account_id', 'ticket', 'symbol', 'open_time', 'close_time'];
+        $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price'];
         $missing = [];
 
         foreach ($required as $field) {
-            if (!isset($data[$field]) || $data[$field] === '') {
+            if (!isset($data[$field])) {
                 $missing[] = $field;
             }
         }
 
-        // Special check: either 'type' OR 'ordertype' is required
-        if (!isset($data['type']) && !isset($data['ordertype'])) {
-            $missing[] = 'type';
-        }
-
         if (!empty($missing)) {
-            throw new \yii\web\BadRequestHttpException('Missing required field(s): ' . implode(', ', $missing));
+            throw new \yii\web\BadRequestHttpException('Missing required fields: ' . implode(', ', $missing));
         }
-
-        // Set type from either 'type' or 'ordertype'
-        $type = isset($data['type']) ? $data['type'] : $data['ordertype'];
 
         // Check if order already exists
         $existing = ClosedOrders::find()
-            ->where(['account_id' => $data['account_id'], 'ticket' => $data['ticket']])
+            ->where(['account_id' => (string)$data['account_id'], 'ticket' => (int)$data['ticket']])
             ->one();
 
         if ($existing) {
@@ -1027,11 +1022,11 @@ class EaController extends Controller
         $order->account_id = (string)$data['account_id'];
         $order->ticket = (int)$data['ticket'];
         $order->symbol = $data['symbol'];
-        $order->type = (int)$type;
-        $order->type_desc = isset($data['type_desc']) ? $data['type_desc'] : ClosedOrders::getOrderTypeDescription($type);
-        $order->lots = isset($data['lots']) ? (float)$data['lots'] : 0;
-        $order->open_price = isset($data['open_price']) ? (float)$data['open_price'] : 0;
-        $order->close_price = isset($data['close_price']) ? (float)$data['close_price'] : 0;
+        $order->type = (int)$data['type'];
+        $order->type_desc = isset($data['type_desc']) ? $data['type_desc'] : ClosedOrders::getOrderTypeDescription($data['type']);
+        $order->lots = (float)$data['lots'];
+        $order->open_price = (float)$data['open_price'];
+        $order->close_price = (float)$data['close_price'];
         $order->profit = isset($data['profit']) ? (float)$data['profit'] : 0;
         $order->swap = isset($data['swap']) ? (float)$data['swap'] : 0;
         $order->commission = isset($data['commission']) ? (float)$data['commission'] : 0;
@@ -1058,11 +1053,10 @@ class EaController extends Controller
         }
     }
 
-    /**
-     * Handle batch sync (multiple orders)
-     */
     private function handleBatchSync($orders)
     {
+        Yii::info('Handling batch sync. Total orders: ' . count($orders));
+
         if (empty($orders)) {
             throw new \yii\web\BadRequestHttpException('No orders provided for batch sync');
         }
@@ -1078,10 +1072,11 @@ class EaController extends Controller
         foreach ($orders as $orderData) {
             try {
                 // Validate required fields for each order
-                $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price', 'open_time', 'close_time'];
+                $required = ['account_id', 'ticket', 'symbol', 'type', 'lots', 'open_price', 'close_price'];
                 $missing = [];
+
                 foreach ($required as $field) {
-                    if (empty($orderData[$field])) {
+                    if (!isset($orderData[$field])) {
                         $missing[] = $field;
                     }
                 }
@@ -1094,26 +1089,43 @@ class EaController extends Controller
 
                 // Check if order exists
                 $existing = ClosedOrders::find()
-                    ->where(['account_id' => $orderData['account_id'], 'ticket' => $orderData['ticket']])
+                    ->where(['account_id' => (string)$orderData['account_id'], 'ticket' => (int)$orderData['ticket']])
                     ->one();
 
                 if ($existing) {
-                    $this->updateOrderModel($existing, $orderData);
-                    if ($existing->save()) {
-                        $stats['updated']++;
-                    } else {
-                        $stats['failed']++;
-                        $stats['errors'][] = "Failed to update order {$orderData['ticket']}: " . json_encode($existing->getErrors());
-                    }
+                    $order = $existing;
+                    $isNew = false;
+                    $stats['updated']++;
                 } else {
                     $order = new ClosedOrders();
-                    $this->updateOrderModel($order, $orderData);
-                    if ($order->save()) {
-                        $stats['new']++;
-                    } else {
-                        $stats['failed']++;
-                        $stats['errors'][] = "Failed to save order {$orderData['ticket']}: " . json_encode($order->getErrors());
-                    }
+                    $isNew = true;
+                    $stats['new']++;
+                }
+
+                // Populate the order
+                $order->account_id = (string)$orderData['account_id'];
+                $order->ticket = (int)$orderData['ticket'];
+                $order->symbol = $orderData['symbol'];
+                $order->type = (int)$orderData['type'];
+                $order->type_desc = isset($orderData['type_desc']) ? $orderData['type_desc'] : ClosedOrders::getOrderTypeDescription($orderData['type']);
+                $order->lots = (float)$orderData['lots'];
+                $order->open_price = (float)$orderData['open_price'];
+                $order->close_price = (float)$orderData['close_price'];
+                $order->profit = isset($orderData['profit']) ? (float)$orderData['profit'] : 0;
+                $order->swap = isset($orderData['swap']) ? (float)$orderData['swap'] : 0;
+                $order->commission = isset($orderData['commission']) ? (float)$orderData['commission'] : 0;
+                $order->open_time = (int)$orderData['open_time'];
+                $order->close_time = (int)$orderData['close_time'];
+                $order->magic = isset($orderData['magic']) ? (int)$orderData['magic'] : 0;
+                $order->comment = isset($orderData['comment']) ? $orderData['comment'] : null;
+                $order->status = ClosedOrders::STATUS_CLOSED;
+                $order->synced_at = date('Y-m-d H:i:s');
+
+                if (!$order->save()) {
+                    $stats['failed']++;
+                    $stats['updated']--; // Revert the increment if it was an update
+                    $stats['new']--; // Revert the increment if it was new
+                    $stats['errors'][] = "Failed to save order {$orderData['ticket']}: " . json_encode($order->getErrors());
                 }
             } catch (\Exception $e) {
                 $stats['failed']++;
@@ -1121,16 +1133,13 @@ class EaController extends Controller
             }
         }
 
-        // Log the sync
-        Yii::info("Batch sync completed: total={$stats['total']}, new={$stats['new']}, updated={$stats['updated']}, failed={$stats['failed']}");
-
         return [
             'status' => 'success',
             'message' => "Batch sync completed",
             'stats' => $stats
         ];
     }
-
+    
     /**
      * Update order model with data
      */
