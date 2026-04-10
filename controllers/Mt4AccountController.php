@@ -2,8 +2,8 @@
 
 namespace app\controllers;
 
+use app\helpers\JwtHelper;
 use app\models\Mt4Account;
-use app\models\User;
 use app\models\Users;
 use Yii;
 use yii\web\BadRequestHttpException;
