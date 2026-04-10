@@ -1261,7 +1261,7 @@ class Mt4AccountController extends Controller
             $currentUser = Users::findOne($currentUserId);
 
             if (!$currentUser) {
-                throw new UnauthorizedHttpException('User not found');
+                throw new UnauthorizedHttpException('User id ' . $currentUserId . ' not found from payload');
             }
 
             // If no user_id provided, get current user's accounts
@@ -1272,7 +1272,7 @@ class Mt4AccountController extends Controller
             // Check if target user exists
             $targetUser = Users::findOne($user_id);
             if (!$targetUser) {
-                throw new NotFoundHttpException('User not found');
+                throw new NotFoundHttpException('user_id ' . $user_id . 'not found');
             }
 
             // Check access rights
