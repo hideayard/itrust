@@ -1234,13 +1234,35 @@ class Mt4AccountController extends Controller
         }
     }
 
-    // In Mt4AccountController.php
     public function actionGetAccountsByUser($user_id = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            $currentUser = Yii::$app->user->identity;
+            // Get and validate JWT token
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            // Extract current user ID from payload
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
 
             // If no user_id provided, get current user's accounts
             if ($user_id === null) {
@@ -1446,15 +1468,86 @@ class Mt4AccountController extends Controller
             ];
 
             return $responseData;
+        } catch (UnauthorizedHttpException $e) {
+            Yii::error('Authentication error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        } catch (ForbiddenHttpException $e) {
+            Yii::error('Authorization error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        } catch (NotFoundHttpException $e) {
+            Yii::error('Not found error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
         } catch (\Exception $e) {
             Yii::error('Error getting accounts: ' . $e->getMessage());
             Yii::error('Stack trace: ' . $e->getTraceAsString());
 
             return [
                 'status' => 'error',
-                'message' => $e->getMessage()
+                'message' => 'An internal error occurred'
             ];
         }
+    }
+
+    /**
+     * Extract token from request headers
+     * @return string|null
+     */
+    private function getTokenFromRequest()
+    {
+        $headers = Yii::$app->request->headers;
+
+        // Check for Bearer token in Authorization header
+        $authHeader = $headers->get('Authorization');
+        if ($authHeader && preg_match('/^Bearer\s+(.*?)$/', $authHeader, $matches)) {
+            return $matches[1];
+        }
+
+        // Check for token in query parameter
+        $token = Yii::$app->request->get('token');
+        if ($token) {
+            return $token;
+        }
+
+        // Check for token in POST parameter
+        $token = Yii::$app->request->post('token');
+        if ($token) {
+            return $token;
+        }
+
+        return null;
+    }
+
+    /**
+     * Extract user ID from JWT payload
+     * @param object $payload
+     * @return int|null
+     */
+    private function extractUserIdFromPayload($payload)
+    {
+        // Try different possible field names in the payload
+        if (isset($payload->user_id)) {
+            return $payload->user_id;
+        }
+        if (isset($payload->userId)) {
+            return $payload->userId;
+        }
+        if (isset($payload->id)) {
+            return $payload->id;
+        }
+        if (isset($payload->sub)) {
+            return $payload->sub;
+        }
+
+        return null;
     }
 
     /**
@@ -1475,7 +1568,7 @@ class Mt4AccountController extends Controller
                 foreach ($pathParts as $part) {
                     if (!isset($currentLevel[$part])) {
                         $currentLevel[$part] = [
-                            'user_id' => $part,
+                            'user_id' => (int)$part,
                             'username' => isset($users[$part]) ? $users[$part]->user_name : 'Unknown',
                             'children' => [],
                             'accounts' => []
@@ -1500,6 +1593,7 @@ class Mt4AccountController extends Controller
 
         return array_values($hierarchy);
     }
+
 
 
     public function actionGetAccountsByUserPost()
