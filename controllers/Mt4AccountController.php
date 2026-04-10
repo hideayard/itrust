@@ -8,6 +8,7 @@ use app\models\Users;
 use Yii;
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
+use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\ServerErrorHttpException;
@@ -1234,30 +1235,127 @@ class Mt4AccountController extends Controller
     }
 
     // In Mt4AccountController.php
-    public function actionGetAccountsByUser($user_id)
+    public function actionGetAccountsByUser($user_id = null)
     {
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            // Validate user exists
-            $user = Users::findOne($user_id);
-            if (!$user) {
+            $currentUser = Yii::$app->user->identity;
+
+            // If no user_id provided, get current user's accounts
+            if ($user_id === null) {
+                $user_id = $currentUser->id;
+            }
+
+            // Check if target user exists
+            $targetUser = Users::findOne($user_id);
+            if (!$targetUser) {
                 throw new NotFoundHttpException('User not found');
             }
 
-            // Get accounts
-            $accounts = Mt4Account::find()
-                ->where(['user_id' => $user_id])
+            // Check access rights
+            $canAccess = false;
+            $accessibleUserIds = [];
+
+            if ($currentUser->user_tipe == 'ADMIN') {
+                // Admin can access all accounts
+                $canAccess = true;
+            } else {
+                // Check if current user can access target user based on path hierarchy
+                $currentUserAccount = Mt4Account::find()
+                    ->where(['user_id' => $currentUser->id])
+                    ->one();
+
+                if ($currentUserAccount && $currentUserAccount->path) {
+                    // Get all user_ids that are descendants of current user
+                    $descendants = Mt4Account::find()
+                        ->where(['like', 'path', $currentUserAccount->path . '.%', false])
+                        ->orWhere(['path' => $currentUserAccount->path])
+                        ->select('user_id')
+                        ->distinct()
+                        ->column();
+
+                    $accessibleUserIds = $descendants;
+
+                    // Current user can access if target user is themselves or descendant
+                    if ($currentUser->id == $user_id || in_array($user_id, $accessibleUserIds)) {
+                        $canAccess = true;
+                    }
+
+                    // Also check if current user is ancestor of target user
+                    $targetUserAccount = Mt4Account::find()
+                        ->where(['user_id' => $user_id])
+                        ->one();
+
+                    if ($targetUserAccount && $targetUserAccount->path) {
+                        $pathParts = explode('.', $targetUserAccount->path);
+                        // Check if current user's ID is in the path (meaning current user is ancestor)
+                        if (in_array($currentUser->id, $pathParts)) {
+                            $canAccess = true;
+                        }
+                    }
+                } elseif ($currentUser->id == $user_id) {
+                    // User can access their own accounts even without path
+                    $canAccess = true;
+                }
+            }
+
+            if (!$canAccess) {
+                throw new ForbiddenHttpException('You do not have permission to view these accounts');
+            }
+
+            // Build query for accounts
+            $accountsQuery = Mt4Account::find();
+
+            if ($currentUser->user_tipe == 'ADMIN') {
+                // Admin sees all accounts
+                if ($user_id) {
+                    $accountsQuery->where(['user_id' => $user_id]);
+                }
+            } else {
+                // Non-admin: show own accounts and descendant accounts
+                $currentUserAccount = Mt4Account::find()
+                    ->where(['user_id' => $currentUser->id])
+                    ->one();
+
+                if ($currentUserAccount && $currentUserAccount->path) {
+                    // Get all descendant user_ids including self
+                    $descendantUsers = Mt4Account::find()
+                        ->where(['like', 'path', $currentUserAccount->path . '.%', false])
+                        ->orWhere(['path' => $currentUserAccount->path])
+                        ->select('user_id')
+                        ->distinct()
+                        ->column();
+
+                    $accountsQuery->where(['user_id' => $descendantUsers]);
+
+                    // If specific user_id requested, filter further
+                    if ($user_id && $user_id != $currentUser->id) {
+                        $accountsQuery->andWhere(['user_id' => $user_id]);
+                    }
+                } else {
+                    // User has no path, only show their own accounts
+                    $accountsQuery->where(['user_id' => $currentUser->id]);
+                }
+            }
+
+            // Get accounts with ordering
+            $accounts = $accountsQuery
                 ->orderBy(['created_at' => SORT_DESC])
                 ->all();
 
             // Format response
             $accountData = [];
+            $userIds = [];
+
             foreach ($accounts as $account) {
+                $userIds[] = $account->user_id;
                 $accountData[] = [
                     'id' => $account->id,
+                    'user_id' => $account->user_id,
                     'account_id' => $account->account_id,
                     'bot_name' => $account->bot_name,
+                    'path' => $account->path,
                     'buy_order_count' => (int)$account->buy_order_count,
                     'total_buy_lot' => (float)$account->total_buy_lot,
                     'sell_order_count' => (int)$account->sell_order_count,
@@ -1272,7 +1370,6 @@ class Mt4AccountController extends Controller
                     'server' => $account->server,
                     'broker' => $account->broker,
                     'account_type' => $account->account_type,
-                    'path' => $account->path,
                     'status' => $account->status,
                     'last_connected' => $account->last_connected,
                     'last_sync' => $account->last_sync,
@@ -1282,45 +1379,128 @@ class Mt4AccountController extends Controller
                 ];
             }
 
-            // Get summary
-            $summary = Mt4Account::find()
-                ->select([
-                    'COUNT(*) as total_accounts',
-                    'SUM(account_balance) as total_balance',
-                    'SUM(total_profit) as total_profit',
-                    'AVG(total_profit_percentage) as avg_profit_percentage',
-                    'SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active_accounts',
-                ])
-                ->where(['user_id' => $user_id])
-                ->asArray()
-                ->one();
+            // Get unique users for the response
+            $users = Users::find()
+                ->where(['id' => array_unique($userIds)])
+                ->indexBy('id')
+                ->all();
 
-            return [
+            // Build hierarchical summary
+            $summary = [
+                'total_accounts' => 0,
+                'total_balance' => 0,
+                'total_profit' => 0,
+                'avg_profit_percentage' => 0,
+                'active_accounts' => 0,
+                'hierarchy' => []
+            ];
+
+            // Calculate summary
+            foreach ($accounts as $account) {
+                $summary['total_accounts']++;
+                $summary['total_balance'] += (float)$account->account_balance;
+                $summary['total_profit'] += (float)$account->total_profit;
+                if ($account->status == 'active') {
+                    $summary['active_accounts']++;
+                }
+            }
+
+            if ($summary['total_accounts'] > 0) {
+                $totalProfitPercentage = array_sum(array_column($accounts, 'total_profit_percentage'));
+                $summary['avg_profit_percentage'] = round($totalProfitPercentage / $summary['total_accounts'], 2);
+            }
+
+            // Build hierarchical data structure
+            $hierarchyData = $this->buildHierarchyData($accounts, $users);
+
+            $responseData = [
                 'status' => 'success',
                 'data' => [
-                    'user' => [
-                        'id' => $user->id,
-                        'username' => $user->user_name,
-                        'email' => $user->user_email,
-                    ],
                     'summary' => [
                         'total_accounts' => (int)$summary['total_accounts'],
                         'total_balance' => (float)$summary['total_balance'],
                         'total_profit' => (float)$summary['total_profit'],
-                        'avg_profit_percentage' => round((float)$summary['avg_profit_percentage'], 2),
+                        'avg_profit_percentage' => (float)$summary['avg_profit_percentage'],
                         'active_accounts' => (int)$summary['active_accounts'],
                     ],
                     'accounts' => $accountData,
+                    'hierarchy' => $hierarchyData
                 ]
             ];
+
+            // Include target user info if specific user requested
+            if ($user_id) {
+                $responseData['data']['target_user'] = [
+                    'id' => $targetUser->id,
+                    'username' => $targetUser->user_name,
+                    'email' => $targetUser->user_email,
+                    'user_tipe' => $targetUser->user_tipe,
+                ];
+            }
+
+            // Include current user info for context
+            $responseData['data']['current_user'] = [
+                'id' => $currentUser->id,
+                'username' => $currentUser->user_name,
+                'user_tipe' => $currentUser->user_tipe,
+            ];
+
+            return $responseData;
         } catch (\Exception $e) {
             Yii::error('Error getting accounts: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
             return [
                 'status' => 'error',
                 'message' => $e->getMessage()
             ];
         }
     }
+
+    /**
+     * Build hierarchical data structure based on paths
+     * @param array $accounts
+     * @param array $users
+     * @return array
+     */
+    private function buildHierarchyData($accounts, $users)
+    {
+        $hierarchy = [];
+
+        foreach ($accounts as $account) {
+            if ($account->path) {
+                $pathParts = explode('.', $account->path);
+                $currentLevel = &$hierarchy;
+
+                foreach ($pathParts as $part) {
+                    if (!isset($currentLevel[$part])) {
+                        $currentLevel[$part] = [
+                            'user_id' => $part,
+                            'username' => isset($users[$part]) ? $users[$part]->user_name : 'Unknown',
+                            'children' => [],
+                            'accounts' => []
+                        ];
+                    }
+                    $currentLevel = &$currentLevel[$part]['children'];
+                }
+
+                // Add account to the deepest level
+                if (isset($currentLevel[$account->user_id])) {
+                    $currentLevel[$account->user_id]['accounts'][] = [
+                        'id' => $account->id,
+                        'account_id' => $account->account_id,
+                        'bot_name' => $account->bot_name,
+                        'total_profit' => (float)$account->total_profit,
+                        'account_balance' => (float)$account->account_balance,
+                        'status' => $account->status,
+                    ];
+                }
+            }
+        }
+
+        return array_values($hierarchy);
+    }
+
 
     public function actionGetAccountsByUserPost()
     {
