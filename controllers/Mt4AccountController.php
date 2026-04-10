@@ -1403,8 +1403,8 @@ class Mt4AccountController extends Controller
 
             // Get unique users for the response
             $users = Users::find()
-                ->where(['id' => array_unique($userIds)])
-                ->indexBy('id')
+                ->where(['user_id' => array_unique($userIds)])
+                ->indexBy('user_id')
                 ->all();
 
             // Build hierarchical summary
