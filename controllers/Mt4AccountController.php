@@ -1533,18 +1533,21 @@ class Mt4AccountController extends Controller
      */
     private function extractUserIdFromPayload($payload)
     {
-        // Try different possible field names in the payload
-        if (isset($payload->user_id)) {
-            return $payload->user_id;
+        // Check for user ID in various possible locations
+        if (isset($payload['data']['id'])) {
+            return (int)$payload['data']['id'];
         }
-        if (isset($payload->userId)) {
-            return $payload->userId;
+
+        if (isset($payload['user_id'])) {
+            return (int)$payload['user_id'];
         }
-        if (isset($payload->id)) {
-            return $payload->id;
+
+        if (isset($payload['id'])) {
+            return (int)$payload['id'];
         }
-        if (isset($payload->sub)) {
-            return $payload->sub;
+
+        if (isset($payload['sub'])) {
+            return (int)$payload['sub'];
         }
 
         return null;
