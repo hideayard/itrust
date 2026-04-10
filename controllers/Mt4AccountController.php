@@ -1264,61 +1264,34 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User id ' . $currentUserId . ' not found from payload');
             }
 
-            // If no user_id provided, get current user's accounts
-            if ($user_id === null) {
-                $user_id = $currentUser->id;
-            }
-
-            // Check if target user exists
-            $targetUser = Users::findOne($user_id);
-            if (!$targetUser) {
-                throw new NotFoundHttpException('user_id ' . $user_id . 'not found');
-            }
-
-            // Check access rights
+            // Check access rights first (before any user_id logic)
             $canAccess = false;
-            $accessibleUserIds = [];
 
             if ($currentUser->user_tipe == 'ADMIN') {
                 // Admin can access all accounts
                 $canAccess = true;
             } else {
-                // Check if current user can access target user based on path hierarchy
-                $currentUserAccount = Mt4Account::find()
-                    ->where(['user_id' => $currentUser->id])
-                    ->one();
-
-                if ($currentUserAccount && $currentUserAccount->path) {
-                    // Get all user_ids that are descendants of current user
-                    $descendants = Mt4Account::find()
-                        ->where(['like', 'path', $currentUserAccount->path . '.%', false])
-                        ->orWhere(['path' => $currentUserAccount->path])
-                        ->select('user_id')
-                        ->distinct()
-                        ->column();
-
-                    $accessibleUserIds = $descendants;
-
-                    // Current user can access if target user is themselves or descendant
-                    if ($currentUser->id == $user_id || in_array($user_id, $accessibleUserIds)) {
-                        $canAccess = true;
-                    }
-
-                    // Also check if current user is ancestor of target user
-                    $targetUserAccount = Mt4Account::find()
-                        ->where(['user_id' => $user_id])
+                // For non-admin, check if they're accessing their own or descendant accounts
+                if ($user_id === null || $user_id == $currentUser->id) {
+                    $canAccess = true;
+                } else {
+                    // Check hierarchy for non-admin
+                    $currentUserAccount = Mt4Account::find()
+                        ->where(['user_id' => $currentUser->id])
                         ->one();
 
-                    if ($targetUserAccount && $targetUserAccount->path) {
-                        $pathParts = explode('.', $targetUserAccount->path);
-                        // Check if current user's ID is in the path (meaning current user is ancestor)
-                        if (in_array($currentUser->id, $pathParts)) {
-                            $canAccess = true;
+                    if ($currentUserAccount && $currentUserAccount->path) {
+                        $targetUserAccount = Mt4Account::find()
+                            ->where(['user_id' => $user_id])
+                            ->one();
+
+                        if ($targetUserAccount && $targetUserAccount->path) {
+                            $pathParts = explode('.', $targetUserAccount->path);
+                            if (in_array($currentUser->id, $pathParts)) {
+                                $canAccess = true;
+                            }
                         }
                     }
-                } elseif ($currentUser->id == $user_id) {
-                    // User can access their own accounts even without path
-                    $canAccess = true;
                 }
             }
 
@@ -1330,34 +1303,50 @@ class Mt4AccountController extends Controller
             $accountsQuery = Mt4Account::find();
 
             if ($currentUser->user_tipe == 'ADMIN') {
-                // Admin sees all accounts
-                if ($user_id) {
+                // ADMIN: Show all accounts or filter by specific user if provided
+                if ($user_id !== null && $user_id !== '') {
+                    // If specific user_id is provided, show only that user's accounts
                     $accountsQuery->where(['user_id' => $user_id]);
                 }
+                // If no user_id provided, show ALL accounts (no where clause)
             } else {
                 // Non-admin: show own accounts and descendant accounts
-                $currentUserAccount = Mt4Account::find()
-                    ->where(['user_id' => $currentUser->id])
-                    ->one();
+                if ($user_id !== null && $user_id != $currentUser->id) {
+                    // Check if trying to access descendant
+                    $targetUserAccount = Mt4Account::find()
+                        ->where(['user_id' => $user_id])
+                        ->one();
 
-                if ($currentUserAccount && $currentUserAccount->path) {
-                    // Get all descendant user_ids including self
-                    $descendantUsers = Mt4Account::find()
-                        ->where(['like', 'path', $currentUserAccount->path . '.%', false])
-                        ->orWhere(['path' => $currentUserAccount->path])
-                        ->select('user_id')
-                        ->distinct()
-                        ->column();
-
-                    $accountsQuery->where(['user_id' => $descendantUsers]);
-
-                    // If specific user_id requested, filter further
-                    if ($user_id && $user_id != $currentUser->id) {
-                        $accountsQuery->andWhere(['user_id' => $user_id]);
+                    if ($targetUserAccount && $targetUserAccount->path) {
+                        $pathParts = explode('.', $targetUserAccount->path);
+                        if (in_array($currentUser->id, $pathParts)) {
+                            $accountsQuery->where(['user_id' => $user_id]);
+                        } else {
+                            throw new ForbiddenHttpException('You do not have permission to view these accounts');
+                        }
+                    } else {
+                        throw new ForbiddenHttpException('You do not have permission to view these accounts');
                     }
                 } else {
-                    // User has no path, only show their own accounts
-                    $accountsQuery->where(['user_id' => $currentUser->id]);
+                    // Show own accounts and descendants
+                    $currentUserAccount = Mt4Account::find()
+                        ->where(['user_id' => $currentUser->id])
+                        ->one();
+
+                    if ($currentUserAccount && $currentUserAccount->path) {
+                        // Get all descendant user_ids including self
+                        $descendantUsers = Mt4Account::find()
+                            ->where(['like', 'path', $currentUserAccount->path . '.%', false])
+                            ->orWhere(['path' => $currentUserAccount->path])
+                            ->select('user_id')
+                            ->distinct()
+                            ->column();
+
+                        $accountsQuery->where(['user_id' => $descendantUsers]);
+                    } else {
+                        // User has no path, only show their own accounts
+                        $accountsQuery->where(['user_id' => $currentUser->id]);
+                    }
                 }
             }
 
@@ -1365,6 +1354,11 @@ class Mt4AccountController extends Controller
             $accounts = $accountsQuery
                 ->orderBy(['created_at' => SORT_DESC])
                 ->all();
+
+            // If admin and no accounts found, log for debugging
+            if ($currentUser->user_tipe == 'ADMIN' && empty($accounts)) {
+                Yii::info('Admin user ' . $currentUser->id . ' requested accounts but none found. user_id filter: ' . ($user_id ?? 'null'));
+            }
 
             // Format response
             $accountData = [];
@@ -1402,10 +1396,13 @@ class Mt4AccountController extends Controller
             }
 
             // Get unique users for the response
-            $users = Users::find()
-                ->where(['user_id' => array_unique($userIds)])
-                ->indexBy('user_id')
-                ->all();
+            $users = [];
+            if (!empty($userIds)) {
+                $users = Users::find()
+                    ->where(['id' => array_unique($userIds)])
+                    ->indexBy('id')
+                    ->all();
+            }
 
             // Build hierarchical summary
             $summary = [
@@ -1414,7 +1411,6 @@ class Mt4AccountController extends Controller
                 'total_profit' => 0,
                 'avg_profit_percentage' => 0,
                 'active_accounts' => 0,
-                'hierarchy' => []
             ];
 
             // Calculate summary
@@ -1432,8 +1428,11 @@ class Mt4AccountController extends Controller
                 $summary['avg_profit_percentage'] = round($totalProfitPercentage / $summary['total_accounts'], 2);
             }
 
-            // Build hierarchical data structure
-            $hierarchyData = $this->buildHierarchyData($accounts, $users);
+            // Build hierarchical data structure (only for non-admin or when showing hierarchy)
+            $hierarchyData = [];
+            if ($currentUser->user_tipe != 'ADMIN' || ($user_id !== null && $user_id != '')) {
+                $hierarchyData = $this->buildHierarchyData($accounts, $users);
+            }
 
             $responseData = [
                 'status' => 'success',
@@ -1446,18 +1445,25 @@ class Mt4AccountController extends Controller
                         'active_accounts' => (int)$summary['active_accounts'],
                     ],
                     'accounts' => $accountData,
-                    'hierarchy' => $hierarchyData
                 ]
             ];
 
+            // Add hierarchy data if available
+            if (!empty($hierarchyData)) {
+                $responseData['data']['hierarchy'] = $hierarchyData;
+            }
+
             // Include target user info if specific user requested
-            if ($user_id) {
-                $responseData['data']['target_user'] = [
-                    'id' => $targetUser->id,
-                    'username' => $targetUser->user_name,
-                    'email' => $targetUser->user_email,
-                    'user_tipe' => $targetUser->user_tipe,
-                ];
+            if ($user_id !== null && $user_id != '') {
+                $targetUser = Users::findOne($user_id);
+                if ($targetUser) {
+                    $responseData['data']['target_user'] = [
+                        'id' => $targetUser->id,
+                        'username' => $targetUser->user_name,
+                        'email' => $targetUser->user_email,
+                        'user_tipe' => $targetUser->user_tipe,
+                    ];
+                }
             }
 
             // Include current user info for context
