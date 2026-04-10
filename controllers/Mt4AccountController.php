@@ -1266,10 +1266,12 @@ class Mt4AccountController extends Controller
 
             // Check access rights first (before any user_id logic)
             $canAccess = false;
+            $isAdmin = false;
 
             if ($currentUser->user_tipe == 'ADMIN') {
                 // Admin can access all accounts
                 $canAccess = true;
+                $isAdmin = true;
             } else {
                 // For non-admin, check if they're accessing their own or descendant accounts
                 if ($user_id === null || $user_id == $currentUser->id) {
@@ -1302,53 +1304,59 @@ class Mt4AccountController extends Controller
             // Build query for accounts
             $accountsQuery = Mt4Account::find();
 
-            if ($currentUser->user_tipe == 'ADMIN') {
-                // ADMIN: Show all accounts or filter by specific user if provided
-                if ($user_id !== null && $user_id !== '') {
-                    // If specific user_id is provided, show only that user's accounts
-                    $accountsQuery->where(['user_id' => $user_id]);
-                }
-                // If no user_id provided, show ALL accounts (no where clause)
-            } else {
-                // Non-admin: show own accounts and descendant accounts
-                if ($user_id !== null && $user_id != $currentUser->id) {
-                    // Check if trying to access descendant
-                    $targetUserAccount = Mt4Account::find()
-                        ->where(['user_id' => $user_id])
-                        ->one();
+            // if ($currentUser->user_tipe == 'ADMIN') {
+            //     // ADMIN: Show all accounts or filter by specific user if provided
+            //     if ($user_id !== null && $user_id !== '') {
+            //         // If specific user_id is provided, show only that user's accounts
+            //         $accountsQuery->where(['user_id' => $user_id]);
+            //     }
+            //     // If no user_id provided, show ALL accounts (no where clause)
+            // } else 
+            // {
+            if ($isAdmin) {
+                $targetUserAccount = Mt4Account::find()
+                    // ->where(['user_id' => $user_id])
+                    ->all();
+            }
+            // Non-admin: show own accounts and descendant accounts
+            else if ($user_id !== null && $user_id != $currentUser->id) {
+                // Check if trying to access descendant
+                $targetUserAccount = Mt4Account::find()
+                    ->where(['user_id' => $user_id])
+                    ->one();
 
-                    if ($targetUserAccount && $targetUserAccount->path) {
-                        $pathParts = explode('.', $targetUserAccount->path);
-                        if (in_array($currentUser->id, $pathParts)) {
-                            $accountsQuery->where(['user_id' => $user_id]);
-                        } else {
-                            throw new ForbiddenHttpException('You do not have permission to view these accounts');
-                        }
+                if ($targetUserAccount && $targetUserAccount->path) {
+                    $pathParts = explode('.', $targetUserAccount->path);
+                    if (in_array($currentUser->id, $pathParts)) {
+                        $accountsQuery->where(['user_id' => $user_id]);
                     } else {
                         throw new ForbiddenHttpException('You do not have permission to view these accounts');
                     }
                 } else {
-                    // Show own accounts and descendants
-                    $currentUserAccount = Mt4Account::find()
-                        ->where(['user_id' => $currentUser->id])
-                        ->one();
+                    throw new ForbiddenHttpException('You do not have permission to view these accounts');
+                }
+            } else {
+                // Show own accounts and descendants
+                $currentUserAccount = Mt4Account::find()
+                    ->where(['user_id' => $currentUser->id])
+                    ->one();
 
-                    if ($currentUserAccount && $currentUserAccount->path) {
-                        // Get all descendant user_ids including self
-                        $descendantUsers = Mt4Account::find()
-                            ->where(['like', 'path', $currentUserAccount->path . '.%', false])
-                            ->orWhere(['path' => $currentUserAccount->path])
-                            ->select('user_id')
-                            ->distinct()
-                            ->column();
+                if ($currentUserAccount && $currentUserAccount->path) {
+                    // Get all descendant user_ids including self
+                    $descendantUsers = Mt4Account::find()
+                        ->where(['like', 'path', $currentUserAccount->path . '.%', false])
+                        ->orWhere(['path' => $currentUserAccount->path])
+                        ->select('user_id')
+                        ->distinct()
+                        ->column();
 
-                        $accountsQuery->where(['user_id' => $descendantUsers]);
-                    } else {
-                        // User has no path, only show their own accounts
-                        $accountsQuery->where(['user_id' => $currentUser->id]);
-                    }
+                    $accountsQuery->where(['user_id' => $descendantUsers]);
+                } else {
+                    // User has no path, only show their own accounts
+                    $accountsQuery->where(['user_id' => $currentUser->id]);
                 }
             }
+            // }
 
             // Get accounts with ordering
             $accounts = $accountsQuery
