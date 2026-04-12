@@ -4579,25 +4579,23 @@ class MobileController extends Controller
                 ];
             }
 
-            // Get request data from multiple sources
+            // Get request data - TRY MULTIPLE SOURCES
             $requestData = [];
 
-            // Method 1: Try standard POST data
+            // Method 1: Standard POST data (application/x-www-form-urlencoded)
             $postData = \Yii::$app->request->post();
             if (!empty($postData)) {
                 $requestData = $postData;
             }
 
-            // Method 2: If POST is empty, try raw body (JSON or form data)
+            // Method 2: Raw body (for JSON requests)
             if (empty($requestData)) {
                 $rawBody = \Yii::$app->request->getRawBody();
                 if (!empty($rawBody)) {
-                    // Try to decode as JSON first
                     $jsonData = json_decode($rawBody, true);
                     if ($jsonData && json_last_error() === JSON_ERROR_NONE) {
                         $requestData = $jsonData;
                     } else {
-                        // Try to parse as form-urlencoded
                         parse_str($rawBody, $formData);
                         if (!empty($formData)) {
                             $requestData = $formData;
@@ -4606,13 +4604,14 @@ class MobileController extends Controller
                 }
             }
 
-            // Method 3: Try GET parameters as fallback
+            // Method 3: GET parameters (for debugging)
             if (empty($requestData)) {
                 $requestData = \Yii::$app->request->get();
             }
 
-            // Debug logging (remove in production)
-            \Yii::info('CreateDevice - Final request data: ' . json_encode($requestData), 'debug');
+            // DEBUG: Log what we received (remove in production)
+            \Yii::info('CreateDevice - Raw POST: ' . json_encode($_POST), 'debug');
+            \Yii::info('CreateDevice - Request Data: ' . json_encode($requestData), 'debug');
 
             // Determine target user ID
             $targetUserId = $currentUserId;
@@ -4620,7 +4619,7 @@ class MobileController extends Controller
             // Check if current user is admin and trying to assign to another user
             $isAdmin = ($currentUser->user_tipe === 'ADMIN');
 
-            if ($isAdmin && isset($requestData['user_id'])) {
+            if ($isAdmin && isset($requestData['user_id']) && !empty($requestData['user_id'])) {
                 $targetUserId = $requestData['user_id'];
 
                 // Verify target user exists
@@ -4648,13 +4647,16 @@ class MobileController extends Controller
             }
 
             // Validate required fields
-            if (empty($requestData['device_id']) || empty($requestData['device_name'])) {
+            $deviceId = trim($requestData['device_id'] ?? '');
+            $deviceName = trim($requestData['device_name'] ?? '');
+
+            if (empty($deviceId) || empty($deviceName)) {
                 return [
                     'success' => false,
                     'message' => 'Device ID and Device Name are required',
                     'debug' => [
                         'received_data' => $requestData,
-                        'post_data' => \Yii::$app->request->post(),
+                        'post_data' => $_POST,
                         'raw_body' => \Yii::$app->request->getRawBody()
                     ]
                 ];
@@ -4662,15 +4664,15 @@ class MobileController extends Controller
 
             // Check if device already exists for this user
             $existingDevice = UserDevices::find()
-                ->where(['user_id' => $targetUserId, 'device_id' => $requestData['device_id']])
+                ->where(['user_id' => $targetUserId, 'device_id' => $deviceId])
                 ->one();
 
             if ($existingDevice) {
                 if ($existingDevice->is_active == 0) {
                     // Reactivate the device
                     $existingDevice->is_active = 1;
-                    $existingDevice->device_name = $requestData['device_name'];
-                    $existingDevice->device_alias = $requestData['device_alias'] ?? $requestData['device_name'];
+                    $existingDevice->device_name = $deviceName;
+                    $existingDevice->device_alias = $requestData['device_alias'] ?? $deviceName;
                     $existingDevice->device_description = $requestData['device_description'] ?? null;
                     $existingDevice->device_remark = $requestData['device_remark'] ?? null;
                     $existingDevice->modified_by = $currentUserId;
@@ -4699,9 +4701,9 @@ class MobileController extends Controller
             // Create new device
             $device = new UserDevices();
             $device->user_id = $targetUserId;
-            $device->device_id = $requestData['device_id'];
-            $device->device_name = $requestData['device_name'];
-            $device->device_alias = $requestData['device_alias'] ?? $requestData['device_name'];
+            $device->device_id = $deviceId;
+            $device->device_name = $deviceName;
+            $device->device_alias = $requestData['device_alias'] ?? $deviceName;
             $device->device_description = $requestData['device_description'] ?? null;
             $device->device_remark = $requestData['device_remark'] ?? null;
             $device->is_active = 1;
