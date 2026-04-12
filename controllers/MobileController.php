@@ -4579,8 +4579,40 @@ class MobileController extends Controller
                 ];
             }
 
-            // Get request data
-            $requestData = \Yii::$app->request->post();
+            // Get request data from multiple sources
+            $requestData = [];
+
+            // Method 1: Try standard POST data
+            $postData = \Yii::$app->request->post();
+            if (!empty($postData)) {
+                $requestData = $postData;
+            }
+
+            // Method 2: If POST is empty, try raw body (JSON or form data)
+            if (empty($requestData)) {
+                $rawBody = \Yii::$app->request->getRawBody();
+                if (!empty($rawBody)) {
+                    // Try to decode as JSON first
+                    $jsonData = json_decode($rawBody, true);
+                    if ($jsonData && json_last_error() === JSON_ERROR_NONE) {
+                        $requestData = $jsonData;
+                    } else {
+                        // Try to parse as form-urlencoded
+                        parse_str($rawBody, $formData);
+                        if (!empty($formData)) {
+                            $requestData = $formData;
+                        }
+                    }
+                }
+            }
+
+            // Method 3: Try GET parameters as fallback
+            if (empty($requestData)) {
+                $requestData = \Yii::$app->request->get();
+            }
+
+            // Debug logging (remove in production)
+            \Yii::info('CreateDevice - Final request data: ' . json_encode($requestData), 'debug');
 
             // Determine target user ID
             $targetUserId = $currentUserId;
@@ -4619,7 +4651,12 @@ class MobileController extends Controller
             if (empty($requestData['device_id']) || empty($requestData['device_name'])) {
                 return [
                     'success' => false,
-                    'message' => 'Device ID and Device Name are required'
+                    'message' => 'Device ID and Device Name are required',
+                    'debug' => [
+                        'received_data' => $requestData,
+                        'post_data' => \Yii::$app->request->post(),
+                        'raw_body' => \Yii::$app->request->getRawBody()
+                    ]
                 ];
             }
 
@@ -4896,7 +4933,6 @@ class MobileController extends Controller
             ];
         }
     }
-
 
     public function actionGetUsersOld()
     {
