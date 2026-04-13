@@ -107,8 +107,8 @@ class Mt4Account extends ActiveRecord
             [['leverage'], 'default', 'value' => 100],
             
             // Default numeric values
-            [['buy_status'], 'default', 'value' => 0],
-            [['sell_status'], 'default', 'value' => 0],
+            [['buy_status'], 'default', 'value' => 1],
+            [['sell_status'], 'default', 'value' => 1],
             [['disabled_ea'], 'default', 'value' => 0],
             [['buy_order_count'], 'default', 'value' => 0],
             [['sell_order_count'], 'default', 'value' => 0],
