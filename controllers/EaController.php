@@ -549,6 +549,8 @@ class EaController extends Controller
 
         try {
             // Get POST parameters
+            $bot_name = Yii::$app->request->post('bot_name');
+            $broker = Yii::$app->request->post('broker_name');
             $license = Yii::$app->request->post('license');
             $accountId = Yii::$app->request->post('account_id');
 
@@ -603,6 +605,8 @@ class EaController extends Controller
             } else {
                 // Account doesn't exist - create new
                 $mt4Account = new Mt4Account();
+                $mt4Account->bot_name = $bot_name;
+                $mt4Account->broker = $broker;
                 $mt4Account->user_id = $user->user_id;
                 $mt4Account->account_id = (string)$accountId;
                 $mt4Account->status = Mt4Account::STATUS_ACTIVE;
@@ -620,6 +624,8 @@ class EaController extends Controller
             $previousEquity = $mt4Account->account_equity;
 
             // Update account metrics (for both existing and new)
+            $mt4Account->bot_name = $bot_name;
+            $mt4Account->buy_orderbroker_count = $broker;
             $mt4Account->buy_order_count = (int)$buyOrderCount;
             $mt4Account->total_buy_lot = (float)$totalBuyLot;
             $mt4Account->sell_order_count = (int)$sellOrderCount;
