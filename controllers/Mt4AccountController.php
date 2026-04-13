@@ -1729,15 +1729,11 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountId  = Yii::$app->request->post('account_id');
-            $disabledEa = (int)Yii::$app->request->post('disabled_ea', 0); // 0=enable, 1=disable
+            $accountId      = Yii::$app->request->post('account_id');
+            $disabledEaRaw  = Yii::$app->request->post('disabled_ea'); // null if not sent
 
             if (empty($accountId)) {
                 throw new BadRequestHttpException('account_id is required');
-            }
-
-            if (!in_array($disabledEa, [0, 1])) {
-                throw new BadRequestHttpException('disabled_ea must be 0 or 1');
             }
 
             // Verify account exists and user has access
@@ -1745,29 +1741,50 @@ class Mt4AccountController extends Controller
             if ($currentUser->user_tipe !== 'ADMIN') {
                 $query->andWhere(['user_id' => $currentUser->id]);
             }
-            if (!$query->exists()) {
+
+            $account = $query->one();
+            if (!$account) {
                 throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Determine the command:
+            // - If disabled_ea is explicitly sent → use it directly
+            //     disabled_ea = 0 → ENABLED_EA  (caller wants EA on)
+            //     disabled_ea = 1 → DISABLED_EA (caller wants EA off)
+            // - If disabled_ea is NOT sent → toggle based on current db value
+            //     current disabled_ea = 0 (currently enabled)  → DISABLED_EA
+            //     current disabled_ea = 1 (currently disabled) → ENABLED_EA
+            if ($disabledEaRaw !== null) {
+                $disabledEa = (int)$disabledEaRaw;
+
+                if (!in_array($disabledEa, [0, 1])) {
+                    throw new BadRequestHttpException('disabled_ea must be 0 or 1');
+                }
+
+                $orderCmd = $disabledEa === 0 ? 'ENABLED_EA' : 'DISABLED_EA';
+            } else {
+                // Toggle: flip the current state
+                $orderCmd = (int)$account->disabled_ea === 0 ? 'DISABLED_EA' : 'ENABLED_EA';
             }
 
             // Queue the command
             $order = new CloseOrder();
             $order->order_account = $accountId;
-            $order->order_cmd     = 'TOGGLE_EA';
+            $order->order_cmd     = $orderCmd;
             $order->order_status  = 0;
             $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
 
             if (!$order->save()) {
-                throw new ServerErrorHttpException('Failed to queue TOGGLE_EA command: ' . json_encode($order->errors));
+                throw new ServerErrorHttpException('Failed to queue ' . $orderCmd . ' command: ' . json_encode($order->errors));
             }
 
             return [
                 'status'  => 'success',
-                'message' => $disabledEa === 0 ? 'EA enable command sent' : 'EA disable command sent',
+                'message' => $orderCmd === 'ENABLED_EA' ? 'EA enable command sent' : 'EA disable command sent',
                 'data'    => [
-                    'account_id'  => $accountId,
-                    'order_cmd'   => $order->order_cmd,
-                    'disabled_ea' => $disabledEa,
-                    'ea_status'   => $disabledEa === 0 ? 'enabled' : 'disabled',
+                    'account_id'          => $accountId,
+                    'order_cmd'           => $orderCmd,
+                    'current_disabled_ea' => (int)$account->disabled_ea,
                 ],
             ];
         } catch (\Exception $e) {
