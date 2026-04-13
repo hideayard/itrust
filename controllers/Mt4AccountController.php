@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\helpers\JwtHelper;
+use app\models\AccountOrders;
 use app\models\CloseOrder;
 use app\models\Mt4Account;
 use app\models\Users;
@@ -1616,7 +1617,362 @@ class Mt4AccountController extends Controller
         return array_values($hierarchy);
     }
 
+    /**
+     * Get all orders by account ID (all statuses)
+     * 
+     * @return array
+     */
+    public function actionGetOrdersByAccount()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->get('account_id') ?? Yii::$app->request->post('account_id');
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+            if (!$query->exists()) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Get all orders
+            $orders = AccountOrders::find()
+                ->where(['account_id' => $accountId])
+                ->orderBy(['open_time' => SORT_DESC])
+                ->all();
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'account_id' => $accountId,
+                    'total_orders' => count($orders),
+                    'orders' => $this->formatOrders($orders),
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetOrdersByAccount: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get open/modified orders (not closed) by account ID
+     * 
+     * @return array
+     */
+    public function actionGetOpenOrdersByAccount()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->get('account_id') ?? Yii::$app->request->post('account_id');
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+            if (!$query->exists()) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Get open and modified orders (not closed)
+            $orders = AccountOrders::find()
+                ->where(['account_id' => $accountId])
+                ->andWhere(['NOT IN', 'status', [AccountOrders::STATUS_CLOSED, AccountOrders::STATUS_DELETED]])
+                ->orderBy(['open_time' => SORT_DESC])
+                ->all();
+
+            // Calculate totals
+            $totalLots = 0;
+            $totalProfit = 0;
+            foreach ($orders as $order) {
+                if ($order->status === AccountOrders::STATUS_OPEN) {
+                    $totalLots += $order->lots;
+                }
+                $totalProfit += $order->profit;
+            }
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'account_id' => $accountId,
+                    'open_orders' => count($orders),
+                    'total_lots' => $totalLots,
+                    'total_profit' => $totalProfit,
+                    'orders' => $this->formatOrders($orders),
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetOpenOrdersByAccount: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get closed orders by account ID
+     * 
+     * @return array
+     */
+    public function actionGetClosedOrdersByAccount()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->get('account_id') ?? Yii::$app->request->post('account_id');
+            $limit = Yii::$app->request->get('limit') ?? Yii::$app->request->post('limit') ?? 100;
+            $offset = Yii::$app->request->get('offset') ?? Yii::$app->request->post('offset') ?? 0;
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+            if (!$query->exists()) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Get closed orders
+            $ordersQuery = AccountOrders::find()
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
+                ->orderBy(['close_time' => SORT_DESC]);
+
+            $total = $ordersQuery->count();
+            $orders = $ordersQuery->limit($limit)->offset($offset)->all();
+
+            // Calculate statistics
+            $totalProfit = AccountOrders::getTotalProfitByAccount($accountId);
+            $winRate = AccountOrders::getWinRate($accountId);
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'account_id' => $accountId,
+                    'total_closed' => $total,
+                    'total_profit' => $totalProfit,
+                    'win_rate' => $winRate['win_rate'],
+                    'wins' => $winRate['wins'],
+                    'losses' => $total - $winRate['wins'],
+                    'limit' => (int)$limit,
+                    'offset' => (int)$offset,
+                    'orders' => $this->formatOrders($orders),
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetClosedOrdersByAccount: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Get orders summary by account ID
+     * 
+     * @return array
+     */
+    public function actionGetOrdersSummaryByAccount()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->get('account_id') ?? Yii::$app->request->post('account_id');
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+            if (!$query->exists()) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Get summary statistics
+            $totalOrders = AccountOrders::find()->where(['account_id' => $accountId])->count();
+            $openOrders = AccountOrders::find()
+                ->where(['account_id' => $accountId])
+                ->andWhere(['NOT IN', 'status', [AccountOrders::STATUS_CLOSED, AccountOrders::STATUS_DELETED]])
+                ->count();
+            $closedOrders = AccountOrders::find()
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
+                ->count();
+
+            // Orders by type
+            $buyOrders = AccountOrders::find()
+                ->where(['account_id' => $accountId, 'type' => AccountOrders::TYPE_BUY])
+                ->count();
+            $sellOrders = AccountOrders::find()
+                ->where(['account_id' => $accountId, 'type' => AccountOrders::TYPE_SELL])
+                ->count();
+
+            // Total profit/loss
+            $totalProfit = AccountOrders::getTotalProfitByAccount($accountId);
+            $winRate = AccountOrders::getWinRate($accountId);
+
+            // Orders by symbol
+            $symbols = AccountOrders::find()
+                ->select(['symbol', 'COUNT(*) as count', 'SUM(profit) as profit'])
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
+                ->groupBy('symbol')
+                ->asArray()
+                ->all();
+
+            return [
+                'status' => 'success',
+                'data' => [
+                    'account_id' => $accountId,
+                    'summary' => [
+                        'total_orders' => $totalOrders,
+                        'open_orders' => $openOrders,
+                        'closed_orders' => $closedOrders,
+                        'buy_orders' => $buyOrders,
+                        'sell_orders' => $sellOrders,
+                    ],
+                    'performance' => [
+                        'total_profit' => $totalProfit,
+                        'win_rate' => $winRate['win_rate'],
+                        'wins' => $winRate['wins'],
+                        'losses' => $closedOrders - $winRate['wins'],
+                    ],
+                    'by_symbol' => $symbols,
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetOrdersSummaryByAccount: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Format orders for JSON response
+     * 
+     * @param array|AccountOrders[] $orders
+     * @return array
+     */
+    private function formatOrders($orders)
+    {
+        $formatted = [];
+        foreach ($orders as $order) {
+            $formatted[] = [
+                'id' => $order->id,
+                'ticket' => $order->ticket,
+                'symbol' => $order->symbol,
+                'type' => $order->type,
+                'type_desc' => $order->type_desc ?? AccountOrders::getOrderTypeDescription($order->type),
+                'lots' => (float)$order->lots,
+                'open_price' => (float)$order->open_price,
+                'close_price' => (float)$order->close_price,
+                'profit' => (float)$order->profit,
+                'swap' => (float)$order->swap,
+                'commission' => (float)$order->commission,
+                'open_time' => $order->open_time,
+                'open_time_formatted' => date('Y-m-d H:i:s', $order->open_time),
+                'close_time' => $order->close_time,
+                'close_time_formatted' => $order->close_time ? date('Y-m-d H:i:s', $order->close_time) : null,
+                'magic' => $order->magic,
+                'comment' => $order->comment,
+                'status' => $order->status,
+            ];
+        }
+        return $formatted;
+    }
 
     public function actionGetAccountsByUserPost()
     {
