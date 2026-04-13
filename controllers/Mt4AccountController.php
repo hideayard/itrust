@@ -1390,6 +1390,7 @@ class Mt4AccountController extends Controller
                     'account_balance' => (float)$account->account_balance,
                     'account_equity' => (float)$account->account_equity,
                     'floating_value' => (float)$account->floating_value,
+                    'min_lot' => (float)$account->min_lot,
                     'leverage' => $account->leverage,
                     'currency' => $account->currency,
                     'server' => $account->server,
