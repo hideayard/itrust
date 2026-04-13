@@ -563,7 +563,7 @@ class EaController extends Controller
             $accountBalance = Yii::$app->request->post('account_balance', 0);
             $accountEquity = Yii::$app->request->post('account_equity', 0);
             $floatingValue = Yii::$app->request->post('floating_value', 0);
-            $timestamp = Yii::$app->request->post('timestamp', time());
+            // $timestamp = Yii::$app->request->post('timestamp', time());
 
             // Validate required parameters
             if (empty($license)) {
@@ -613,7 +613,8 @@ class EaController extends Controller
                 $mt4Account->currency = 'USD';
                 $mt4Account->leverage = 100;
                 $mt4Account->account_type = Mt4Account::ACCOUNT_TYPE_STANDARD;
-                $mt4Account->last_connected = date('Y-m-d H:i:s', $timestamp);
+                $mt4Account->last_connected = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
+                $mt4Account->last_sync = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
                 $isNewRecord = true;
 
                 Yii::info("Creating new MT4 account record for user {$user->user_id}, account {$accountId}");
@@ -635,7 +636,8 @@ class EaController extends Controller
             $mt4Account->account_balance = (float)$accountBalance;
             $mt4Account->account_equity = (float)$accountEquity;
             $mt4Account->floating_value = (float)$floatingValue;
-            $mt4Account->last_sync = date('Y-m-d H:i:s', $timestamp);
+            $mt4Account->last_connected = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
+            $mt4Account->last_sync = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
 
             // Update status based on equity
             if ($accountEquity > 0) {
