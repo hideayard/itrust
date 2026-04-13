@@ -611,7 +611,7 @@ class EaController extends Controller
                 $mt4Account->bot_name = $bot_name;
                 $mt4Account->broker = $broker;
                 $mt4Account->currency = $currency??'USD';
-                $mt4Account->leverage = $leverage??100;
+                $mt4Account->leverage = intval($leverage)??100;
                 $mt4Account->server = $server;
                 $mt4Account->user_id = $user->user_id;
                 $mt4Account->account_id = (string)$accountId;
@@ -632,7 +632,7 @@ class EaController extends Controller
             $mt4Account->bot_name = $bot_name;
             $mt4Account->broker = $broker;
             $mt4Account->currency = $currency;
-            $mt4Account->leverage = $leverage;
+            $mt4Account->leverage = intval($leverage);
             $mt4Account->server = $server;
             $mt4Account->buy_order_count = (int)$buyOrderCount;
             $mt4Account->total_buy_lot = (float)$totalBuyLot;
