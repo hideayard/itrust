@@ -2160,17 +2160,17 @@ class Mt4AccountController extends Controller
             }
 
             // Check if account has open positions (optional)
-            $openPositions = $this->getOpenPositionsCount($accountId);
-            if ($openPositions == 0) {
-                return [
-                    'status'  => 'success',
-                    'message' => 'No open positions to close',
-                    'data'    => [
-                        'account_id' => $accountId,
-                        'positions_closed' => 0,
-                    ],
-                ];
-            }
+            // $openPositions = $this->getOpenPositionsCount($accountId);
+            // if ($openPositions == 0) {
+            //     return [
+            //         'status'  => 'success',
+            //         'message' => 'No open positions to close',
+            //         'data'    => [
+            //             'account_id' => $accountId,
+            //             'positions_closed' => 0,
+            //         ],
+            //     ];
+            // }
 
             // Queue the close all command
             $order = new CloseOrder();
