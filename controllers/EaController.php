@@ -550,6 +550,9 @@ class EaController extends Controller
         try {
             // Get POST parameters
             $bot_name = Yii::$app->request->post('bot_name');
+            $disabled_ea = Yii::$app->request->post('disabled_ea');
+            $buy_status = Yii::$app->request->post('buy_status');
+            $sell_status = Yii::$app->request->post('sell_status');
             $broker = Yii::$app->request->post('broker');
             $license = Yii::$app->request->post('license');
             $accountId = Yii::$app->request->post('account_id');
@@ -610,15 +613,19 @@ class EaController extends Controller
                 $mt4Account = new Mt4Account();
                 $mt4Account->bot_name = $bot_name;
                 $mt4Account->broker = $broker;
-                $mt4Account->currency = $currency??'USD';
-                $mt4Account->leverage = intval($leverage)??100;
+                $mt4Account->currency = $currency ?? 'USD';
+                $mt4Account->leverage = intval($leverage) ?? 100;
                 $mt4Account->server = $server;
                 $mt4Account->user_id = $user->user_id;
                 $mt4Account->account_id = (string)$accountId;
                 $mt4Account->status = Mt4Account::STATUS_ACTIVE;
                 $mt4Account->account_type = Mt4Account::ACCOUNT_TYPE_STANDARD;
-                $mt4Account->last_connected = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
-                $mt4Account->last_sync = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
+                $mt4Account->last_connected = date('Y-m-d H:i:s'); //date('Y-m-d H:i:s', $timestamp);
+                $mt4Account->last_sync = date('Y-m-d H:i:s'); //date('Y-m-d H:i:s', $timestamp);
+                $mt4Account->disabled_ea = $disabled_ea;
+                $mt4Account->buy_status = $buy_status;
+                $mt4Account->sell_status = $sell_status;
+
                 $isNewRecord = true;
 
                 Yii::info("Creating new MT4 account record for user {$user->user_id}, account {$accountId}");
@@ -643,8 +650,11 @@ class EaController extends Controller
             $mt4Account->account_balance = (float)$accountBalance;
             $mt4Account->account_equity = (float)$accountEquity;
             $mt4Account->floating_value = (float)$floatingValue;
-            $mt4Account->last_connected = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
-            $mt4Account->last_sync = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
+            $mt4Account->last_connected = date('Y-m-d H:i:s'); //date('Y-m-d H:i:s', $timestamp);
+            $mt4Account->last_sync = date('Y-m-d H:i:s'); //date('Y-m-d H:i:s', $timestamp);
+            $mt4Account->disabled_ea = $disabled_ea;
+            $mt4Account->buy_status = $buy_status;
+            $mt4Account->sell_status = $sell_status;
 
             // Update status based on equity
             if ($accountEquity > 0) {
@@ -684,6 +694,9 @@ class EaController extends Controller
                         'equity_new' => $accountEquity,
                     ],
                     'last_sync' => $mt4Account->last_sync,
+                    'disabled_ea' => $mt4Account->disabled_ea,
+                    'buy_status' => $mt4Account->buy_status,
+                    'sell_status' => $mt4Account->sell_status,
                 ];
 
                 Yii::info("MT4 account synced successfully: user_id={$user->user_id}, account_id={$accountId}, is_new={$isNewRecord}");

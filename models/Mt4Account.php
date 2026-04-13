@@ -37,6 +37,7 @@ use yii\db\Expression;
  * @property string|null $remark
  * @property string|null $last_connected
  * @property string|null $last_sync
+ * @property int|null $disabled_ea
  * @property string $created_at
  * @property int|null $created_by
  * @property string $modified_at
@@ -84,7 +85,7 @@ class Mt4Account extends ActiveRecord
             [['user_id', 'account_id'], 'required'],
             
             // Integer fields
-            [['user_id', 'buy_order_count', 'sell_order_count', 'leverage', 'created_by', 'modified_by'], 'integer'],
+            [['user_id', 'buy_order_count', 'sell_order_count', 'leverage', 'created_by', 'modified_by','disabled_ea','buy_status','sell_status'], 'integer'],
             
             // Decimal fields
             [['total_buy_lot', 'total_sell_lot', 'total_profit', 'total_profit_percentage', 
@@ -105,6 +106,9 @@ class Mt4Account extends ActiveRecord
             [['leverage'], 'default', 'value' => 100],
             
             // Default numeric values
+            [['buy_status'], 'default', 'value' => 0],
+            [['sell_status'], 'default', 'value' => 0],
+            [['disabled_ea'], 'default', 'value' => 0],
             [['buy_order_count'], 'default', 'value' => 0],
             [['sell_order_count'], 'default', 'value' => 0],
             [['total_buy_lot'], 'default', 'value' => 0.00],
