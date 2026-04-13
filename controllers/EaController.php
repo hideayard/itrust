@@ -550,9 +550,12 @@ class EaController extends Controller
         try {
             // Get POST parameters
             $bot_name = Yii::$app->request->post('bot_name');
-            $broker = Yii::$app->request->post('broker_name');
+            $broker = Yii::$app->request->post('broker');
             $license = Yii::$app->request->post('license');
             $accountId = Yii::$app->request->post('account_id');
+            $leverage = Yii::$app->request->post('leverage');
+            $currency = Yii::$app->request->post('currency');
+            $server = Yii::$app->request->post('server');
 
             // Get account metrics
             $buyOrderCount = Yii::$app->request->post('buy_order_count', 0);
@@ -607,11 +610,12 @@ class EaController extends Controller
                 $mt4Account = new Mt4Account();
                 $mt4Account->bot_name = $bot_name;
                 $mt4Account->broker = $broker;
+                $mt4Account->currency = $currency??'USD';
+                $mt4Account->leverage = $leverage??100;
+                $mt4Account->server = $server;
                 $mt4Account->user_id = $user->user_id;
                 $mt4Account->account_id = (string)$accountId;
                 $mt4Account->status = Mt4Account::STATUS_ACTIVE;
-                $mt4Account->currency = 'USD';
-                $mt4Account->leverage = 100;
                 $mt4Account->account_type = Mt4Account::ACCOUNT_TYPE_STANDARD;
                 $mt4Account->last_connected = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
                 $mt4Account->last_sync = date('Y-m-d H:i:s');//date('Y-m-d H:i:s', $timestamp);
@@ -627,6 +631,9 @@ class EaController extends Controller
             // Update account metrics (for both existing and new)
             $mt4Account->bot_name = $bot_name;
             $mt4Account->broker = $broker;
+            $mt4Account->currency = $currency;
+            $mt4Account->leverage = $leverage;
+            $mt4Account->server = $server;
             $mt4Account->buy_order_count = (int)$buyOrderCount;
             $mt4Account->total_buy_lot = (float)$totalBuyLot;
             $mt4Account->sell_order_count = (int)$sellOrderCount;
