@@ -44,8 +44,8 @@ class AccountOrders extends ActiveRecord
     /**
      * Status constants
      */
-    const STATUS_OPEN = 'open';      
-    const STATUS_MODIFIED = 'modified';      
+    const STATUS_OPEN = 'open';
+    const STATUS_MODIFIED = 'modified';
     const STATUS_CLOSED = 'closed';
     const STATUS_DELETED = 'deleted';
 
@@ -191,9 +191,14 @@ class AccountOrders extends ActiveRecord
      */
     public static function getTotalProfitByAccount($accountId)
     {
-        return self::find()
+        $result = self::find()
+            ->select([
+                'total' => 'SUM(profit + swap + commission)'
+            ])
             ->where(['account_id' => $accountId, 'status' => self::STATUS_CLOSED])
-            ->sum('profit') ?? 0;
+            ->scalar();
+
+        return (float)($result ?? 0);
     }
 
     /**
@@ -205,9 +210,14 @@ class AccountOrders extends ActiveRecord
      */
     public static function getProfitBySymbol($accountId, $symbol)
     {
-        return self::find()
+        $result = self::find()
+            ->select([
+                'total' => 'SUM(profit + swap + commission)'
+            ])
             ->where(['account_id' => $accountId, 'symbol' => $symbol, 'status' => self::STATUS_CLOSED])
-            ->sum('profit') ?? 0;
+            ->scalar();
+
+        return (float)($result ?? 0);
     }
 
     /**
