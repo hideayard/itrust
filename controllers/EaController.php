@@ -625,7 +625,7 @@ class EaController extends Controller
 
             // Update account metrics (for both existing and new)
             $mt4Account->bot_name = $bot_name;
-            $mt4Account->buy_orderbroker_count = $broker;
+            $mt4Account->broker = $broker;
             $mt4Account->buy_order_count = (int)$buyOrderCount;
             $mt4Account->total_buy_lot = (float)$totalBuyLot;
             $mt4Account->sell_order_count = (int)$sellOrderCount;
