@@ -14,19 +14,16 @@ use app\models\MyfxbookInterestRate;
 use app\models\MyfxbookScrapedData;
 use app\models\MyfxbookScrapedDataNew;
 use app\models\MyfxbookStatistics;
-use app\models\MyfxbookTechnicalPattern;
 use app\models\ScrapedDataLog;
 use app\models\TelemetryData;
 use app\models\UserDevices;
 use app\models\Users;
 use Yii;
-use yii\filters\Cors;
 use yii\validators\EmailValidator; // Add this import
 use yii\web\BadRequestHttpException;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
-use yii\web\UploadedFile;
 
 class MobileController extends Controller
 {

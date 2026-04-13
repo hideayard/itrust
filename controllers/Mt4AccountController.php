@@ -3,6 +3,7 @@
 namespace app\controllers;
 
 use app\helpers\JwtHelper;
+use app\models\CloseOrder;
 use app\models\Mt4Account;
 use app\models\Users;
 use Yii;
@@ -1700,5 +1701,232 @@ class Mt4AccountController extends Controller
             $formatted[] = $this->formatAccountData($account);
         }
         return $formatted;
+    }
+
+    /**
+     * Toggle EA (disabled_ea) for an account
+     * POST: account_id, disabled_ea (0 = enabled, 1 = disabled)
+     */
+    public function actionToggleAutoTrade()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId  = Yii::$app->request->post('account_id');
+            $disabledEa = (int)Yii::$app->request->post('disabled_ea', 0); // 0=enable, 1=disable
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            if (!in_array($disabledEa, [0, 1])) {
+                throw new BadRequestHttpException('disabled_ea must be 0 or 1');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+            if (!$query->exists()) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Queue the command
+            $order = new CloseOrder();
+            $order->order_account = $accountId;
+            $order->order_cmd     = 'TOGGLE_EA';
+            $order->order_status  = 0;
+            $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue TOGGLE_EA command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => $disabledEa === 0 ? 'EA enable command sent' : 'EA disable command sent',
+                'data'    => [
+                    'account_id'  => $accountId,
+                    'order_cmd'   => $order->order_cmd,
+                    'disabled_ea' => $disabledEa,
+                    'ea_status'   => $disabledEa === 0 ? 'enabled' : 'disabled',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionToggleAutoTrade: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Toggle buy or sell status for an account
+     * POST: account_id, type (buy|sell), status (0=disabled, 1=enabled)
+     */
+    public function actionToggleBuySellStatus()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->post('account_id');
+            $type      = strtoupper(Yii::$app->request->post('type', '')); // 'buy' or 'sell' → 'BUY' or 'SELL'
+            $status    = (int)Yii::$app->request->post('status', 0);       // 0=disable, 1=enable
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            if (!in_array($type, ['BUY', 'SELL'])) {
+                throw new BadRequestHttpException('type must be "buy" or "sell"');
+            }
+
+            if (!in_array($status, [0, 1])) {
+                throw new BadRequestHttpException('status must be 0 or 1');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+            if (!$query->exists()) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Queue the command — order_cmd is "BUY" or "SELL"
+            $order = new CloseOrder();
+            $order->order_account = $accountId;
+            $order->order_cmd     = $type; // 'BUY' or 'SELL'
+            $order->order_status  = 0;
+            $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue ' . $type . ' command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => $type . ' orders ' . ($status === 1 ? 'enable' : 'disable') . ' command sent',
+                'data'    => [
+                    'account_id' => $accountId,
+                    'order_cmd'  => $order->order_cmd,
+                    'type'       => strtolower($type),
+                    'status'     => $status,
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionToggleBuySellStatus: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Close all orders for an account
+     * POST: account_id
+     */
+    public function actionCloseOrders()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->post('account_id');
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+            if (!$query->exists()) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Queue the command — same pattern as actionClose()
+            $order = new CloseOrder();
+            $order->order_account = $accountId;
+            $order->order_cmd     = 'close_all';
+            $order->order_status  = 0;
+            $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue close_all command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => 'Close all orders command sent successfully',
+                'data'    => [
+                    'account_id' => $accountId,
+                    'order_cmd'  => $order->order_cmd,
+                    'note'       => 'The EA will close all orders on next tick',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionCloseOrders: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
     }
 }
