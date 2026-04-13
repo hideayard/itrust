@@ -559,7 +559,6 @@ class EaController extends Controller
             $leverage = Yii::$app->request->post('leverage');
             $currency = Yii::$app->request->post('currency');
             $server = Yii::$app->request->post('server');
-            $min_lot = Yii::$app->request->post('min_lot');
 
             // Get account metrics
             $buyOrderCount = Yii::$app->request->post('buy_order_count', 0);
@@ -570,6 +569,7 @@ class EaController extends Controller
             $accountBalance = Yii::$app->request->post('account_balance', 0);
             $accountEquity = Yii::$app->request->post('account_equity', 0);
             $floatingValue = Yii::$app->request->post('floating_value', 0);
+            $min_lot = Yii::$app->request->post('min_lot', 0.01);
             // $timestamp = Yii::$app->request->post('timestamp', time());
 
             // Validate required parameters
@@ -617,7 +617,7 @@ class EaController extends Controller
                 $mt4Account->currency = $currency ?? 'USD';
                 $mt4Account->leverage = intval($leverage) ?? 100;
                 $mt4Account->server = $server;
-                $mt4Account->min_lot = $min_lot;
+                $mt4Account->min_lot = (float)$min_lot;
                 $mt4Account->user_id = $user->user_id;
                 $mt4Account->account_id = (string)$accountId;
                 $mt4Account->status = Mt4Account::STATUS_ACTIVE;
@@ -643,7 +643,7 @@ class EaController extends Controller
             $mt4Account->currency = $currency;
             $mt4Account->leverage = intval($leverage);
             $mt4Account->server = $server;
-            $mt4Account->min_lot = $min_lot;
+            $mt4Account->min_lot = (float)$min_lot;
             $mt4Account->buy_order_count = (int)$buyOrderCount;
             $mt4Account->total_buy_lot = (float)$totalBuyLot;
             $mt4Account->sell_order_count = (int)$sellOrderCount;
