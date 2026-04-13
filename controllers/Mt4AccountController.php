@@ -1947,4 +1947,267 @@ class Mt4AccountController extends Controller
             ];
         }
     }
+
+    public function actionOrderBuy()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->post('account_id');
+            $lot       = Yii::$app->request->post('lot');
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            if (empty($lot) || !is_numeric($lot) || $lot <= 0) {
+                throw new BadRequestHttpException('Valid lot value is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+
+            $account = $query->one();
+            if (!$account) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Check if buy is enabled for this account
+            if (isset($account->buy_status) && $account->buy_status == 0) {
+                throw new BadRequestHttpException('Buy orders are disabled for this account');
+            }
+
+            // Check minimum lot size
+            $minLot = isset($account->min_lot) ? (float)$account->min_lot : 0.01;
+            if ($lot < $minLot) {
+                throw new BadRequestHttpException("Lot size cannot be less than minimum lot: {$minLot}");
+            }
+
+            // Queue the buy order command
+            $order = new CloseOrder(); // Or create a new model for orders
+            $order->order_account = $accountId;
+            $order->order_cmd     = 'buy'; // or 'order_buy'
+            $order->order_lot     = $lot;
+            $order->order_status  = 0; // 0 = pending, 1 = completed, 2 = failed
+            $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue buy command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => 'Buy order command sent successfully',
+                'data'    => [
+                    'account_id' => $accountId,
+                    'lot'        => $lot,
+                    'order_cmd'  => $order->order_cmd,
+                    'note'       => 'The EA will place buy order on next tick',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionOrderBuy: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function actionOrderSell()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->post('account_id');
+            $lot       = Yii::$app->request->post('lot');
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            if (empty($lot) || !is_numeric($lot) || $lot <= 0) {
+                throw new BadRequestHttpException('Valid lot value is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+
+            $account = $query->one();
+            if (!$account) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Check if sell is enabled for this account
+            if (isset($account->sell_status) && $account->sell_status == 0) {
+                throw new BadRequestHttpException('Sell orders are disabled for this account');
+            }
+
+            // Check minimum lot size
+            $minLot = isset($account->min_lot) ? (float)$account->min_lot : 0.01;
+            if ($lot < $minLot) {
+                throw new BadRequestHttpException("Lot size cannot be less than minimum lot: {$minLot}");
+            }
+
+            // Queue the sell order command
+            $order = new CloseOrder(); // Or create a new model for orders
+            $order->order_account = $accountId;
+            $order->order_cmd     = 'sell'; // or 'order_sell'
+            $order->order_lot     = $lot;
+            $order->order_status  = 0; // 0 = pending, 1 = completed, 2 = failed
+            $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue sell command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => 'Sell order command sent successfully',
+                'data'    => [
+                    'account_id' => $accountId,
+                    'lot'        => $lot,
+                    'order_cmd'  => $order->order_cmd,
+                    'note'       => 'The EA will place sell order on next tick',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionOrderSell: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function actionCloseAllPositions()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountId = Yii::$app->request->post('account_id');
+
+            if (empty($accountId)) {
+                throw new BadRequestHttpException('account_id is required');
+            }
+
+            // Verify account exists and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountId]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+
+            $account = $query->one();
+            if (!$account) {
+                throw new NotFoundHttpException('Account not found or access denied');
+            }
+
+            // Check if account has open positions (optional)
+            $openPositions = $this->getOpenPositionsCount($accountId);
+            if ($openPositions == 0) {
+                return [
+                    'status'  => 'success',
+                    'message' => 'No open positions to close',
+                    'data'    => [
+                        'account_id' => $accountId,
+                        'positions_closed' => 0,
+                    ],
+                ];
+            }
+
+            // Queue the close all command
+            $order = new CloseOrder();
+            $order->order_account = $accountId;
+            $order->order_cmd     = 'close_all';
+            $order->order_status  = 0;
+            $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue close_all command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => 'Close all orders command sent successfully',
+                'data'    => [
+                    'account_id' => $accountId,
+                    'order_cmd'  => $order->order_cmd,
+                    'note'       => 'The EA will close all orders on next tick',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionCloseAllPositions: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    // Helper method to get open positions count (implement as needed)
+    private function getOpenPositionsCount($accountId)
+    {
+        // Implement based on your data structure
+        // This could query your orders table or MT4 API
+        return CloseOrder::find()
+            ->where(['order_account' => $accountId, 'order_cmd' => ['buy', 'sell'], 'order_status' => 0])
+            ->count();
+    }
 }
