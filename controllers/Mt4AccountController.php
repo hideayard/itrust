@@ -1734,11 +1734,13 @@ class Mt4AccountController extends Controller
             // Calculate totals
             $totalLots = 0;
             $totalProfit = 0;
+            $totalFloating = 0;
             foreach ($orders as $order) {
-                if ($order->status === AccountOrders::STATUS_OPEN) {
+                if ($order->status == AccountOrders::STATUS_OPEN || $order->status == AccountOrders::STATUS_MODIFIED) {
                     $totalLots += $order->lots;
                 }
                 $totalProfit += $order->profit;
+                $totalFloating += ($order->profit + $order->swap + $order->commission);
             }
 
             return [
@@ -1747,6 +1749,7 @@ class Mt4AccountController extends Controller
                     'account_id' => $accountId,
                     'open_orders' => count($orders),
                     'total_lots' => $totalLots,
+                    'total_floating' => $totalFloating,
                     'total_profit' => $totalProfit,
                     'orders' => $this->formatOrders($orders),
                 ]
