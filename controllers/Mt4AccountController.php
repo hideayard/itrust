@@ -2006,8 +2006,8 @@ class Mt4AccountController extends Controller
             // Queue the buy order command
             $order = new CloseOrder(); // Or create a new model for orders
             $order->order_account = $accountId;
-            $order->order_cmd     = 'buy'; // or 'order_buy'
-            $order->order_lot     = $lot;
+            $order->order_cmd     = 'BUY'; // or 'order_buy'
+            // $order->order_lot     = $lot;
             $order->order_status  = 0; // 0 = pending, 1 = completed, 2 = failed
             $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
 
@@ -2092,8 +2092,8 @@ class Mt4AccountController extends Controller
             // Queue the sell order command
             $order = new CloseOrder(); // Or create a new model for orders
             $order->order_account = $accountId;
-            $order->order_cmd     = 'sell'; // or 'order_sell'
-            $order->order_lot     = $lot;
+            $order->order_cmd     = 'SELL'; // or 'order_sell'
+            // $order->order_lot     = $lot;
             $order->order_status  = 0; // 0 = pending, 1 = completed, 2 = failed
             $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
 
@@ -2175,7 +2175,7 @@ class Mt4AccountController extends Controller
             // Queue the close all command
             $order = new CloseOrder();
             $order->order_account = $accountId;
-            $order->order_cmd     = 'close_all';
+            $order->order_cmd     = 'CLOSE_ALL';
             $order->order_status  = 0;
             $order->order_date    = (new \DateTime())->format('Y-m-d H:i:s');
 
