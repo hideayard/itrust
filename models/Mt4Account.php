@@ -42,6 +42,7 @@ use yii\db\Expression;
  * @property int|null $created_by
  * @property string $modified_at
  * @property int|null $modified_by
+ * @property float|null $min_lot
  *
  * @property Users $user
  * @property Users $createdBy
@@ -88,7 +89,7 @@ class Mt4Account extends ActiveRecord
             [['user_id', 'buy_order_count', 'sell_order_count', 'leverage', 'created_by', 'modified_by','disabled_ea','buy_status','sell_status'], 'integer'],
             
             // Decimal fields
-            [['total_buy_lot', 'total_sell_lot', 'total_profit', 'total_profit_percentage', 
+            [['min_lot','total_buy_lot', 'total_sell_lot', 'total_profit', 'total_profit_percentage', 
               'account_balance', 'account_equity', 'floating_value'], 'number'],
             
             // String fields
@@ -111,6 +112,7 @@ class Mt4Account extends ActiveRecord
             [['disabled_ea'], 'default', 'value' => 0],
             [['buy_order_count'], 'default', 'value' => 0],
             [['sell_order_count'], 'default', 'value' => 0],
+            [['min_lot'], 'default', 'value' => 0.00],
             [['total_buy_lot'], 'default', 'value' => 0.00],
             [['total_sell_lot'], 'default', 'value' => 0.00],
             [['total_profit'], 'default', 'value' => 0.00],
@@ -155,6 +157,7 @@ class Mt4Account extends ActiveRecord
             'account_id' => Yii::t('app', 'Account ID'),
             'bot_name' => Yii::t('app', 'Bot Name'),
             'buy_order_count' => Yii::t('app', 'Buy Orders'),
+            'min_lot' => Yii::t('app', 'Min Lot'),
             'total_buy_lot' => Yii::t('app', 'Total Buy Lot'),
             'sell_order_count' => Yii::t('app', 'Sell Orders'),
             'total_sell_lot' => Yii::t('app', 'Total Sell Lot'),
