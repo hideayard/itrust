@@ -21,6 +21,32 @@ class Mt4AccountController extends Controller
     public $enableCsrfValidation = false;
 
     /**
+     * @inheritdoc
+     */
+    public function behaviors()
+    {
+        $behaviors = parent::behaviors();
+
+        // Remove CSRF validation for API requests
+        unset($behaviors['authenticator']);
+
+        // Add CORS filter
+        $behaviors['corsFilter'] = [
+            'class' => \yii\filters\Cors::className(),
+            'cors' => [
+                'Origin' => ['*'], // Or restrict to specific domains: ['http://yourdomain.com']
+                'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
+                'Access-Control-Request-Headers' => ['*'],
+                'Access-Control-Allow-Credentials' => true,
+                'Access-Control-Max-Age' => 86400,
+                'Access-Control-Expose-Headers' => [],
+            ],
+        ];
+
+        return $behaviors;
+    }
+
+    /**
      * Action to save or update MT4 account data
      * Client sends POST data: account_id, buy_order_count, total_buy_lot, 
      * sell_order_count, total_sell_lot, total_profit, account_balance, 
