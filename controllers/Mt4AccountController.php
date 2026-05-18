@@ -6,6 +6,7 @@ use app\helpers\JwtHelper;
 use app\models\AccountOrders;
 use app\models\CloseOrder;
 use app\models\Mt4Account;
+use app\models\Mt4Group;
 use app\models\Users;
 use Yii;
 use yii\web\BadRequestHttpException;
@@ -1332,15 +1333,6 @@ class Mt4AccountController extends Controller
             // Build query for accounts
             $accountsQuery = Mt4Account::find();
 
-            // if ($currentUser->user_tipe == 'ADMIN') {
-            //     // ADMIN: Show all accounts or filter by specific user if provided
-            //     if ($user_id !== null && $user_id !== '') {
-            //         // If specific user_id is provided, show only that user's accounts
-            //         $accountsQuery->where(['user_id' => $user_id]);
-            //     }
-            //     // If no user_id provided, show ALL accounts (no where clause)
-            // } else 
-            // {
             if ($isAdmin) {
                 $targetUserAccount = Mt4Account::find()
                     // ->where(['user_id' => $user_id])
@@ -1384,7 +1376,6 @@ class Mt4AccountController extends Controller
                     $accountsQuery->where(['user_id' => $currentUser->id]);
                 }
             }
-            // }
 
             // Get accounts with ordering
             $accounts = $accountsQuery
@@ -1399,9 +1390,11 @@ class Mt4AccountController extends Controller
             // Format response
             $accountData = [];
             $userIds = [];
+            $accountMt4Ids = []; // Collect MT4 account IDs for group lookup
 
             foreach ($accounts as $account) {
                 $userIds[] = $account->user_id;
+                $accountMt4Ids[] = $account->account_id; // Collect account IDs
                 $accountData[] = [
                     'id' => $account->id,
                     'user_id' => $account->user_id,
@@ -1442,6 +1435,63 @@ class Mt4AccountController extends Controller
                     ->where(['user_id' => array_unique($userIds)])
                     ->indexBy('user_id')
                     ->all();
+            }
+
+            // ===== NEW: Query Mt4Group and build group data =====
+            $groupData = [];
+            if (!empty($accountMt4Ids)) {
+                // Get all active groups
+                $groups = Mt4Group::find()
+                    ->where(['status' => Mt4Group::STATUS_ACTIVE])
+                    ->all();
+
+                foreach ($groups as $group) {
+                    $groupMt4Ids = $group->getMt4IdsArray();
+
+                    // Find matching accounts for this group
+                    $matchingAccounts = [];
+                    $groupAccountIds = array_intersect($accountMt4Ids, $groupMt4Ids);
+
+                    if (!empty($groupAccountIds)) {
+                        foreach ($accounts as $account) {
+                            if (in_array($account->account_id, $groupAccountIds)) {
+                                $matchingAccounts[] = [
+                                    'id' => $account->id,
+                                    'account_id' => $account->account_id,
+                                    'user_id' => $account->user_id,
+                                    'bot_name' => $account->bot_name,
+                                    'total_profit' => (float)$account->total_profit,
+                                    'account_balance' => (float)$account->account_balance,
+                                    'account_equity' => (float)$account->account_equity,
+                                ];
+                            }
+                        }
+
+                        // Calculate group summary
+                        $groupTotalProfit = array_sum(array_column($matchingAccounts, 'total_profit'));
+                        $groupTotalBalance = array_sum(array_column($matchingAccounts, 'account_balance'));
+                        $groupTotalEquity = array_sum(array_column($matchingAccounts, 'account_equity'));
+
+                        $groupData[] = [
+                            'id' => $group->id,
+                            'name' => $group->name,
+                            'desc' => $group->desc,
+                            'remark' => $group->remark,
+                            'mt4_ids' => $groupMt4Ids,
+                            'total_accounts' => count($matchingAccounts),
+                            'total_profit' => $groupTotalProfit,
+                            'total_balance' => $groupTotalBalance,
+                            'total_equity' => $groupTotalEquity,
+                            'avg_profit_per_account' => count($matchingAccounts) > 0
+                                ? round($groupTotalProfit / count($matchingAccounts), 2)
+                                : 0,
+                            'accounts' => $matchingAccounts,
+                            'created_by' => $group->created_by,
+                            'created_at' => $group->created_at,
+                            'status' => $group->status,
+                        ];
+                    }
+                }
             }
 
             // Build hierarchical summary
@@ -1485,6 +1535,7 @@ class Mt4AccountController extends Controller
                         'active_accounts' => (int)$summary['active_accounts'],
                     ],
                     'accounts' => $accountData,
+                    'groups' => $groupData, // ===== NEW: Add groups to response =====
                 ]
             ];
 
@@ -1542,6 +1593,7 @@ class Mt4AccountController extends Controller
             ];
         }
     }
+
 
     /**
      * Extract token from request headers
