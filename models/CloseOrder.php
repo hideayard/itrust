@@ -23,7 +23,7 @@ class CloseOrder extends \yii\db\ActiveRecord
             [['order_date'], 'safe'],
             [['order_status'], 'integer'],
             [['order_account','order_cmd'], 'string', 'max' => 50],
-            [['order_multi_account'], 'string'], // JSON will be stored as text
+            [['order_multi_account', 'order_finished_account'], 'string'], // JSON will be stored as text
         ];
     }
 
@@ -39,6 +39,7 @@ class CloseOrder extends \yii\db\ActiveRecord
             'order_status' => 'Order Status',
             'order_date' => 'Order Date',
             'order_multi_account' => 'Multi Account',
+            'order_finished_account' => 'Finished Account',
         ];
     }
     
@@ -61,5 +62,37 @@ class CloseOrder extends \yii\db\ActiveRecord
     public function setMultiAccounts(array $accounts)
     {
         $this->order_multi_account = json_encode($accounts);
+    }
+
+    /**
+     * Get finished accounts as array
+     * @return array
+     */
+    public function getFinishedAccounts()
+    {
+        if (empty($this->order_finished_account)) {
+            return [];
+        }
+        return json_decode($this->order_finished_account, true) ?? [];
+    }
+
+    /**
+     * Set finished accounts from array
+     * @param array $accounts
+     */
+    public function setFinishedAccounts(array $accounts)
+    {
+        $this->order_finished_account = json_encode(array_values(array_unique($accounts)));
+    }
+
+    /**
+     * Mark one account as finished.
+     * @param string|int $account
+     */
+    public function addFinishedAccount($account)
+    {
+        $finishedAccounts = $this->getFinishedAccounts();
+        $finishedAccounts[] = (string)$account;
+        $this->setFinishedAccounts($finishedAccounts);
     }
 }

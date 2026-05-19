@@ -89,13 +89,51 @@ class EaController extends Controller
         $account = Yii::$app->request->post('id');
 
         if ($account) {
+            $updated = false;
 
-            $updateCount = CloseOrder::updateAll(
-                ['order_status' => 1], // Update attributes
-                ['order_account' => $account] // Condition: where id IN ($account)
-            );
+            $directOrders = CloseOrder::find()
+                ->where(['order_account' => $account, 'order_status' => 0])
+                ->all();
 
-            if ($updateCount > 0) {
+            foreach ($directOrders as $order) {
+                $order->addFinishedAccount($account);
+                $order->order_status = 1;
+                if ($order->save()) {
+                    $updated = true;
+                }
+            }
+
+            $multiOrders = CloseOrder::find()
+                ->where(['order_status' => 0])
+                ->andWhere(['not', ['order_multi_account' => null]])
+                ->andWhere(['not', ['order_multi_account' => '']])
+                ->all();
+
+            foreach ($multiOrders as $order) {
+                $multiAccounts = array_map('strval', $order->getMultiAccounts());
+                $accountKey = (string)$account;
+
+                if (!in_array($accountKey, $multiAccounts, true)) {
+                    continue;
+                }
+
+                $finishedAccounts = array_map('strval', $order->getFinishedAccounts());
+                if (!in_array($accountKey, $finishedAccounts, true)) {
+                    $finishedAccounts[] = $accountKey;
+                    $order->setFinishedAccounts($finishedAccounts);
+                }
+
+                $remainingAccounts = array_diff($multiAccounts, array_map('strval', $order->getFinishedAccounts()));
+                if (empty($remainingAccounts)) {
+                    $order->order_status = 1;
+                }
+
+                if ($order->save()) {
+                    $updated = true;
+                }
+            }
+
+            if ($updated) {
                 return 1; //return ['success' => true, 'message' => "Updated $updateCount records."];
             } else {
                 return 0; //return ['success' => false, 'message' => "No records updated."];
@@ -138,8 +176,17 @@ class EaController extends Controller
                     ->all();
 
                 foreach ($multiOrders as $multiOrder) {
-                    $multiAccounts = $multiOrder->getMultiAccounts();
-                    if (in_array($accountID, $multiAccounts)) {
+                    $multiAccounts = array_map('strval', $multiOrder->getMultiAccounts());
+                    $finishedAccounts = array_map('strval', $multiOrder->getFinishedAccounts());
+                    $accountKey = (string)$accountID;
+
+                    if (!array_diff($multiAccounts, $finishedAccounts)) {
+                        $multiOrder->order_status = 1;
+                        $multiOrder->save(false);
+                        continue;
+                    }
+
+                    if (in_array($accountKey, $multiAccounts, true) && !in_array($accountKey, $finishedAccounts, true)) {
                         $order = $multiOrder;
                         break;
                     }
