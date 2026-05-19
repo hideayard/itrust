@@ -2676,7 +2676,22 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIds = Yii::$app->request->post('account_ids'); // Accept array of account IDs
+            $accountIdsRaw = Yii::$app->request->post('account_ids');
+
+            // Parse account_ids - handle both JSON string and array formats
+            if (is_string($accountIdsRaw)) {
+                $accountIds = json_decode($accountIdsRaw, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
+                }
+            } else {
+                $accountIds = $accountIdsRaw;
+            }
+
+            if (empty($accountIds) || !is_array($accountIds)) {
+                throw new BadRequestHttpException('account_ids must be a non-empty array');
+            }
+
 
             if (empty($accountIds) || !is_array($accountIds)) {
                 throw new BadRequestHttpException('account_ids must be a non-empty array');
@@ -2764,7 +2779,22 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIds = Yii::$app->request->post('account_ids');
+            $accountIdsRaw = Yii::$app->request->post('account_ids');
+
+            // Parse account_ids - handle both JSON string and array formats
+            if (is_string($accountIdsRaw)) {
+                $accountIds = json_decode($accountIdsRaw, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
+                }
+            } else {
+                $accountIds = $accountIdsRaw;
+            }
+
+            if (empty($accountIds) || !is_array($accountIds)) {
+                throw new BadRequestHttpException('account_ids must be a non-empty array');
+            }
+
             $lot        = Yii::$app->request->post('lot');
 
             if (empty($accountIds) || !is_array($accountIds)) {
@@ -2874,7 +2904,22 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIds = Yii::$app->request->post('account_ids');
+            $accountIdsRaw = Yii::$app->request->post('account_ids');
+
+            // Parse account_ids - handle both JSON string and array formats
+            if (is_string($accountIdsRaw)) {
+                $accountIds = json_decode($accountIdsRaw, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
+                }
+            } else {
+                $accountIds = $accountIdsRaw;
+            }
+
+            if (empty($accountIds) || !is_array($accountIds)) {
+                throw new BadRequestHttpException('account_ids must be a non-empty array');
+            }
+
             $lot        = Yii::$app->request->post('lot');
 
             if (empty($accountIds) || !is_array($accountIds)) {
@@ -2984,8 +3029,18 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIds   = Yii::$app->request->post('account_ids');
+            $accountIdsRaw = Yii::$app->request->post('account_ids');
             $disabledEaRaw = Yii::$app->request->post('disabled_ea'); // 0 = enable, 1 = disable, null = toggle
+
+            // Parse account_ids - handle both JSON string and array formats
+            if (is_string($accountIdsRaw)) {
+                $accountIds = json_decode($accountIdsRaw, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
+                }
+            } else {
+                $accountIds = $accountIdsRaw;
+            }
 
             if (empty($accountIds) || !is_array($accountIds)) {
                 throw new BadRequestHttpException('account_ids must be a non-empty array');
