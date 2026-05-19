@@ -2648,6 +2648,73 @@ class Mt4AccountController extends Controller
             ->count();
     }
 
+    /**
+     * Read a request value from form-data, x-www-form-urlencoded, or JSON body.
+     */
+    private function getRequestParam($name, $default = null)
+    {
+        $value = Yii::$app->request->post($name, null);
+        if ($value !== null) {
+            return $value;
+        }
+
+        $rawBody = Yii::$app->request->getRawBody();
+        if (empty($rawBody)) {
+            return $default;
+        }
+
+        $body = json_decode($rawBody, true);
+        if (json_last_error() !== JSON_ERROR_NONE || !is_array($body)) {
+            return $default;
+        }
+
+        return array_key_exists($name, $body) ? $body[$name] : $default;
+    }
+
+    /**
+     * Normalize account_ids from JSON array, JSON string, repeated form field,
+     * or comma-separated value into a unique numeric array.
+     */
+    private function parseAccountIds($accountIdsRaw)
+    {
+        if (is_string($accountIdsRaw)) {
+            $accountIdsRaw = trim($accountIdsRaw);
+
+            if ($accountIdsRaw === '') {
+                $accountIds = [];
+            } elseif ($accountIdsRaw[0] === '[') {
+                $accountIds = json_decode($accountIdsRaw, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
+                }
+            } else {
+                $accountIds = array_map('trim', explode(',', $accountIdsRaw));
+            }
+        } else {
+            $accountIds = $accountIdsRaw;
+        }
+
+        if (empty($accountIds) || !is_array($accountIds)) {
+            throw new BadRequestHttpException('account_ids must be a non-empty array');
+        }
+
+        $accountIds = array_values(array_filter($accountIds, static function ($accountId) {
+            return $accountId !== null && $accountId !== '';
+        }));
+
+        if (empty($accountIds)) {
+            throw new BadRequestHttpException('account_ids must be a non-empty array');
+        }
+
+        foreach ($accountIds as $accountId) {
+            if (!is_numeric($accountId)) {
+                throw new BadRequestHttpException('All account IDs must be numeric');
+            }
+        }
+
+        return array_values(array_unique($accountIds));
+    }
+
 
     //// for multiple accounts
 
@@ -2676,36 +2743,7 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIdsRaw = Yii::$app->request->post('account_ids');
-
-            // Parse account_ids - handle both JSON string and array formats
-            if (is_string($accountIdsRaw)) {
-                $accountIds = json_decode($accountIdsRaw, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
-                }
-            } else {
-                $accountIds = $accountIdsRaw;
-            }
-
-            if (empty($accountIds) || !is_array($accountIds)) {
-                throw new BadRequestHttpException('account_ids must be a non-empty array');
-            }
-
-
-            if (empty($accountIds) || !is_array($accountIds)) {
-                throw new BadRequestHttpException('account_ids must be a non-empty array');
-            }
-
-            // Validate all account IDs are numeric
-            foreach ($accountIds as $accountId) {
-                if (!is_numeric($accountId)) {
-                    throw new BadRequestHttpException('All account IDs must be numeric');
-                }
-            }
-
-            // Remove duplicates
-            $accountIds = array_unique($accountIds);
+            $accountIds = $this->parseAccountIds($this->getRequestParam('account_ids'));
 
             // Verify all accounts exist and user has access
             $query = Mt4Account::find()->where(['account_id' => $accountIds]);
@@ -2779,34 +2817,12 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIdsRaw = Yii::$app->request->post('account_ids');
-
-            // Parse account_ids - handle both JSON string and array formats
-            if (is_string($accountIdsRaw)) {
-                $accountIds = json_decode($accountIdsRaw, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
-                }
-            } else {
-                $accountIds = $accountIdsRaw;
-            }
-
-            if (empty($accountIds) || !is_array($accountIds)) {
-                throw new BadRequestHttpException('account_ids must be a non-empty array');
-            }
-
-            $lot        = Yii::$app->request->post('lot');
-
-            if (empty($accountIds) || !is_array($accountIds)) {
-                throw new BadRequestHttpException('account_ids must be a non-empty array');
-            }
+            $accountIds = $this->parseAccountIds($this->getRequestParam('account_ids'));
+            $lot        = $this->getRequestParam('lot');
 
             if (empty($lot) || !is_numeric($lot) || $lot <= 0) {
                 throw new BadRequestHttpException('Valid lot value is required');
             }
-
-            // Remove duplicates
-            $accountIds = array_unique($accountIds);
 
             // Get accessible accounts
             $query = Mt4Account::find()->where(['account_id' => $accountIds]);
@@ -2904,34 +2920,12 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIdsRaw = Yii::$app->request->post('account_ids');
-
-            // Parse account_ids - handle both JSON string and array formats
-            if (is_string($accountIdsRaw)) {
-                $accountIds = json_decode($accountIdsRaw, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
-                }
-            } else {
-                $accountIds = $accountIdsRaw;
-            }
-
-            if (empty($accountIds) || !is_array($accountIds)) {
-                throw new BadRequestHttpException('account_ids must be a non-empty array');
-            }
-
-            $lot        = Yii::$app->request->post('lot');
-
-            if (empty($accountIds) || !is_array($accountIds)) {
-                throw new BadRequestHttpException('account_ids must be a non-empty array');
-            }
+            $accountIds = $this->parseAccountIds($this->getRequestParam('account_ids'));
+            $lot        = $this->getRequestParam('lot');
 
             if (empty($lot) || !is_numeric($lot) || $lot <= 0) {
                 throw new BadRequestHttpException('Valid lot value is required');
             }
-
-            // Remove duplicates
-            $accountIds = array_unique($accountIds);
 
             // Get accessible accounts
             $query = Mt4Account::find()->where(['account_id' => $accountIds]);
@@ -3029,25 +3023,8 @@ class Mt4AccountController extends Controller
                 throw new UnauthorizedHttpException('User not found');
             }
 
-            $accountIdsRaw = Yii::$app->request->post('account_ids');
-            $disabledEaRaw = Yii::$app->request->post('disabled_ea'); // 0 = enable, 1 = disable, null = toggle
-
-            // Parse account_ids - handle both JSON string and array formats
-            if (is_string($accountIdsRaw)) {
-                $accountIds = json_decode($accountIdsRaw, true);
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    throw new BadRequestHttpException('Invalid account_ids format. Must be a valid JSON array.');
-                }
-            } else {
-                $accountIds = $accountIdsRaw;
-            }
-
-            if (empty($accountIds) || !is_array($accountIds)) {
-                throw new BadRequestHttpException('account_ids must be a non-empty array');
-            }
-
-            // Remove duplicates
-            $accountIds = array_unique($accountIds);
+            $accountIds    = $this->parseAccountIds($this->getRequestParam('account_ids'));
+            $disabledEaRaw = $this->getRequestParam('disabled_ea'); // 0 = enable, 1 = disable, null = toggle
 
             // Determine the command type
             if ($disabledEaRaw !== null) {
