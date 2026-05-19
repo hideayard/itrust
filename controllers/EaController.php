@@ -105,6 +105,9 @@ class EaController extends Controller
         }
     }
 
+    /**
+     * Simplified version that doesn't modify the multi-account list
+     */
     public function actionGet()
     {
         Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
@@ -118,31 +121,91 @@ class EaController extends Controller
                 throw new \yii\web\BadRequestHttpException('account id is required');
             }
 
+            // First, check if there's an order specifically for this account
             $order = CloseOrder::find()
                 ->where(['order_account' => $accountID, 'order_status' => 0])
                 ->orderBy(['order_date' => SORT_DESC])
                 ->one();
 
-            $data = "";
-            if ($order !== null) {
-                if ($order->order_cmd == "outlook") {
-                    $data =  1;
-                } else if ($order->order_cmd == "cr_off") {
-                    $data =  10;
-                } else if ($order->order_cmd == "cr_on") {
-                    $data =  11;
-                } else if ($order->order_cmd == "close_all") {
-                    $data =  99;
-                } else {
-                    $data =  $order->order_cmd;
+            // If no direct order found, check multi-account orders
+            if ($order === null) {
+                // Get all pending orders that have order_multi_account set
+                $multiOrders = CloseOrder::find()
+                    ->where(['order_status' => 0])
+                    ->andWhere(['not', ['order_multi_account' => null]])
+                    ->andWhere(['not', ['order_multi_account' => '']])
+                    ->orderBy(['order_date' => SORT_DESC])
+                    ->all();
+
+                foreach ($multiOrders as $multiOrder) {
+                    $multiAccounts = $multiOrder->getMultiAccounts();
+                    if (in_array($accountID, $multiAccounts)) {
+                        $order = $multiOrder;
+                        break;
+                    }
                 }
-            } else {
-                $data =  0;
+            }
+
+            // Process the command if found
+            $data = 0; // Default value
+            if ($order !== null) {
+                $cmd = $order->order_cmd;
+
+                // Map commands
+                switch ($cmd) {
+                    case 'outlook':
+                        $data = 1;
+                        break;
+                    case 'cr_off':
+                        $data = 10;
+                        break;
+                    case 'cr_on':
+                        $data = 11;
+                        break;
+                    case 'close_all':
+                        $data = 99;
+                        break;
+                    case 'BUY':
+                    case 'SELL':
+                    case 'CLOSE_ALL':
+                    case 'CLOSE_BUY':
+                    case 'CLOSE_SELL':
+                    case 'ENABLED_EA':
+                    case 'DISABLED_EA':
+                    case 'TOGGLE_EA':
+                        $data = $cmd;
+                        break;
+                    // Multi-account commands - convert to single command format
+                    case 'BUY_MULTI':
+                        $data = 'BUY';
+                        break;
+                    case 'SELL_MULTI':
+                        $data = 'SELL';
+                        break;
+                    case 'close_all_multi':
+                        $data = 99;
+                        break;
+                    case 'ENABLED_EA_MULTI':
+                        $data = 'ENABLED_EA';
+                        break;
+                    case 'DISABLED_EA_MULTI':
+                        $data = 'DISABLED_EA';
+                        break;
+                    case 'TOGGLE_EA_MULTI':
+                        $data = 'TOGGLE_EA';
+                        break;
+                    default:
+                        // Check if command contains 'OP'
+                        if (strpos($cmd, 'OP') !== false) {
+                            $data = $cmd;
+                        }
+                        break;
+                }
             }
 
             return [
                 'status' => 'success',
-                'message' => 'get Command successfully',
+                'message' => 'Get command successfully',
                 'data' => $data
             ];
         } catch (\Exception $e) {
@@ -151,42 +214,6 @@ class EaController extends Controller
                 'status' => 'error',
                 'message' => $e->getMessage()
             ];
-        }
-
-        Yii::$app->response->format = Response::FORMAT_JSON;
-        $account = Yii::$app->request->post('id');
-
-        if ($account) {
-
-            $order = CloseOrder::find()
-                ->where(['order_account' => $account, 'order_status' => 0])
-                ->orderBy(['order_date' => SORT_DESC])
-                ->one();
-
-
-            if ($order !== null) {
-                if ($order->order_cmd == "outlook") {
-                    return 1;
-                } else if ($order->order_cmd == "cr_off") {
-                    return 10;
-                } else if ($order->order_cmd == "cr_on") {
-                    return 11;
-                } else if ($order->order_cmd == "close_all") {
-                    return 99;
-                } else if (str_contains($order->order_cmd, 'OP') || ($order->order_cmd == "CLOSE_ALL") || ($order->order_cmd ==  "CLOSE_BUY") || ($order->order_cmd ==  "CLOSE_SELL") || ($order->order_cmd ==  "BUY") || ($order->order_cmd ==  "SELL")) {
-                    return $order->order_cmd;
-                } else {
-                    return 0;
-                }
-                // return ['success' => true, 'message' => "Success Getting Command", 'type' => $order->order_cmd];
-
-            } else {
-                // return ['success' => false, 'message' => "Close Order command not found"];
-                return 0;
-            }
-        } else {
-            // return ['success' => false, 'message' => "failed to Close Order"];
-            return 0;
         }
     }
 

@@ -2647,4 +2647,423 @@ class Mt4AccountController extends Controller
             ->where(['order_account' => $accountId, 'order_cmd' => ['buy', 'sell'], 'order_status' => 0])
             ->count();
     }
+
+
+    //// for multiple accounts
+
+    /**
+     * Close all orders for multiple accounts
+     */
+    public function actionCloseOrdersMulti()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountIds = Yii::$app->request->post('account_ids'); // Accept array of account IDs
+
+            if (empty($accountIds) || !is_array($accountIds)) {
+                throw new BadRequestHttpException('account_ids must be a non-empty array');
+            }
+
+            // Validate all account IDs are numeric
+            foreach ($accountIds as $accountId) {
+                if (!is_numeric($accountId)) {
+                    throw new BadRequestHttpException('All account IDs must be numeric');
+                }
+            }
+
+            // Remove duplicates
+            $accountIds = array_unique($accountIds);
+
+            // Verify all accounts exist and user has access
+            $query = Mt4Account::find()->where(['account_id' => $accountIds]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+
+            $accessibleAccounts = $query->select('account_id')->column();
+
+            if (empty($accessibleAccounts)) {
+                throw new NotFoundHttpException('No accounts found or access denied');
+            }
+
+            // Queue the command for multiple accounts
+            $order = new CloseOrder();
+            $order->setMultiAccounts($accessibleAccounts); // Store as JSON array
+            $order->order_cmd    = 'close_all_multi';
+            $order->order_status = 0;
+            $order->order_date   = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue close_all_multi command: ' . json_encode($order->errors));
+            }
+
+            $inaccessible = array_diff($accountIds, $accessibleAccounts);
+
+            return [
+                'status'  => 'success',
+                'message' => 'Close all orders command sent for ' . count($accessibleAccounts) . ' accounts',
+                'data'    => [
+                    'order_id'              => $order->order_id,
+                    'accounts_processed'    => $accessibleAccounts,
+                    'accounts_inaccessible' => $inaccessible,
+                    'total_requested'       => count($accountIds),
+                    'total_processed'       => count($accessibleAccounts),
+                    'order_cmd'             => $order->order_cmd,
+                    'note'                  => 'The EA will close all orders on next tick for all processed accounts',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionCloseOrdersMulti: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Place buy orders for multiple accounts
+     */
+    public function actionOrderBuyMulti()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountIds = Yii::$app->request->post('account_ids');
+            $lot        = Yii::$app->request->post('lot');
+
+            if (empty($accountIds) || !is_array($accountIds)) {
+                throw new BadRequestHttpException('account_ids must be a non-empty array');
+            }
+
+            if (empty($lot) || !is_numeric($lot) || $lot <= 0) {
+                throw new BadRequestHttpException('Valid lot value is required');
+            }
+
+            // Remove duplicates
+            $accountIds = array_unique($accountIds);
+
+            // Get accessible accounts
+            $query = Mt4Account::find()->where(['account_id' => $accountIds]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+
+            $accounts = $query->all();
+
+            if (empty($accounts)) {
+                throw new NotFoundHttpException('No accounts found or access denied');
+            }
+
+            // Filter accounts: check buy_status, min_lot, etc.
+            $validAccounts = [];
+            $skippedAccounts = [];
+
+            foreach ($accounts as $account) {
+                // Check if buy is enabled
+                if (isset($account->buy_status) && $account->buy_status == 0) {
+                    $skippedAccounts[$account->account_id] = 'Buy orders are disabled';
+                    continue;
+                }
+
+                // Check minimum lot size
+                $minLot = isset($account->min_lot) ? (float)$account->min_lot : 0.01;
+                if ($lot < $minLot) {
+                    $skippedAccounts[$account->account_id] = "Lot size below minimum: {$minLot}";
+                    continue;
+                }
+
+                $validAccounts[] = $account->account_id;
+            }
+
+            if (empty($validAccounts)) {
+                throw new BadRequestHttpException('No valid accounts for buy orders. Check buy status and lot size requirements.');
+            }
+
+            // Queue the multi buy order command
+            $order = new CloseOrder();
+            $order->setMultiAccounts($validAccounts);
+            $order->order_cmd    = 'BUY_MULTI';
+            $order->order_status = 0;
+            $order->order_date   = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue BUY_MULTI command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => 'Buy order command sent for ' . count($validAccounts) . ' accounts',
+                'data'    => [
+                    'order_id'           => $order->order_id,
+                    'lot'                => $lot,
+                    'accounts_processed' => $validAccounts,
+                    'accounts_skipped'   => $skippedAccounts,
+                    'total_processed'    => count($validAccounts),
+                    'total_skipped'      => count($skippedAccounts),
+                    'order_cmd'          => $order->order_cmd,
+                    'note'               => 'The EA will place buy orders on next tick for all processed accounts',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionOrderBuyMulti: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Place sell orders for multiple accounts
+     */
+    public function actionOrderSellMulti()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountIds = Yii::$app->request->post('account_ids');
+            $lot        = Yii::$app->request->post('lot');
+
+            if (empty($accountIds) || !is_array($accountIds)) {
+                throw new BadRequestHttpException('account_ids must be a non-empty array');
+            }
+
+            if (empty($lot) || !is_numeric($lot) || $lot <= 0) {
+                throw new BadRequestHttpException('Valid lot value is required');
+            }
+
+            // Remove duplicates
+            $accountIds = array_unique($accountIds);
+
+            // Get accessible accounts
+            $query = Mt4Account::find()->where(['account_id' => $accountIds]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+
+            $accounts = $query->all();
+
+            if (empty($accounts)) {
+                throw new NotFoundHttpException('No accounts found or access denied');
+            }
+
+            // Filter accounts: check sell_status, min_lot, etc.
+            $validAccounts = [];
+            $skippedAccounts = [];
+
+            foreach ($accounts as $account) {
+                // Check if sell is enabled
+                if (isset($account->sell_status) && $account->sell_status == 0) {
+                    $skippedAccounts[$account->account_id] = 'Sell orders are disabled';
+                    continue;
+                }
+
+                // Check minimum lot size
+                $minLot = isset($account->min_lot) ? (float)$account->min_lot : 0.01;
+                if ($lot < $minLot) {
+                    $skippedAccounts[$account->account_id] = "Lot size below minimum: {$minLot}";
+                    continue;
+                }
+
+                $validAccounts[] = $account->account_id;
+            }
+
+            if (empty($validAccounts)) {
+                throw new BadRequestHttpException('No valid accounts for sell orders. Check sell status and lot size requirements.');
+            }
+
+            // Queue the multi sell order command
+            $order = new CloseOrder();
+            $order->setMultiAccounts($validAccounts);
+            $order->order_cmd    = 'SELL_MULTI';
+            $order->order_status = 0;
+            $order->order_date   = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue SELL_MULTI command: ' . json_encode($order->errors));
+            }
+
+            return [
+                'status'  => 'success',
+                'message' => 'Sell order command sent for ' . count($validAccounts) . ' accounts',
+                'data'    => [
+                    'order_id'           => $order->order_id,
+                    'lot'                => $lot,
+                    'accounts_processed' => $validAccounts,
+                    'accounts_skipped'   => $skippedAccounts,
+                    'total_processed'    => count($validAccounts),
+                    'total_skipped'      => count($skippedAccounts),
+                    'order_cmd'          => $order->order_cmd,
+                    'note'               => 'The EA will place sell orders on next tick for all processed accounts',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionOrderSellMulti: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
+     * Toggle auto trade for multiple accounts
+     */
+    public function actionToggleAutoTradeMulti()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            $secret  = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser   = Users::findOne($currentUserId);
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User not found');
+            }
+
+            $accountIds   = Yii::$app->request->post('account_ids');
+            $disabledEaRaw = Yii::$app->request->post('disabled_ea'); // 0 = enable, 1 = disable, null = toggle
+
+            if (empty($accountIds) || !is_array($accountIds)) {
+                throw new BadRequestHttpException('account_ids must be a non-empty array');
+            }
+
+            // Remove duplicates
+            $accountIds = array_unique($accountIds);
+
+            // Determine the command type
+            if ($disabledEaRaw !== null) {
+                $disabledEa = (int)$disabledEaRaw;
+                if (!in_array($disabledEa, [0, 1])) {
+                    throw new BadRequestHttpException('disabled_ea must be 0 or 1');
+                }
+                $isToggle = false;
+                $orderCmd = $disabledEa === 0 ? 'ENABLED_EA' : 'DISABLED_EA';
+            } else {
+                $isToggle = true;
+                $orderCmd = 'TOGGLE_EA';
+            }
+
+            // Get accessible accounts
+            $query = Mt4Account::find()->where(['account_id' => $accountIds]);
+            if ($currentUser->user_tipe !== 'ADMIN') {
+                $query->andWhere(['user_id' => $currentUser->id]);
+            }
+
+            $accounts = $query->all();
+
+            if (empty($accounts)) {
+                throw new NotFoundHttpException('No accounts found or access denied');
+            }
+
+            $accountStates = [];
+            foreach ($accounts as $account) {
+                $accountStates[$account->account_id] = [
+                    'current_state' => (int)$account->disabled_ea,
+                    'new_state' => $isToggle ? (1 - (int)$account->disabled_ea) : $disabledEa,
+                ];
+            }
+
+            $validAccounts = array_keys($accountStates);
+
+            // Queue the multi toggle command
+            $order = new CloseOrder();
+            $order->setMultiAccounts($validAccounts);
+            $order->order_cmd    = $isToggle ? 'TOGGLE_EA_MULTI' : $orderCmd . '_MULTI';
+            $order->order_status = 0;
+            $order->order_date   = (new \DateTime())->format('Y-m-d H:i:s');
+
+            if (!$order->save()) {
+                throw new ServerErrorHttpException('Failed to queue toggle command: ' . json_encode($order->errors));
+            }
+
+            $message = $isToggle
+                ? 'Toggle EA command sent for ' . count($validAccounts) . ' accounts'
+                : ($orderCmd === 'ENABLED_EA' ? 'Enable EA command sent for ' . count($validAccounts) . ' accounts'
+                    : 'Disable EA command sent for ' . count($validAccounts) . ' accounts');
+
+            return [
+                'status'  => 'success',
+                'message' => $message,
+                'data'    => [
+                    'order_id'           => $order->order_id,
+                    'order_cmd'          => $order->order_cmd,
+                    'accounts_processed' => $validAccounts,
+                    'account_states'     => $accountStates,
+                    'total_processed'    => count($validAccounts),
+                    'is_toggle'          => $isToggle,
+                    'note'               => 'The EA will process the command on next tick for all accounts',
+                ],
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionToggleAutoTradeMulti: ' . $e->getMessage());
+            return [
+                'status'  => 'error',
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
 }
