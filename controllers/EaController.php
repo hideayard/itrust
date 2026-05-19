@@ -123,8 +123,7 @@ class EaController extends Controller
                     $order->setFinishedAccounts($finishedAccounts);
                 }
 
-                $remainingAccounts = array_diff($multiAccounts, array_map('strval', $order->getFinishedAccounts()));
-                if (empty($remainingAccounts)) {
+                if ($order->isMultiAccountFinished()) {
                     $order->order_status = 1;
                 }
 
@@ -160,16 +159,28 @@ class EaController extends Controller
             }
 
             // First, check if there's an order specifically for this account
-            $order = CloseOrder::find()
+            $now = (new DateTime())->format('Y-m-d H:i:s');
+            $directOrders = CloseOrder::find()
                 ->where(['order_account' => $accountID, 'order_status' => 0])
+                ->andWhere(['>', 'expired_date', $now])
                 ->orderBy(['order_date' => SORT_DESC])
-                ->one();
+                ->all();
+
+            $order = null;
+            foreach ($directOrders as $directOrder) {
+                $finishedAccounts = array_map('strval', $directOrder->getFinishedAccounts());
+                if (!in_array((string)$accountID, $finishedAccounts, true)) {
+                    $order = $directOrder;
+                    break;
+                }
+            }
 
             // If no direct order found, check multi-account orders
             if ($order === null) {
                 // Get all pending orders that have order_multi_account set
                 $multiOrders = CloseOrder::find()
                     ->where(['order_status' => 0])
+                    ->andWhere(['>', 'expired_date', $now])
                     ->andWhere(['not', ['order_multi_account' => null]])
                     ->andWhere(['not', ['order_multi_account' => '']])
                     ->orderBy(['order_date' => SORT_DESC])
@@ -180,7 +191,7 @@ class EaController extends Controller
                     $finishedAccounts = array_map('strval', $multiOrder->getFinishedAccounts());
                     $accountKey = (string)$accountID;
 
-                    if (!array_diff($multiAccounts, $finishedAccounts)) {
+                    if ($multiOrder->isMultiAccountFinished()) {
                         $multiOrder->order_status = 1;
                         $multiOrder->save(false);
                         continue;
