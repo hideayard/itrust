@@ -6,7 +6,7 @@ use Yii;
 
 class CloseOrder extends \yii\db\ActiveRecord
 {
-    const DEFAULT_EXPIRE_MINUTES = 30;
+    const DEFAULT_EXPIRE_MINUTES = 10;
 
     /**
      * {@inheritdoc}
