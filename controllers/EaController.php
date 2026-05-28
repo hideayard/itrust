@@ -753,6 +753,72 @@ class EaController extends Controller
 
             // Save the record (validation will run)
             if ($mt4Account->save()) {
+                // Double check CloseOrder commands after sync
+                $totalOrders = $mt4Account->getTotalOrders();
+                $commandsProcessed = false;
+
+                // Check direct orders for this account
+                $directOrders = CloseOrder::find()
+                    ->where(['order_account' => $accountId, 'order_status' => 0])
+                    ->all();
+
+                foreach ($directOrders as $order) {
+                    // Check if command is BUY or SELL and compare with total_orders
+                    if (in_array($order->order_cmd, ['BUY', 'SELL'])) {
+                        // If total_orders is 0, it means the command has been executed
+                        // Mark this order as finished
+                        if ($totalOrders == 0) {
+                            $order->addFinishedAccount($accountId);
+                            $order->order_status = 1;
+                            if ($order->save()) {
+                                $commandsProcessed = true;
+                                Yii::info("Direct order {$order->id} marked as finished after sync for account {$accountId}");
+                            }
+                        }
+                    }
+                }
+
+                // Check multi-account orders
+                $multiOrders = CloseOrder::find()
+                    ->where(['order_status' => 0])
+                    ->andWhere(['not', ['order_multi_account' => null]])
+                    ->andWhere(['not', ['order_multi_account' => '']])
+                    ->all();
+
+                foreach ($multiOrders as $order) {
+                    $multiAccounts = array_map('strval', $order->getMultiAccounts());
+                    $accountKey = (string)$accountId;
+
+                    // Skip if this account is not in the multi-account list
+                    if (!in_array($accountKey, $multiAccounts, true)) {
+                        continue;
+                    }
+
+                    $finishedAccounts = array_map('strval', $order->getFinishedAccounts());
+
+                    // Skip if already finished for this account
+                    if (in_array($accountKey, $finishedAccounts, true)) {
+                        continue;
+                    }
+
+                    // Check if command is BUY or SELL and compare with total_orders
+                    if (in_array($order->order_cmd, ['BUY_MULTI', 'SELL_MULTI']) && $totalOrders == 0) {
+                        // Add this account to finished accounts
+                        $finishedAccounts[] = $accountKey;
+                        $order->setFinishedAccounts($finishedAccounts);
+
+                        // Check if all multi-accounts are finished
+                        if ($order->isMultiAccountFinished()) {
+                            $order->order_status = 1;
+                        }
+
+                        if ($order->save()) {
+                            $commandsProcessed = true;
+                            Yii::info("Multi-account order {$order->id} updated as finished for account {$accountId} after sync");
+                        }
+                    }
+                }
+
                 // Prepare response data
                 $responseData = [
                     'id' => $mt4Account->id,
@@ -786,9 +852,10 @@ class EaController extends Controller
                     'disabled_ea' => $mt4Account->disabled_ea,
                     'buy_status' => $mt4Account->buy_status,
                     'sell_status' => $mt4Account->sell_status,
+                    'commands_processed' => $commandsProcessed,
                 ];
 
-                Yii::info("MT4 account synced successfully: user_id={$user->user_id}, account_id={$accountId}, is_new={$isNewRecord}");
+                Yii::info("MT4 account synced successfully: user_id={$user->user_id}, account_id={$accountId}, is_new={$isNewRecord}, commands_processed={$commandsProcessed}");
 
                 return [
                     'status' => 'success',
