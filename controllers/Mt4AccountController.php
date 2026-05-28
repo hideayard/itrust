@@ -2440,6 +2440,12 @@ class Mt4AccountController extends Controller
                 throw new BadRequestHttpException("Lot size cannot be less than minimum lot: {$minLot}");
             }
 
+            // Double check: Check if account already has open orders
+            $totalOrders = $account->getTotalOrders();
+            if ($totalOrders > 0) {
+                throw new BadRequestHttpException("Cannot place buy order: Account already has {$totalOrders} open order(s)");
+            }
+
             // Queue the buy order command
             $order = new CloseOrder(); // Or create a new model for orders
             $order->order_account = $accountId;
@@ -2524,6 +2530,12 @@ class Mt4AccountController extends Controller
             $minLot = isset($account->min_lot) ? (float)$account->min_lot : 0.01;
             if ($lot < $minLot) {
                 throw new BadRequestHttpException("Lot size cannot be less than minimum lot: {$minLot}");
+            }
+
+            // Double check: Check if account already has open orders
+            $totalOrders = $account->getTotalOrders();
+            if ($totalOrders > 0) {
+                throw new BadRequestHttpException("Cannot place sell order: Account already has {$totalOrders} open order(s)");
             }
 
             // Queue the sell order command
@@ -2836,7 +2848,7 @@ class Mt4AccountController extends Controller
                 throw new NotFoundHttpException('No accounts found or access denied');
             }
 
-            // Filter accounts: check buy_status, min_lot, etc.
+            // Filter accounts: check buy_status, min_lot, and existing open orders
             $validAccounts = [];
             $skippedAccounts = [];
 
@@ -2854,11 +2866,18 @@ class Mt4AccountController extends Controller
                     continue;
                 }
 
+                // Double check: Check if account already has open orders
+                $totalOrders = $account->getTotalOrders();
+                if ($totalOrders > 0) {
+                    $skippedAccounts[$account->account_id] = "Account already has {$totalOrders} open orders";
+                    continue;
+                }
+
                 $validAccounts[] = $account->account_id;
             }
 
             if (empty($validAccounts)) {
-                throw new BadRequestHttpException('No valid accounts for buy orders. Check buy status and lot size requirements.');
+                throw new BadRequestHttpException('No valid accounts for buy orders. Check buy status, lot size requirements, and existing open orders.');
             }
 
             // Queue the multi buy order command
@@ -2939,7 +2958,7 @@ class Mt4AccountController extends Controller
                 throw new NotFoundHttpException('No accounts found or access denied');
             }
 
-            // Filter accounts: check sell_status, min_lot, etc.
+            // Filter accounts: check sell_status, min_lot, and existing open orders
             $validAccounts = [];
             $skippedAccounts = [];
 
@@ -2957,11 +2976,18 @@ class Mt4AccountController extends Controller
                     continue;
                 }
 
+                // Double check: Check if account already has open orders
+                $totalOrders = $account->getTotalOrders();
+                if ($totalOrders > 0) {
+                    $skippedAccounts[$account->account_id] = "Account already has {$totalOrders} open orders";
+                    continue;
+                }
+
                 $validAccounts[] = $account->account_id;
             }
 
             if (empty($validAccounts)) {
-                throw new BadRequestHttpException('No valid accounts for sell orders. Check sell status and lot size requirements.');
+                throw new BadRequestHttpException('No valid accounts for sell orders. Check sell status, lot size requirements, and existing open orders.');
             }
 
             // Queue the multi sell order command
