@@ -3558,6 +3558,7 @@ class Mt4AccountController extends Controller
 
             $groupData[] = [
                 'id' => $group['id'],
+                'mt4_ids' => $group['mt4_ids'],
                 'name' => $group['name'],
                 'desc' => $group['desc'] ?? '',
                 'remark' => $group['remark'] ?? '',
