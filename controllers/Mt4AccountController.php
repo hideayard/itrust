@@ -3124,400 +3124,414 @@ class Mt4AccountController extends Controller
             ];
         }
     }
-}
 
-/**
- * Optimized lightweight version - 3x faster, 70% less memory
- * GET /mt4-account/accounts?user_id=123
- */
-public function actionAccounts($user_id = null)
-{
-    Yii::$app->response->format = Response::FORMAT_JSON;
-    Yii::$app->session->close(); // CRITICAL: Release session lock immediately
-    
-    try {
-        // Authenticate
-        $currentUser = $this->authenticateUser();
-        
-        // Build cache key based on request
-        $cacheKey = "accounts_" . $currentUser->id . "_" . ($user_id ?? 'all');
-        $cached = Yii::$app->cache->get($cacheKey);
-        
-        if ($cached !== false) {
-            return $cached;
-        }
-        
-        // Determine which user IDs to query
-        $targetUserIds = $this->getTargetUserIds($currentUser, $user_id);
-        
-        if (empty($targetUserIds)) {
-            throw new ForbiddenHttpException('No accessible accounts found');
-        }
-        
-        // SINGLE QUERY with only needed columns
-        $accounts = Mt4Account::find()
-            ->select([
-                'id', 'user_id', 'account_id', 'bot_name',
-                'buy_order_count', 'total_buy_lot',
-                'sell_order_count', 'total_sell_lot',
-                'total_profit', 'total_profit_percentage',
-                'account_balance', 'account_equity',
-                'floating_value', 'min_lot', 'leverage',
-                'currency', 'server', 'broker',
-                'account_type', 'status',
-                'last_connected', 'last_sync',
-                'disabled_ea', 'buy_status', 'sell_status',
-                'created_at'
-            ])
-            ->where(['user_id' => $targetUserIds])
-            ->asArray() // Return array instead of objects (much faster)
-            ->orderBy(['created_at' => SORT_DESC])
-            ->all();
-        
-        // Calculate summary in PHP (faster than separate queries)
-        $summary = $this->calculateSummary($accounts);
-        
-        // Get groups data (cached separately)
-        $groups = $this->getGroupsData($accounts);
-        
-        // Build minimal user info
-        $userInfo = $this->getMinimalUserInfo($targetUserIds, $currentUser, $user_id);
-        
-        $response = [
-            'status' => 'success',
-            'data' => [
-                'summary' => $summary,
-                'accounts' => $accounts,
-                'groups' => $groups,
-                'user' => $userInfo,
-            ]
-        ];
-        
-        // Cache based on user role
-        $cacheDuration = ($currentUser->user_tipe == 'ADMIN') ? 15 : 30;
-        Yii::$app->cache->set($cacheKey, $response, $cacheDuration);
-        
-        return $response;
-        
-    } catch (\Exception $e) {
-        Yii::error('Accounts error: ' . $e->getMessage());
-        return [
-            'status' => 'error',
-            'message' => $e->getMessage()
-        ];
-    }
-}
+    /**
+     * Optimized lightweight version - 3x faster, 70% less memory
+     * GET /mt4-account/accounts?user_id=123
+     */
+    public function actionAccounts($user_id = null)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        Yii::$app->session->close(); // CRITICAL: Release session lock immediately
 
-/**
- * Lightweight authentication
- */
-private function authenticateUser()
-{
-    $token = Yii::$app->request->headers->get('Authorization');
-    $token = str_replace('Bearer ', '', $token);
-    
-    if (!$token) {
-        $token = Yii::$app->request->get('token');
-    }
-    
-    if (!$token) {
-        throw new UnauthorizedHttpException('No token provided');
-    }
-    
-    $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
-    $payload = JwtHelper::validate($token, $secret);
-    
-    if (!$payload) {
-        throw new UnauthorizedHttpException('Invalid token');
-    }
-    
-    $userId = $payload['user_id'] ?? $payload['sub'] ?? $payload['id'] ?? null;
-    
-    if (!$userId) {
-        throw new UnauthorizedHttpException('Invalid token payload');
-    }
-    
-    // Cache user object for 5 minutes
-    $cacheKey = "user_auth_{$userId}";
-    $user = Yii::$app->cache->get($cacheKey);
-    
-    if ($user === false) {
-        $user = Users::find()
-            ->select(['id', 'user_name', 'user_email', 'user_tipe'])
-            ->where(['id' => $userId])
-            ->asArray()
-            ->one();
-        
-        if ($user) {
-            Yii::$app->cache->set($cacheKey, $user, 300);
+        try {
+            // Authenticate
+            $currentUser = $this->authenticateUser();
+
+            // Build cache key based on request
+            $cacheKey = "accounts_" . $currentUser->id . "_" . ($user_id ?? 'all');
+            $cached = Yii::$app->cache->get($cacheKey);
+
+            if ($cached !== false) {
+                return $cached;
+            }
+
+            // Determine which user IDs to query
+            $targetUserIds = $this->getTargetUserIds($currentUser, $user_id);
+
+            if (empty($targetUserIds)) {
+                throw new ForbiddenHttpException('No accessible accounts found');
+            }
+
+            // SINGLE QUERY with only needed columns
+            $accounts = Mt4Account::find()
+                ->select([
+                    'id',
+                    'user_id',
+                    'account_id',
+                    'bot_name',
+                    'buy_order_count',
+                    'total_buy_lot',
+                    'sell_order_count',
+                    'total_sell_lot',
+                    'total_profit',
+                    'total_profit_percentage',
+                    'account_balance',
+                    'account_equity',
+                    'floating_value',
+                    'min_lot',
+                    'leverage',
+                    'currency',
+                    'server',
+                    'broker',
+                    'account_type',
+                    'status',
+                    'last_connected',
+                    'last_sync',
+                    'disabled_ea',
+                    'buy_status',
+                    'sell_status',
+                    'created_at'
+                ])
+                ->where(['user_id' => $targetUserIds])
+                ->asArray() // Return array instead of objects (much faster)
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            // Calculate summary in PHP (faster than separate queries)
+            $summary = $this->calculateSummary($accounts);
+
+            // Get groups data (cached separately)
+            $groups = $this->getGroupsData($accounts);
+
+            // Build minimal user info
+            $userInfo = $this->getMinimalUserInfo($targetUserIds, $currentUser, $user_id);
+
+            $response = [
+                'status' => 'success',
+                'data' => [
+                    'summary' => $summary,
+                    'accounts' => $accounts,
+                    'groups' => $groups,
+                    'user' => $userInfo,
+                ]
+            ];
+
+            // Cache based on user role
+            $cacheDuration = ($currentUser->user_tipe == 'ADMIN') ? 15 : 30;
+            Yii::$app->cache->set($cacheKey, $response, $cacheDuration);
+
+            return $response;
+        } catch (\Exception $e) {
+            Yii::error('Accounts error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
         }
     }
-    
-    if (!$user) {
-        throw new UnauthorizedHttpException('User not found');
-    }
-    
-    return (object)$user; // Return as object for easy access
-}
 
-/**
- * Get target user IDs efficiently
- */
-private function getTargetUserIds($currentUser, $requestedUserId)
-{
-    // Admin sees everything
-    if ($currentUser->user_tipe == 'ADMIN') {
-        if ($requestedUserId) {
-            return [(int)$requestedUserId];
+    /**
+     * Lightweight authentication
+     */
+    private function authenticateUser()
+    {
+        $token = Yii::$app->request->headers->get('Authorization');
+        $token = str_replace('Bearer ', '', $token);
+
+        if (!$token) {
+            $token = Yii::$app->request->get('token');
         }
-        
-        // Return all user IDs with accounts (cached)
-        $cacheKey = "all_account_user_ids";
-        $userIds = Yii::$app->cache->get($cacheKey);
-        
-        if ($userIds === false) {
-            $userIds = Mt4Account::find()
-                ->select('user_id')
-                ->distinct()
-                ->column();
-            Yii::$app->cache->set($cacheKey, $userIds, 60);
+
+        if (!$token) {
+            throw new UnauthorizedHttpException('No token provided');
         }
-        
-        return $userIds;
-    }
-    
-    // Non-admin: get self and descendants
-    $selfId = (int)$currentUser->id;
-    
-    // If requesting own data or no specific user
-    if (!$requestedUserId || (int)$requestedUserId === $selfId) {
-        return $this->getDescendantUserIds($selfId);
-    }
-    
-    // Check if requesting descendant
-    $targetId = (int)$requestedUserId;
-    if ($this->isDescendant($selfId, $targetId)) {
-        return [$targetId];
-    }
-    
-    throw new ForbiddenHttpException('Access denied');
-}
 
-/**
- * Get descendant user IDs (including self)
- */
-private function getDescendantUserIds($userId)
-{
-    $cacheKey = "descendants_{$userId}";
-    $userIds = Yii::$app->cache->get($cacheKey);
-    
-    if ($userIds !== false) {
-        return $userIds;
-    }
-    
-    $ownAccount = Mt4Account::find()
-        ->select('path')
-        ->where(['user_id' => $userId])
-        ->asArray()
-        ->one();
-    
-    if (!$ownAccount || empty($ownAccount['path'])) {
-        return [$userId];
-    }
-    
-    $userIds = Mt4Account::find()
-        ->select('user_id')
-        ->where(['like', 'path', $ownAccount['path'] . '%', false])
-        ->distinct()
-        ->column();
-    
-    Yii::$app->cache->set($cacheKey, $userIds, 120);
-    
-    return $userIds;
-}
+        $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+        $payload = JwtHelper::validate($token, $secret);
 
-/**
- * Check if target is descendant
- */
-private function isDescendant($ancestorId, $targetId)
-{
-    $cacheKey = "is_descendant_{$ancestorId}_{$targetId}";
-    $result = Yii::$app->cache->get($cacheKey);
-    
-    if ($result !== false) {
-        return $result;
-    }
-    
-    $targetAccount = Mt4Account::find()
-        ->select('path')
-        ->where(['user_id' => $targetId])
-        ->asArray()
-        ->one();
-    
-    if (!$targetAccount || empty($targetAccount['path'])) {
-        return false;
-    }
-    
-    $result = in_array((string)$ancestorId, explode('.', $targetAccount['path']));
-    Yii::$app->cache->set($cacheKey, $result, 300);
-    
-    return $result;
-}
-
-/**
- * Calculate summary from accounts array (no extra queries)
- */
-private function calculateSummary($accounts)
-{
-    $summary = [
-        'total_accounts' => count($accounts),
-        'total_balance' => 0,
-        'total_profit' => 0,
-        'total_equity' => 0,
-        'active_accounts' => 0,
-        'avg_profit_percentage' => 0,
-    ];
-    
-    $totalProfitPct = 0;
-    
-    foreach ($accounts as $account) {
-        $summary['total_balance'] += (float)$account['account_balance'];
-        $summary['total_profit'] += (float)$account['total_profit'];
-        $summary['total_equity'] += (float)$account['account_equity'];
-        $totalProfitPct += (float)$account['total_profit_percentage'];
-        
-        if ($account['status'] === 'active') {
-            $summary['active_accounts']++;
+        if (!$payload) {
+            throw new UnauthorizedHttpException('Invalid token');
         }
-    }
-    
-    if ($summary['total_accounts'] > 0) {
-        $summary['avg_profit_percentage'] = round(
-            $totalProfitPct / $summary['total_accounts'], 
-            2
-        );
-    }
-    
-    // Round values
-    $summary['total_balance'] = round($summary['total_balance'], 2);
-    $summary['total_profit'] = round($summary['total_profit'], 2);
-    $summary['total_equity'] = round($summary['total_equity'], 2);
-    
-    return $summary;
-}
 
-/**
- * Get groups data efficiently
- */
-private function getGroupsData($accounts)
-{
-    if (empty($accounts)) {
-        return [];
-    }
-    
-    $cacheKey = "active_groups";
-    $groups = Yii::$app->cache->get($cacheKey);
-    
-    if ($groups === false) {
-        $groups = Mt4Group::find()
-            ->where(['status' => Mt4Group::STATUS_ACTIVE])
-            ->asArray()
-            ->all();
-        Yii::$app->cache->set($cacheKey, $groups, 120);
-    }
-    
-    if (empty($groups)) {
-        return [];
-    }
-    
-    // Extract account IDs for matching
-    $accountMt4Ids = array_column($accounts, 'account_id');
-    
-    $groupData = [];
-    foreach ($groups as $group) {
-        $groupMt4Ids = is_string($group['mt4_ids']) 
-            ? json_decode($group['mt4_ids'], true) 
-            : $group['mt4_ids'];
-        
-        if (empty($groupMt4Ids)) continue;
-        
-        $matchingIds = array_intersect($accountMt4Ids, $groupMt4Ids);
-        
-        if (empty($matchingIds)) continue;
-        
-        // Filter matching accounts
-        $matchingAccounts = array_filter($accounts, function($account) use ($matchingIds) {
-            return in_array($account['account_id'], $matchingIds);
-        });
-        
-        // Calculate group stats
-        $groupTotalProfit = array_sum(array_column($matchingAccounts, 'total_profit'));
-        $groupTotalBalance = array_sum(array_column($matchingAccounts, 'account_balance'));
-        $groupTotalEquity = array_sum(array_column($matchingAccounts, 'account_equity'));
-        $accountCount = count($matchingAccounts);
-        
-        $groupData[] = [
-            'id' => $group['id'],
-            'name' => $group['name'],
-            'desc' => $group['desc'] ?? '',
-            'remark' => $group['remark'] ?? '',
-            'total_accounts' => $accountCount,
-            'total_profit' => round($groupTotalProfit, 2),
-            'total_balance' => round($groupTotalBalance, 2),
-            'total_equity' => round($groupTotalEquity, 2),
-            'avg_profit' => $accountCount > 0 
-                ? round($groupTotalProfit / $accountCount, 2) 
-                : 0,
-            'accounts' => array_values($matchingAccounts), // Reset array keys
-        ];
-    }
-    
-    return $groupData;
-}
+        $userId = $payload['user_id'] ?? $payload['sub'] ?? $payload['id'] ?? null;
 
-/**
- * Get minimal user info
- */
-private function getMinimalUserInfo($userIds, $currentUser, $requestedUserId)
-{
-    if (empty($userIds)) {
-        return null;
-    }
-    
-    // Cache users
-    $cacheKey = "users_info_" . md5(implode(',', $userIds));
-    $users = Yii::$app->cache->get($cacheKey);
-    
-    if ($users === false) {
-        $users = Users::find()
-            ->select(['id', 'user_name', 'user_email', 'user_tipe'])
-            ->where(['id' => $userIds])
-            ->asArray()
-            ->all();
-        Yii::$app->cache->set($cacheKey, $users, 300);
-    }
-    
-    $targetUser = null;
-    if ($requestedUserId) {
-        foreach ($users as $user) {
-            if ($user['id'] == $requestedUserId) {
-                $targetUser = [
-                    'id' => $user['id'],
-                    'username' => $user['user_name'],
-                    'email' => $user['user_email'],
-                    'type' => $user['user_tipe'],
-                ];
-                break;
+        if (!$userId) {
+            throw new UnauthorizedHttpException('Invalid token payload');
+        }
+
+        // Cache user object for 5 minutes
+        $cacheKey = "user_auth_{$userId}";
+        $user = Yii::$app->cache->get($cacheKey);
+
+        if ($user === false) {
+            $user = Users::find()
+                ->select(['id', 'user_name', 'user_email', 'user_tipe'])
+                ->where(['id' => $userId])
+                ->asArray()
+                ->one();
+
+            if ($user) {
+                Yii::$app->cache->set($cacheKey, $user, 300);
             }
         }
+
+        if (!$user) {
+            throw new UnauthorizedHttpException('User not found');
+        }
+
+        return (object)$user; // Return as object for easy access
     }
-    
-    return [
-        'current' => [
-            'id' => $currentUser->id,
-            'username' => $currentUser->user_name,
-            'type' => $currentUser->user_tipe,
-        ],
-        'target' => $targetUser,
-    ];
+
+    /**
+     * Get target user IDs efficiently
+     */
+    private function getTargetUserIds($currentUser, $requestedUserId)
+    {
+        // Admin sees everything
+        if ($currentUser->user_tipe == 'ADMIN') {
+            if ($requestedUserId) {
+                return [(int)$requestedUserId];
+            }
+
+            // Return all user IDs with accounts (cached)
+            $cacheKey = "all_account_user_ids";
+            $userIds = Yii::$app->cache->get($cacheKey);
+
+            if ($userIds === false) {
+                $userIds = Mt4Account::find()
+                    ->select('user_id')
+                    ->distinct()
+                    ->column();
+                Yii::$app->cache->set($cacheKey, $userIds, 60);
+            }
+
+            return $userIds;
+        }
+
+        // Non-admin: get self and descendants
+        $selfId = (int)$currentUser->id;
+
+        // If requesting own data or no specific user
+        if (!$requestedUserId || (int)$requestedUserId === $selfId) {
+            return $this->getDescendantUserIds($selfId);
+        }
+
+        // Check if requesting descendant
+        $targetId = (int)$requestedUserId;
+        if ($this->isDescendant($selfId, $targetId)) {
+            return [$targetId];
+        }
+
+        throw new ForbiddenHttpException('Access denied');
+    }
+
+    /**
+     * Get descendant user IDs (including self)
+     */
+    private function getDescendantUserIds($userId)
+    {
+        $cacheKey = "descendants_{$userId}";
+        $userIds = Yii::$app->cache->get($cacheKey);
+
+        if ($userIds !== false) {
+            return $userIds;
+        }
+
+        $ownAccount = Mt4Account::find()
+            ->select('path')
+            ->where(['user_id' => $userId])
+            ->asArray()
+            ->one();
+
+        if (!$ownAccount || empty($ownAccount['path'])) {
+            return [$userId];
+        }
+
+        $userIds = Mt4Account::find()
+            ->select('user_id')
+            ->where(['like', 'path', $ownAccount['path'] . '%', false])
+            ->distinct()
+            ->column();
+
+        Yii::$app->cache->set($cacheKey, $userIds, 120);
+
+        return $userIds;
+    }
+
+    /**
+     * Check if target is descendant
+     */
+    private function isDescendant($ancestorId, $targetId)
+    {
+        $cacheKey = "is_descendant_{$ancestorId}_{$targetId}";
+        $result = Yii::$app->cache->get($cacheKey);
+
+        if ($result !== false) {
+            return $result;
+        }
+
+        $targetAccount = Mt4Account::find()
+            ->select('path')
+            ->where(['user_id' => $targetId])
+            ->asArray()
+            ->one();
+
+        if (!$targetAccount || empty($targetAccount['path'])) {
+            return false;
+        }
+
+        $result = in_array((string)$ancestorId, explode('.', $targetAccount['path']));
+        Yii::$app->cache->set($cacheKey, $result, 300);
+
+        return $result;
+    }
+
+    /**
+     * Calculate summary from accounts array (no extra queries)
+     */
+    private function calculateSummary($accounts)
+    {
+        $summary = [
+            'total_accounts' => count($accounts),
+            'total_balance' => 0,
+            'total_profit' => 0,
+            'total_equity' => 0,
+            'active_accounts' => 0,
+            'avg_profit_percentage' => 0,
+        ];
+
+        $totalProfitPct = 0;
+
+        foreach ($accounts as $account) {
+            $summary['total_balance'] += (float)$account['account_balance'];
+            $summary['total_profit'] += (float)$account['total_profit'];
+            $summary['total_equity'] += (float)$account['account_equity'];
+            $totalProfitPct += (float)$account['total_profit_percentage'];
+
+            if ($account['status'] === 'active') {
+                $summary['active_accounts']++;
+            }
+        }
+
+        if ($summary['total_accounts'] > 0) {
+            $summary['avg_profit_percentage'] = round(
+                $totalProfitPct / $summary['total_accounts'],
+                2
+            );
+        }
+
+        // Round values
+        $summary['total_balance'] = round($summary['total_balance'], 2);
+        $summary['total_profit'] = round($summary['total_profit'], 2);
+        $summary['total_equity'] = round($summary['total_equity'], 2);
+
+        return $summary;
+    }
+
+    /**
+     * Get groups data efficiently
+     */
+    private function getGroupsData($accounts)
+    {
+        if (empty($accounts)) {
+            return [];
+        }
+
+        $cacheKey = "active_groups";
+        $groups = Yii::$app->cache->get($cacheKey);
+
+        if ($groups === false) {
+            $groups = Mt4Group::find()
+                ->where(['status' => Mt4Group::STATUS_ACTIVE])
+                ->asArray()
+                ->all();
+            Yii::$app->cache->set($cacheKey, $groups, 120);
+        }
+
+        if (empty($groups)) {
+            return [];
+        }
+
+        // Extract account IDs for matching
+        $accountMt4Ids = array_column($accounts, 'account_id');
+
+        $groupData = [];
+        foreach ($groups as $group) {
+            $groupMt4Ids = is_string($group['mt4_ids'])
+                ? json_decode($group['mt4_ids'], true)
+                : $group['mt4_ids'];
+
+            if (empty($groupMt4Ids)) continue;
+
+            $matchingIds = array_intersect($accountMt4Ids, $groupMt4Ids);
+
+            if (empty($matchingIds)) continue;
+
+            // Filter matching accounts
+            $matchingAccounts = array_filter($accounts, function ($account) use ($matchingIds) {
+                return in_array($account['account_id'], $matchingIds);
+            });
+
+            // Calculate group stats
+            $groupTotalProfit = array_sum(array_column($matchingAccounts, 'total_profit'));
+            $groupTotalBalance = array_sum(array_column($matchingAccounts, 'account_balance'));
+            $groupTotalEquity = array_sum(array_column($matchingAccounts, 'account_equity'));
+            $accountCount = count($matchingAccounts);
+
+            $groupData[] = [
+                'id' => $group['id'],
+                'name' => $group['name'],
+                'desc' => $group['desc'] ?? '',
+                'remark' => $group['remark'] ?? '',
+                'total_accounts' => $accountCount,
+                'total_profit' => round($groupTotalProfit, 2),
+                'total_balance' => round($groupTotalBalance, 2),
+                'total_equity' => round($groupTotalEquity, 2),
+                'avg_profit' => $accountCount > 0
+                    ? round($groupTotalProfit / $accountCount, 2)
+                    : 0,
+                'accounts' => array_values($matchingAccounts), // Reset array keys
+            ];
+        }
+
+        return $groupData;
+    }
+
+    /**
+     * Get minimal user info
+     */
+    private function getMinimalUserInfo($userIds, $currentUser, $requestedUserId)
+    {
+        if (empty($userIds)) {
+            return null;
+        }
+
+        // Cache users
+        $cacheKey = "users_info_" . md5(implode(',', $userIds));
+        $users = Yii::$app->cache->get($cacheKey);
+
+        if ($users === false) {
+            $users = Users::find()
+                ->select(['id', 'user_name', 'user_email', 'user_tipe'])
+                ->where(['id' => $userIds])
+                ->asArray()
+                ->all();
+            Yii::$app->cache->set($cacheKey, $users, 300);
+        }
+
+        $targetUser = null;
+        if ($requestedUserId) {
+            foreach ($users as $user) {
+                if ($user['id'] == $requestedUserId) {
+                    $targetUser = [
+                        'id' => $user['id'],
+                        'username' => $user['user_name'],
+                        'email' => $user['user_email'],
+                        'type' => $user['user_tipe'],
+                    ];
+                    break;
+                }
+            }
+        }
+
+        return [
+            'current' => [
+                'id' => $currentUser->id,
+                'username' => $currentUser->user_name,
+                'type' => $currentUser->user_tipe,
+            ],
+            'target' => $targetUser,
+        ];
+    }
 }
