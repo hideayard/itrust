@@ -4586,7 +4586,7 @@ class MobileController extends Controller
 
                 return [
                     'success' => true,
-                    'message' => 'If your email is registered, you will receive a password reset link at '. $email,
+                    'message' => 'If your email is registered, you will receive a password reset link at ' . $email,
                     // Only include debug info in development
                     'debug' =>  [
                         'email_sent' => $emailSent,
@@ -4635,9 +4635,17 @@ class MobileController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            // Get POST data
             $request = Yii::$app->request;
-            $token = $request->post('token');
+
+            // Get token from GET parameter (from email link)
+            $token = $request->get('token');
+
+            // For backward compatibility, also check POST if GET is empty
+            if (empty($token)) {
+                $token = $request->post('token');
+            }
+
+            // Get passwords from POST data
             $newPassword = $request->post('new_password');
             $confirmPassword = $request->post('confirm_password');
 
@@ -4749,7 +4757,6 @@ class MobileController extends Controller
             ];
         }
     }
-
 
     /**
      * Verify Reset Token (optional endpoint)
