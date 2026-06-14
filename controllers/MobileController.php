@@ -4555,7 +4555,7 @@ class MobileController extends Controller
 
             if ($user->save()) {
                 // Create reset link (adjust URL to your frontend)
-                $resetLink = Yii::$app->params['frontendUrl'] . '/reset-password?token=' . $resetToken;
+                $resetLink = Yii::$app->params['frontendUrl'] . '/web/mobile/reset-password?token=' . $resetToken;
 
                 // Send email with debug flag (set to false in production)
                 $emailSent = $this->sendPasswordResetEmail($user, $resetLink, YII_DEBUG);
@@ -4586,12 +4586,13 @@ class MobileController extends Controller
 
                 return [
                     'success' => true,
-                    'message' => 'If your email is registered, you will receive a password reset link',
+                    'message' => 'If your email is registered, you will receive a password reset link at '. $email,
                     // Only include debug info in development
                     'debug' =>  [
                         'email_sent' => $emailSent,
                         'reset_link' => $resetLink,
-                        'token' => $resetToken
+                        'token' => $resetToken,
+                        'log' => $logMessage,
                     ]
                 ];
             } else {
