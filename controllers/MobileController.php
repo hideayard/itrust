@@ -4054,24 +4054,26 @@ class MobileController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            // Get POST data
+            // Get POST data - aligned with Users model fields
             $request = Yii::$app->request;
-            $firstName = $request->post('first_name');
-            $lastName = $request->post('last_name');
-            $email = $request->post('email');
-            $username = $request->post('username');
-            $password = $request->post('password');
+            $name = $request->post('name');  // Maps to user_nama (max 100 chars)
+            $email = $request->post('email');  // Maps to user_email (max 100 chars)
+            $username = $request->post('username');  // Maps to user_name (max 100 chars)
+            $password = $request->post('password');  // Maps to user_pass
             $confirmPassword = $request->post('confirm_password');
-            $phone = $request->post('phone', '');
-            $userType = $request->post('user_type', 'user'); // Default to 'user'
+            $phone = $request->post('phone', '');  // Maps to user_hp (max 20 chars)
+            $userType = $request->post('user_type', 'user');  // Maps to user_tipe (max 15 chars)
             $acceptTerms = $request->post('accept_terms', '0');
+            $account = $request->post('account', '');  // Maps to user_account (max 20 chars)
+            $license = $request->post('license', '');  // Maps to user_license (max 20 chars)
+            $telegramId = $request->post('telegram_id', null);  // Maps to telegram_id
+            $telegramUsername = $request->post('telegram_username', null);  // Maps to telegram_username
 
             // Validate input
             $errors = [];
 
-            // Required fields
-            if (empty($firstName)) $errors[] = 'First name is required';
-            if (empty($lastName)) $errors[] = 'Last name is required';
+            // Required fields - minimum: name, email, username, password
+            if (empty($name)) $errors[] = 'Name is required';
             if (empty($email)) $errors[] = 'Email is required';
             if (empty($username)) $errors[] = 'Username is required';
             if (empty($password)) $errors[] = 'Password is required';
@@ -4085,6 +4087,24 @@ class MobileController extends Controller
                 ];
             }
 
+            // Validate name length (max 100 chars per model rules)
+            if (strlen($name) > 100) {
+                return [
+                    'success' => false,
+                    'message' => 'Name must not exceed 100 characters',
+                    'errors' => ['name' => 'Maximum 100 characters allowed']
+                ];
+            }
+
+            // Validate username length (max 100 chars per model rules)
+            if (strlen($username) > 100) {
+                return [
+                    'success' => false,
+                    'message' => 'Username must not exceed 100 characters',
+                    'errors' => ['username' => 'Maximum 100 characters allowed']
+                ];
+            }
+
             // Validate email format
             $emailValidator = new EmailValidator();
             if (!$emailValidator->validate($email, $error)) {
@@ -4092,6 +4112,15 @@ class MobileController extends Controller
                     'success' => false,
                     'message' => 'Invalid email format',
                     'errors' => ['email' => $error]
+                ];
+            }
+
+            // Validate email length (max 100 chars per model rules)
+            if (strlen($email) > 100) {
+                return [
+                    'success' => false,
+                    'message' => 'Email must not exceed 100 characters',
+                    'errors' => ['email' => 'Maximum 100 characters allowed']
                 ];
             }
 
@@ -4122,6 +4151,41 @@ class MobileController extends Controller
                 ];
             }
 
+            // Validate phone length if provided (max 20 chars per model rules)
+            if (!empty($phone) && strlen($phone) > 20) {
+                return [
+                    'success' => false,
+                    'message' => 'Phone number must not exceed 20 characters',
+                    'errors' => ['phone' => 'Maximum 20 characters allowed']
+                ];
+            }
+
+            // Validate user_type length (max 15 chars per model rules)
+            if (strlen($userType) > 15) {
+                return [
+                    'success' => false,
+                    'message' => 'User type must not exceed 15 characters',
+                    'errors' => ['user_type' => 'Maximum 15 characters allowed']
+                ];
+            }
+
+            // Validate optional fields lengths
+            if (!empty($account) && strlen($account) > 20) {
+                return [
+                    'success' => false,
+                    'message' => 'Account must not exceed 20 characters',
+                    'errors' => ['account' => 'Maximum 20 characters allowed']
+                ];
+            }
+
+            if (!empty($license) && strlen($license) > 20) {
+                return [
+                    'success' => false,
+                    'message' => 'License must not exceed 20 characters',
+                    'errors' => ['license' => 'Maximum 20 characters allowed']
+                ];
+            }
+
             // Check if username already exists
             if (Users::find()->where(['user_name' => $username])->exists()) {
                 return [
@@ -4144,16 +4208,33 @@ class MobileController extends Controller
             $user = new Users();
             $user->scenario = Users::SCENARIO_DEFAULT;
             $user->user_name = $username;
-            $user->user_nama = $firstName . ' ' . $lastName;
+            $user->user_nama = $name;  // Direct mapping to user_nama
             $user->user_email = $email;
+            $user->user_pass = Yii::$app->security->generatePasswordHash($password);
             $user->user_hp = $phone;
             $user->user_tipe = $userType;
-            $user->user_pass = Yii::$app->security->generatePasswordHash($password);
-            $user->user_status = 1; // Active
             $user->user_foto = 'default.jpg'; // Default photo
+            $user->user_status = 1; // Active
             $user->is_deleted = 0;
 
-            // Generate token for future use (optional)
+            // Optional fields from model
+            if (!empty($account)) {
+                $user->user_account = $account;
+            }
+
+            if (!empty($license)) {
+                $user->user_license = $license;
+            }
+
+            if (!empty($telegramId)) {
+                $user->telegram_id = $telegramId;
+            }
+
+            if (!empty($telegramUsername)) {
+                $user->telegram_username = $telegramUsername;
+            }
+
+            // Generate token for future use
             $user->user_token = Yii::$app->security->generateRandomString(15);
 
             // Save user
@@ -4164,11 +4245,13 @@ class MobileController extends Controller
                 TelegramHelper::sendSimpleMessage(
                     [
                         'text' => "📝 New User Registration\n" .
-                            "Name: " . $firstName . " " . $lastName . "\n" .
+                            "Name: " . $name . "\n" .
                             "Username: " . $username . "\n" .
                             "Email: " . $email . "\n" .
                             "Phone: " . $phone . "\n" .
                             "Type: " . $userType . "\n" .
+                            "Account: " . ($account ?: 'N/A') . "\n" .
+                            "License: " . ($license ?: 'N/A') . "\n" .
                             "IP: " . $clientIp,
                         'parse_mode' => 'html'
                     ],
@@ -4190,7 +4273,11 @@ class MobileController extends Controller
                         'phone' => $user->user_hp,
                         'user_tipe' => $user->user_tipe,
                         'photo' => $user->user_foto,
-                        'status' => $user->user_status
+                        'status' => $user->user_status,
+                        'account' => $user->user_account,
+                        'license' => $user->user_license,
+                        'telegram_id' => $user->telegram_id,
+                        'telegram_username' => $user->telegram_username
                     ]
                 ];
             } else {
