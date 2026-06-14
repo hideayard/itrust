@@ -4586,11 +4586,11 @@ class MobileController extends Controller
                     'success' => true,
                     'message' => 'If your email is registered, you will receive a password reset link',
                     // Only include debug info in development
-                    'debug' => YII_DEBUG ? [
+                    'debug' =>  [
                         'email_sent' => $emailSent,
                         'reset_link' => $resetLink,
                         'token' => $resetToken
-                    ] : null
+                    ]
                 ];
             } else {
                 Yii::error('Failed to save reset token for user: ' . $user->user_id);
