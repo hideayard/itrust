@@ -4306,6 +4306,113 @@ class MobileController extends Controller
     }
 
     /**
+     * Forgot Password Endpoint - Send reset link
+     */
+    public function actionForgotPassword()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get POST data
+            $request = Yii::$app->request;
+            $email = $request->post('email');
+
+            // Validate input
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required'
+                ];
+            }
+
+            // Validate email format
+            $emailValidator = new EmailValidator();
+            if (!$emailValidator->validate($email, $error)) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid email format'
+                ];
+            }
+
+            // Find user by email
+            $user = Users::find()->where(['user_email' => $email])->one();
+
+            // For security, always return success even if email not found
+            if (!$user) {
+                // Log the attempt but don't reveal that email doesn't exist
+                Yii::info('Password reset attempted for non-existent email: ' . $email);
+
+                return [
+                    'success' => true,
+                    'message' => 'If the email exists, a reset link has been sent'
+                ];
+            }
+
+            // Generate password reset token
+            $resetToken = Yii::$app->security->generateRandomString(15); // user_token field is max 15 chars
+
+            // Save token to user_token field with expiration info embedded
+            // Format: token_timestamp (e.g., abc123_1641234567)
+            $tokenWithExpiry = $resetToken . '_' . time();
+
+            // Since we don't have dedicated reset token fields, we'll use user_token
+            // You may want to add dedicated fields later
+            $user->user_token = $tokenWithExpiry;
+
+            if (!$user->save()) {
+                Yii::error('Failed to save reset token for user: ' . $user->user_id);
+                throw new \Exception('Failed to generate reset token');
+            }
+
+            // Build reset link
+            $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $resetToken]);
+
+            // Send email with reset link
+            $this->sendPasswordResetEmail($user, $resetLink);
+
+            // Log the activity
+            $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+            TelegramHelper::sendSimpleMessage(
+                [
+                    'text' => "🔐 Password Reset Request\n" .
+                        "Email: " . $email . "\n" .
+                        "Username: " . $user->user_name . "\n" .
+                        "Name: " . $user->user_nama . "\n" .
+                        "IP: " . $clientIp,
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
+
+            return [
+                'success' => true,
+                'message' => 'Password reset link has been sent to your email'
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Mobile forgot password error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to process request. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null
+            ];
+        }
+    }
+
+    /**
      * Test email function - sends a test email to verify mail configuration
      * Can be called from an action or directly for testing
      */
@@ -4504,7 +4611,7 @@ class MobileController extends Controller
     /**
      * Updated forgot password action with email debugging
      */
-    public function actionForgotPassword()
+    public function actionForgotPassword2()
     {
         // Add CORS headers
         Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
