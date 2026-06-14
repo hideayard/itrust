@@ -4306,7 +4306,203 @@ class MobileController extends Controller
     }
 
     /**
-     * Forgot Password Endpoint - Send reset link
+     * Test email function - sends a test email to verify mail configuration
+     * Can be called from an action or directly for testing
+     */
+    private function sendTestEmail($toEmail = null, $toName = null)
+    {
+        // If no email specified, use admin email from params
+        if ($toEmail === null) {
+            $toEmail = Yii::$app->params['adminEmail'] ?? 'admin@example.com';
+        }
+
+        if ($toName === null) {
+            $toName = 'Test User';
+        }
+
+        $subject = 'Test Email - Geran Komuniti Iskandar Puteri';
+
+        $htmlBody = "<h2>Test Email</h2>";
+        $htmlBody .= "<p>Hello <strong>" . $toName . "</strong>,</p>";
+        $htmlBody .= "<p>This is a test email from <strong>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</strong>.</p>";
+        $htmlBody .= "<p>If you receive this email, it means your email configuration is working correctly.</p>";
+        $htmlBody .= "<hr>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Time sent: " . date('Y-m-d H:i:s') . "</p>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Server: " . ($_SERVER['SERVER_NAME'] ?? 'localhost') . "</p>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
+
+        $textBody = "Test Email\n\n";
+        $textBody .= "Hello " . $toName . ",\n\n";
+        $textBody .= "This is a test email from Geran Komuniti Iskandar Puteri Rendah Karbon 5.0.\n\n";
+        $textBody .= "If you receive this email, it means your email configuration is working correctly.\n\n";
+        $textBody .= "Time sent: " . date('Y-m-d H:i:s') . "\n";
+        $textBody .= "Server: " . ($_SERVER['SERVER_NAME'] ?? 'localhost') . "\n\n";
+        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0";
+
+        try {
+            Yii::$app->mailer->compose()
+                ->setFrom([Yii::$app->params['adminEmail'] => 'Geran Komuniti Iskandar Puteri'])
+                ->setTo($toEmail)
+                ->setSubject($subject)
+                ->setTextBody($textBody)
+                ->setHtmlBody($htmlBody)
+                ->send();
+
+            Yii::info('Test email sent successfully to: ' . $toEmail);
+
+            return [
+                'success' => true,
+                'message' => 'Test email sent successfully to: ' . $toEmail,
+                'debug' => [
+                    'to_email' => $toEmail,
+                    'to_name' => $toName,
+                    'from_email' => Yii::$app->params['adminEmail'],
+                    'subject' => $subject,
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Failed to send test email: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to send test email',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'to_email' => $toEmail,
+                    'to_name' => $toName,
+                    'from_email' => Yii::$app->params['adminEmail'],
+                    'timestamp' => date('Y-m-d H:i:s'),
+                    'mailer_config' => YII_DEBUG ? Yii::$app->mailer->transport : null
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Public action to test email sending
+     * Can be called via: POST /test-email with optional email and name fields
+     */
+    public function actionTestEmail()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+            $toEmail = $request->post('email', null);
+            $toName = $request->post('name', 'Test User');
+
+            // If no email provided, try to get from query params for GET requests
+            if ($toEmail === null && Yii::$app->request->isGet) {
+                $toEmail = $request->get('email', null);
+            }
+
+            // Run the test
+            $result = $this->sendTestEmail($toEmail, $toName);
+
+            // Add curl command for debugging
+            $curlCommand = 'curl -X POST "' . Yii::$app->request->hostInfo . '/test-email" '
+                . '-F "email=' . ($toEmail ?? 'admin@example.com') . '" '
+                . '-F "name=' . $toName . '"';
+
+            $result['curl_debug'] = $curlCommand;
+
+            return $result;
+        } catch (\Exception $e) {
+            Yii::error('Test email action error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to send test email',
+                'error' => YII_DEBUG ? $e->getMessage() : null
+            ];
+        }
+    }
+
+    /**
+     * Enhanced password reset email sender with test/debug capability
+     */
+    private function sendPasswordResetEmail($user, $resetLink, $debug = false)
+    {
+        $subject = 'Reset Your Password - Geran Komuniti Iskandar Puteri';
+
+        $htmlBody = "<h2>Password Reset Request</h2>";
+        $htmlBody .= "<p>Hello <strong>" . $user->user_nama . "</strong>,</p>";
+        $htmlBody .= "<p>We received a request to reset your password for your account <strong>" . $user->user_name . "</strong>.</p>";
+        $htmlBody .= "<p>Click the link below to set a new password:</p>";
+        $htmlBody .= "<p style='margin: 30px 0;'><a href='" . $resetLink . "' style='background-color: #FDA300; color: #2C5282; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Reset Password</a></p>";
+        $htmlBody .= "<p>Or copy and paste this link in your browser:</p>";
+        $htmlBody .= "<p style='word-break: break-all; color: #2C5282;'>" . $resetLink . "</p>";
+        $htmlBody .= "<p><strong>This link will expire in 1 hour.</strong></p>";
+        $htmlBody .= "<p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>";
+        $htmlBody .= "<hr>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
+        $htmlBody .= "<p style='color: #999; font-size: 11px;'>This is an automated email. Please do not reply to this email.</p>";
+
+        $textBody = "Password Reset Request\n\n";
+        $textBody .= "Hello " . $user->user_nama . ",\n\n";
+        $textBody .= "We received a request to reset your password for your account " . $user->user_name . ".\n\n";
+        $textBody .= "Click the link below to set a new password:\n";
+        $textBody .= $resetLink . "\n\n";
+        $textBody .= "This link will expire in 1 hour.\n\n";
+        $textBody .= "If you didn't request this, please ignore this email and your password will remain unchanged.\n\n";
+        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0\n";
+        $textBody .= "This is an automated email. Please do not reply to this email.";
+
+        // Send email using Yii's mailer
+        try {
+            $mailer = Yii::$app->mailer->compose()
+                ->setFrom([Yii::$app->params['adminEmail'] => 'Geran Komuniti Iskandar Puteri'])
+                ->setTo($user->user_email)
+                ->setSubject($subject)
+                ->setTextBody($textBody)
+                ->setHtmlBody($htmlBody);
+
+            $sent = $mailer->send();
+
+            if ($sent) {
+                Yii::info('Password reset email sent to: ' . $user->user_email);
+
+                if ($debug) {
+                    Yii::info('Debug - Reset link: ' . $resetLink);
+                    Yii::info('Debug - User: ' . $user->user_name . ' (' . $user->user_email . ')');
+                }
+
+                return true;
+            } else {
+                Yii::error('Failed to send password reset email - mailer returned false');
+
+                if ($debug) {
+                    Yii::error('Debug - Mailer configuration: ' . json_encode(Yii::$app->mailer->transport));
+                }
+
+                return false;
+            }
+        } catch (\Exception $e) {
+            Yii::error('Failed to send password reset email: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            if ($debug) {
+                Yii::error('Debug - Mailer error details: ' . $e->getMessage());
+            }
+
+            return false;
+        }
+    }
+
+    /**
+     * Updated forgot password action with email debugging
      */
     public function actionForgotPassword()
     {
@@ -4324,11 +4520,10 @@ class MobileController extends Controller
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            // Get POST data
             $request = Yii::$app->request;
             $email = $request->post('email');
 
-            // Validate input
+            // Validate email
             if (empty($email)) {
                 return [
                     'success' => false,
@@ -4336,77 +4531,80 @@ class MobileController extends Controller
                 ];
             }
 
-            // Validate email format
-            $emailValidator = new EmailValidator();
-            if (!$emailValidator->validate($email, $error)) {
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            // For security reasons, always return success even if email doesn't exist
+            // This prevents email enumeration
+            if (!$user) {
+                Yii::info('Forgot password attempted for non-existent email: ' . $email);
                 return [
-                    'success' => false,
-                    'message' => 'Invalid email format'
+                    'success' => true,
+                    'message' => 'If your email is registered, you will receive a password reset link'
                 ];
             }
 
-            // Find user by email
-            $user = Users::find()->where(['user_email' => $email])->one();
+            // Generate reset token
+            $resetToken = Yii::$app->security->generateRandomString(64);
+            $timestamp = time();
 
-            // For security, always return success even if email not found
-            if (!$user) {
-                // Log the attempt but don't reveal that email doesn't exist
-                Yii::info('Password reset attempted for non-existent email: ' . $email);
+            // Store token with timestamp in user_token field
+            $user->user_token = $resetToken . '_' . $timestamp;
+
+            if ($user->save()) {
+                // Create reset link (adjust URL to your frontend)
+                $resetLink = Yii::$app->params['frontendUrl'] . '/reset-password?token=' . $resetToken;
+
+                // Send email with debug flag (set to false in production)
+                $emailSent = $this->sendPasswordResetEmail($user, $resetLink, YII_DEBUG);
+
+                // Log activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                $logMessage = "🔑 Password Reset Requested\n" .
+                    "Email: " . $email . "\n" .
+                    "Username: " . $user->user_name . "\n" .
+                    "Name: " . $user->user_nama . "\n" .
+                    "IP: " . $clientIp . "\n" .
+                    "Email Sent: " . ($emailSent ? 'Yes' : 'No');
+
+                if (YII_DEBUG) {
+                    $logMessage .= "\nDebug - Reset Link: " . $resetLink;
+                }
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => $logMessage,
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
 
                 return [
                     'success' => true,
-                    'message' => 'If the email exists, a reset link has been sent'
+                    'message' => 'If your email is registered, you will receive a password reset link',
+                    // Only include debug info in development
+                    'debug' => YII_DEBUG ? [
+                        'email_sent' => $emailSent,
+                        'reset_link' => $resetLink,
+                        'token' => $resetToken
+                    ] : null
+                ];
+            } else {
+                Yii::error('Failed to save reset token for user: ' . $user->user_id);
+
+                return [
+                    'success' => false,
+                    'message' => 'Unable to process request. Please try again.'
                 ];
             }
-
-            // Generate password reset token
-            $resetToken = Yii::$app->security->generateRandomString(15); // user_token field is max 15 chars
-
-            // Save token to user_token field with expiration info embedded
-            // Format: token_timestamp (e.g., abc123_1641234567)
-            $tokenWithExpiry = $resetToken . '_' . time();
-
-            // Since we don't have dedicated reset token fields, we'll use user_token
-            // You may want to add dedicated fields later
-            $user->user_token = $tokenWithExpiry;
-
-            if (!$user->save()) {
-                Yii::error('Failed to save reset token for user: ' . $user->user_id);
-                throw new \Exception('Failed to generate reset token');
-            }
-
-            // Build reset link
-            $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $resetToken]);
-
-            // Send email with reset link
-            $this->sendPasswordResetEmail($user, $resetLink);
-
-            // Log the activity
-            $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
-
-            TelegramHelper::sendSimpleMessage(
-                [
-                    'text' => "🔐 Password Reset Request\n" .
-                        "Email: " . $email . "\n" .
-                        "Username: " . $user->user_name . "\n" .
-                        "Name: " . $user->user_nama . "\n" .
-                        "IP: " . $clientIp,
-                    'parse_mode' => 'html'
-                ],
-                Yii::$app->params['group_id']
-            );
-
-            return [
-                'success' => true,
-                'message' => 'Password reset link has been sent to your email'
-            ];
         } catch (\Exception $e) {
-            Yii::error('Mobile forgot password error: ' . $e->getMessage());
+            Yii::error('Forgot password error: ' . $e->getMessage());
             Yii::error('Stack trace: ' . $e->getTraceAsString());
 
             return [
                 'success' => false,
-                'message' => 'Failed to process request. Please try again.',
+                'message' => 'An error occurred. Please try again.',
                 'error' => YII_DEBUG ? $e->getMessage() : null
             ];
         }
