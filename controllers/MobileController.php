@@ -4579,7 +4579,9 @@ class MobileController extends Controller
                         'text' => $logMessage,
                         'parse_mode' => 'html'
                     ],
-                    Yii::$app->params['group_id']
+                    Yii::$app->params['log_group_id'],
+                    Yii::$app->params['log_thread_id']
+
                 );
 
                 return [

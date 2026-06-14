@@ -40,11 +40,11 @@ $config = [
             'class' => 'yii\swiftmailer\Mailer',
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'mail.itrust-tech.id', //smtp.gmail.com',
-                'username' => 'admin@rochat.id',
-                'password' => 'Bismillah@2021',
-                'port' => '587',
-                'encryption' => 'tls',
+                'host' => $params['smtp']['host'],
+                'username' => $params['smtp']['username'],
+                'password' => $params['smtp']['password'],
+                'port' => $params['smtp']['port'],
+                'encryption' => $params['smtp']['encryption'],
             ],
         ],
         'log' => [
