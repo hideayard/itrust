@@ -69,6 +69,7 @@ class MobileController extends Controller
             'save-myfxbook-data',
             'save-investing-data',
             'get-scrape-data',
+            // 'test-email',
             'get-latest-events',
             'get-high-impact-events',
             'get-technical-analysis',
@@ -4540,7 +4541,8 @@ class MobileController extends Controller
                 Yii::info('Forgot password attempted for non-existent email: ' . $email);
                 return [
                     'success' => true,
-                    'message' => 'If your email is registered, you will receive a password reset link'
+                    'message' => 'If your email is registered, you will receive a password reset link',
+                    'info' =>  'Forgot password attempted for non-existent email: ' . $email
                 ];
             }
 
