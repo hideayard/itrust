@@ -4558,7 +4558,7 @@ class MobileController extends Controller
                 $resetLink = Yii::$app->params['frontendUrl'] . '/web/mobile/reset-password?token=' . $resetToken;
 
                 // Send email with debug flag (set to false in production)
-                $emailSent = $this->sendPasswordResetEmail($user, $resetLink, YII_DEBUG);
+                // $emailSent = $this->sendPasswordResetEmail($user, $resetLink, YII_DEBUG);
 
                 // Log activity
                 $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
@@ -4615,11 +4615,834 @@ class MobileController extends Controller
         }
     }
 
+    /**
+     * Generate OTP for password reset
+     * POST /generate-otp
+     * Params: email
+     */
+    public function actionGenerateOTP()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+            $email = $request->post('email');
+
+            // Debug info
+            $debug = [
+                'method' => $request->method,
+                'email' => $email,
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+
+            // Validate email
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate email format
+            $emailValidator = new \yii\validators\EmailValidator();
+            if (!$emailValidator->validate($email, $error)) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid email format',
+                    'debug' => $debug
+                ];
+            }
+
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Email not registered',
+                    'debug' => $debug
+                ];
+            }
+
+            // Generate OTP (6 digits)
+            $otp = rand(100000, 999999);
+            $otpExpiry = time() + 600; // OTP valid for 10 minutes
+
+            // Store OTP and expiry in user_token field
+            // Format: OTP_{otp}_{expiry_timestamp}
+            $user->user_token = 'OTP_' . $otp . '_' . $otpExpiry;
+
+            if ($user->save()) {
+                $debug['otp_generated'] = true;
+                $debug['otp_expiry'] = date('Y-m-d H:i:s', $otpExpiry);
+                $debug['otp_valid_minutes'] = 10;
+
+                // Log OTP in debug mode (remove in production)
+                if (YII_DEBUG) {
+                    $debug['otp'] = $otp;
+                }
+
+                // Send OTP via email
+                $emailSent = $this->sendOTPEmail($user, $otp);
+
+                $debug['email_sent'] = $emailSent;
+
+                // Log activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "📧 Password Reset OTP Requested\n" .
+                            "Email: " . $email . "\n" .
+                            "Username: " . $user->user_name . "\n" .
+                            "Name: " . $user->user_nama . "\n" .
+                            "IP: " . $clientIp . "\n" .
+                            "Time: " . date('Y-m-d H:i:s'),
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'OTP has been sent to your email',
+                    'debug' => $debug,
+                    'data' => [
+                        'email' => $email,
+                        'otp_expires_in_seconds' => 600,
+                        'otp_expires_in_minutes' => 10,
+                    ]
+                ];
+            } else {
+                $debug['save_errors'] = $user->errors;
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to generate OTP',
+                    'debug' => $debug
+                ];
+            }
+        } catch (\Exception $e) {
+            Yii::error('Generate OTP error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to generate OTP. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Check/Verify OTP
+     * POST /check-otp
+     * Params: email, otp
+     */
+    public function actionCheckOTP()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+            $email = $request->post('email');
+            $otp = $request->post('otp');
+
+            // Debug info
+            $debug = [
+                'method' => $request->method,
+                'email' => $email,
+                'otp_length' => strlen($otp ?? ''),
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+
+            // Validate email
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate OTP
+            if (empty($otp)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate OTP format (6 digits)
+            if (!preg_match('/^\d{6}$/', $otp)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP must be 6 digits',
+                    'debug' => $debug
+                ];
+            }
+
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Email not found',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has OTP stored
+            if (empty($user->user_token) || strpos($user->user_token, 'OTP_') !== 0) {
+                return [
+                    'success' => false,
+                    'message' => 'No OTP found. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Parse OTP data from user_token
+            // Format: OTP_{otp}_{expiry_timestamp}
+            $parts = explode('_', $user->user_token);
+
+            if (count($parts) !== 3 || $parts[0] !== 'OTP') {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid OTP format. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            $storedOtp = $parts[1];
+            $expiryTimestamp = (int)$parts[2];
+            $currentTime = time();
+
+            $debug['stored_otp_length'] = strlen($storedOtp);
+            $debug['expiry_timestamp'] = date('Y-m-d H:i:s', $expiryTimestamp);
+            $debug['current_timestamp'] = date('Y-m-d H:i:s', $currentTime);
+            $debug['otp_expired'] = $currentTime > $expiryTimestamp;
+
+            // Check if OTP has expired
+            if ($currentTime > $expiryTimestamp) {
+                // Clear expired OTP
+                $user->user_token = null;
+                $user->save();
+
+                return [
+                    'success' => false,
+                    'message' => 'OTP has expired. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if OTP matches
+            if ($otp !== $storedOtp) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid OTP. Please try again.',
+                    'debug' => $debug
+                ];
+            }
+
+            // OTP is valid - mark as verified but don't clear yet (keep for password reset)
+            $user->user_token = 'OTP_VERIFIED_' . $storedOtp . '_' . $expiryTimestamp;
+            $user->save();
+
+            $debug['otp_verified'] = true;
+
+            // Log activity
+            $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+            TelegramHelper::sendSimpleMessage(
+                [
+                    'text' => "✅ OTP Verified for Password Reset\n" .
+                        "Email: " . $email . "\n" .
+                        "Username: " . $user->user_name . "\n" .
+                        "Name: " . $user->user_nama . "\n" .
+                        "IP: " . $clientIp . "\n" .
+                        "Time: " . date('Y-m-d H:i:s'),
+                    'parse_mode' => 'html'
+                ],
+                Yii::$app->params['group_id']
+            );
+
+            return [
+                'success' => true,
+                'message' => 'OTP verified successfully',
+                'debug' => $debug,
+                'data' => [
+                    'email' => $email,
+                    'username' => $user->user_name,
+                    'verified' => true,
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Check OTP error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to verify OTP. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Reset password using OTP
+     * POST /reset-password
+     * Params: email, otp, new_password, confirm_password
+     */
+    public function actionResetPassword()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+
+            // Get params from POST
+            $email = $request->post('email');
+            $otp = $request->post('otp');
+            $newPassword = $request->post('new_password');
+            $confirmPassword = $request->post('confirm_password');
+
+            // Debug info
+            $debug = [
+                'method' => $request->method,
+                'email' => $email,
+                'otp_length' => strlen($otp ?? ''),
+                'has_new_password' => !empty($newPassword),
+                'has_confirm_password' => !empty($confirmPassword),
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+
+            // Validate email
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate OTP
+            if (empty($otp)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate new password
+            if (empty($newPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'New password is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate confirm password
+            if (empty($confirmPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'Confirm password is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check password length
+            if (strlen($newPassword) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'Password must be at least 8 characters long',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check password match
+            if ($newPassword !== $confirmPassword) {
+                return [
+                    'success' => false,
+                    'message' => 'Passwords do not match',
+                    'debug' => $debug
+                ];
+            }
+
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Email not found',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has OTP verified
+            if (empty($user->user_token) || strpos($user->user_token, 'OTP_VERIFIED_') !== 0) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP not verified. Please verify OTP first.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Parse OTP data from user_token
+            // Format: OTP_VERIFIED_{otp}_{expiry_timestamp}
+            $parts = explode('_', $user->user_token);
+
+            if (count($parts) !== 4 || $parts[0] !== 'OTP' || $parts[1] !== 'VERIFIED') {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid OTP format. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            $storedOtp = $parts[2];
+            $expiryTimestamp = (int)$parts[3];
+            $currentTime = time();
+
+            $debug['stored_otp_length'] = strlen($storedOtp);
+            $debug['expiry_timestamp'] = date('Y-m-d H:i:s', $expiryTimestamp);
+            $debug['otp_expired'] = $currentTime > $expiryTimestamp;
+
+            // Check if OTP has expired
+            if ($currentTime > $expiryTimestamp) {
+                // Clear expired OTP
+                $user->user_token = null;
+                $user->save();
+
+                return [
+                    'success' => false,
+                    'message' => 'OTP has expired. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Verify OTP matches
+            if ($otp !== $storedOtp) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid OTP',
+                    'debug' => $debug
+                ];
+            }
+
+            // Update password
+            $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
+            $user->user_token = null; // Clear the token
+            $user->modified_at = date('Y-m-d H:i:s');
+
+            if ($user->save()) {
+                $debug['password_updated'] = true;
+                $debug['token_cleared'] = true;
+
+                // Log the activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "✅ Password Reset Successful via OTP\n" .
+                            "Username: " . $user->user_name . "\n" .
+                            "Name: " . $user->user_nama . "\n" .
+                            "Email: " . $user->user_email . "\n" .
+                            "IP: " . $clientIp . "\n" .
+                            "Time: " . date('Y-m-d H:i:s'),
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'Password has been reset successfully',
+                    'debug' => $debug
+                ];
+            } else {
+                $debug['save_errors'] = $user->errors;
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to reset password',
+                    'debug' => $debug
+                ];
+            }
+        } catch (\Exception $e) {
+            Yii::error('Reset password error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to reset password. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Send OTP email to user
+     */
+    private function sendOTPEmail($user, $otp)
+    {
+        $subject = 'Password Reset OTP - Geran Komuniti Iskandar Puteri';
+
+        $htmlBody = "<h2>Password Reset OTP</h2>";
+        $htmlBody .= "<p>Hello <strong>" . $user->user_nama . "</strong>,</p>";
+        $htmlBody .= "<p>You have requested to reset your password. Use the following OTP code:</p>";
+        $htmlBody .= "<div style='margin: 30px 0; text-align: center;'>";
+        $htmlBody .= "<div style='background-color: #FDA300; color: #2C5282; padding: 20px; font-size: 32px; font-weight: bold; letter-spacing: 5px; display: inline-block; border-radius: 8px;'>" . $otp . "</div>";
+        $htmlBody .= "</div>";
+        $htmlBody .= "<p>This OTP will expire in <strong>10 minutes</strong>.</p>";
+        $htmlBody .= "<p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>";
+        $htmlBody .= "<hr>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
+        $htmlBody .= "<p style='color: #999; font-size: 11px;'>This is an automated email. Please do not reply to this email.</p>";
+
+        $textBody = "Password Reset OTP\n\n";
+        $textBody .= "Hello " . $user->user_nama . ",\n\n";
+        $textBody .= "You have requested to reset your password.\n\n";
+        $textBody .= "Your OTP: " . $otp . "\n\n";
+        $textBody .= "This OTP will expire in 10 minutes.\n\n";
+        $textBody .= "If you didn't request this, please ignore this email.\n\n";
+        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0\n";
+        $textBody .= "This is an automated email. Please do not reply to this email.";
+
+        try {
+            $smtpConfig = Yii::$app->params['smtp'] ?? null;
+
+            if ($smtpConfig === null || empty($smtpConfig['username']) || empty($smtpConfig['password'])) {
+                Yii::error('SMTP credentials not configured. Saving OTP email to file.');
+                $this->saveEmailToFile($user->user_email, $subject, $htmlBody, $textBody);
+                return true;
+            }
+
+            $transport = (new \Swift_SmtpTransport(
+                $smtpConfig['host'],
+                $smtpConfig['port'],
+                $smtpConfig['encryption'] ?? 'tls'
+            ))
+                ->setUsername($smtpConfig['username'])
+                ->setPassword($smtpConfig['password']);
+
+            $mailer = new \Swift_Mailer($transport);
+
+            $message = (new \Swift_Message($subject))
+                ->setFrom([$smtpConfig['username'] => 'Geran Komuniti Iskandar Puteri'])
+                ->setTo($user->user_email)
+                ->setBody($htmlBody, 'text/html')
+                ->addPart($textBody, 'text/plain');
+
+            $sent = $mailer->send($message);
+
+            if ($sent) {
+                Yii::info('OTP email sent to: ' . $user->user_email);
+                return true;
+            } else {
+                Yii::error('Failed to send OTP email - mailer returned false');
+                return false;
+            }
+        } catch (\Exception $e) {
+            Yii::error('Failed to send OTP email: ' . $e->getMessage());
+            $this->saveEmailToFile($user->user_email, $subject, $htmlBody, $textBody);
+            return false;
+        }
+    }
+
 
     /**
      * Reset Password Endpoint - Actually reset the password using token
      */
-    public function actionResetPassword()
+
+    // public function actionResetPassword()
+    // {
+    //     // Add CORS headers
+    //     Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+    //     Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    //     Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+    //     // Handle OPTIONS request (preflight)
+    //     if (Yii::$app->request->isOptions) {
+    //         Yii::$app->response->statusCode = 200;
+    //         return;
+    //     }
+
+    //     Yii::$app->response->format = Response::FORMAT_JSON;
+
+    //     try {
+    //         $request = Yii::$app->request;
+
+    //         // Get token from GET parameter (from email link)
+    //         $token = $request->get('token');
+
+    //         // For backward compatibility, also check POST if GET is empty
+    //         if (empty($token)) {
+    //             $token = $request->post('token');
+    //         }
+
+    //         // Get passwords from POST data
+    //         $newPassword = $request->post('new_password');
+    //         $confirmPassword = $request->post('confirm_password');
+
+    //         // Debug info
+    //         $debug = [
+    //             'method' => $request->method,
+    //             'token_source' => empty($request->get('token')) ? 'POST' : 'GET',
+    //             'token_length' => strlen($token ?? ''),
+    //             'has_new_password' => !empty($newPassword),
+    //             'has_confirm_password' => !empty($confirmPassword),
+    //             'timestamp' => date('Y-m-d H:i:s'),
+    //         ];
+
+    //         // If only token is provided (GET request without passwords), validate token only
+    //         if (!empty($token) && empty($newPassword) && empty($confirmPassword)) {
+    //             // Find user by reset token
+    //             $users = Users::find()
+    //                 ->where(['like', 'user_token', $token . '_%', false])
+    //                 ->all();
+
+    //             $user = null;
+    //             $currentTime = time();
+    //             $tokenExpiry = 3600; // 1 hour
+
+    //             foreach ($users as $potentialUser) {
+    //                 $parts = explode('_', $potentialUser->user_token);
+    //                 if (count($parts) == 2 && $parts[0] === $token) {
+    //                     $timestamp = (int)$parts[1];
+    //                     $age = $currentTime - $timestamp;
+
+    //                     // Check if token is not expired
+    //                     if ($age <= $tokenExpiry) {
+    //                         $user = $potentialUser;
+    //                         $debug['token_age_seconds'] = $age;
+    //                         $debug['token_age_minutes'] = round($age / 60, 2);
+    //                         $debug['token_expires_in_seconds'] = $tokenExpiry - $age;
+    //                         $debug['token_expires_in_minutes'] = round(($tokenExpiry - $age) / 60, 2);
+    //                         break;
+    //                     } else {
+    //                         $debug['token_expired'] = true;
+    //                         $debug['token_age_seconds'] = $age;
+    //                         $debug['token_age_minutes'] = round($age / 60, 2);
+    //                         $debug['expired_by_seconds'] = $age - $tokenExpiry;
+    //                     }
+    //                 }
+    //             }
+
+    //             if ($user) {
+    //                 // Token is valid
+    //                 return [
+    //                     'success' => true,
+    //                     'message' => 'Token is valid. You can now reset your password.',
+    //                     'debug' => $debug,
+    //                     'data' => [
+    //                         'username' => $user->user_name,
+    //                         'email' => $user->user_email,
+    //                         'token_valid' => true,
+    //                         'token_expires_in_seconds' => $debug['token_expires_in_seconds'] ?? 0,
+    //                         'token_expires_in_minutes' => $debug['token_expires_in_minutes'] ?? 0,
+    //                     ]
+    //                 ];
+    //             } else {
+    //                 // Token is invalid or expired
+    //                 $debug['users_found'] = count($users);
+
+    //                 return [
+    //                     'success' => false,
+    //                     'message' => 'Invalid or expired reset token',
+    //                     'debug' => $debug,
+    //                 ];
+    //             }
+    //         }
+
+    //         // Validate input for password reset
+    //         if (empty($token)) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Reset token is required',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         if (empty($newPassword)) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'New password is required',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         if (empty($confirmPassword)) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Confirm password is required',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Check password length
+    //         if (strlen($newPassword) < 8) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Password must be at least 8 characters long',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Check password match
+    //         if ($newPassword !== $confirmPassword) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Passwords do not match',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Find user by reset token
+    //         $users = Users::find()
+    //             ->where(['like', 'user_token', $token . '_%', false])
+    //             ->all();
+
+    //         $user = null;
+    //         $currentTime = time();
+    //         $tokenExpiry = 3600; // 1 hour
+
+    //         foreach ($users as $potentialUser) {
+    //             $parts = explode('_', $potentialUser->user_token);
+    //             if (count($parts) == 2 && $parts[0] === $token) {
+    //                 $timestamp = (int)$parts[1];
+    //                 $age = $currentTime - $timestamp;
+
+    //                 // Check if token is not expired
+    //                 if ($age <= $tokenExpiry) {
+    //                     $user = $potentialUser;
+    //                     $debug['token_age_seconds'] = $age;
+    //                     $debug['token_age_minutes'] = round($age / 60, 2);
+    //                     $debug['token_valid'] = true;
+    //                     break;
+    //                 }
+    //             }
+    //         }
+
+    //         if (!$user) {
+    //             $debug['users_found'] = count($users);
+
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Invalid or expired reset token',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Update password
+    //         $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
+    //         $user->user_token = null; // Clear the token
+    //         $user->modified_at = date('Y-m-d H:i:s');
+
+    //         if ($user->save()) {
+    //             // Log the activity
+    //             $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+    //             TelegramHelper::sendSimpleMessage(
+    //                 [
+    //                     'text' => "✅ Password Reset Successful\n" .
+    //                         "Username: " . $user->user_name . "\n" .
+    //                         "Name: " . $user->user_nama . "\n" .
+    //                         "Email: " . $user->user_email . "\n" .
+    //                         "IP: " . $clientIp . "\n" .
+    //                         "Time: " . date('Y-m-d H:i:s'),
+    //                     'parse_mode' => 'html'
+    //                 ],
+    //                 Yii::$app->params['group_id']
+    //             );
+
+    //             $debug['password_updated'] = true;
+    //             $debug['token_cleared'] = true;
+    //             $debug['user_id'] = $user->user_id;
+
+    //             return [
+    //                 'success' => true,
+    //                 'message' => 'Password has been reset successfully',
+    //                 'debug' => $debug
+    //             ];
+    //         } else {
+    //             $debug['save_errors'] = $user->errors;
+
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Failed to reset password',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+    //     } catch (\Exception $e) {
+    //         Yii::error('Mobile reset password error: ' . $e->getMessage());
+    //         Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+    //         return [
+    //             'success' => false,
+    //             'message' => 'Failed to reset password. Please try again.',
+    //             'error' => YII_DEBUG ? $e->getMessage() : null,
+    //             'debug' => [
+    //                 'exception' => get_class($e),
+    //                 'message' => $e->getMessage(),
+    //                 'file' => $e->getFile(),
+    //                 'line' => $e->getLine(),
+    //             ]
+    //         ];
+    //     }
+    // }
+
+    public function actionActionChangePassword()
     {
         // Add CORS headers
         Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
