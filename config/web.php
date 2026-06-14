@@ -25,6 +25,9 @@ $config = [
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
+            'cachePath' => '@runtime/cache/ea',
+            'defaultDuration' => 10, // Default 10 seconds
+
         ],
         'user' => [
             'identityClass' => 'app\models\Users',
@@ -110,6 +113,12 @@ $config = [
                 'GET ea/get-orders' => 'ea/get-orders',
                 'GET ea/order-stats' => 'ea/order-stats',
 
+                'ea/command-status' => 'ea/command-status',
+                'ea/batch-status' => 'ea/batch-status',
+                'ea/complete' => 'ea/complete',
+                'ea/get' => 'ea/get', // Your existing device get command endpoint
+                'ea/cancel' => 'ea/cancel', // Your existing cancel / finish command endpoint
+                'api/accounts' => 'mt4-account/accounts', // New optimized endpoint
 
             ],
         ],
