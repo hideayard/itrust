@@ -4062,7 +4062,7 @@ class MobileController extends Controller
             $password = $request->post('password');  // Maps to user_pass
             $confirmPassword = $request->post('confirm_password');
             $phone = $request->post('phone', '');  // Maps to user_hp (max 20 chars)
-            $userType = $request->post('user_type', 'user');  // Maps to user_tipe (max 15 chars)
+            $userType = $request->post('user_type', 'USER');  // Maps to user_tipe (max 15 chars)
             $acceptTerms = $request->post('accept_terms', '0');
             $account = $request->post('account', '');  // Maps to user_account (max 20 chars)
             $license = $request->post('license', '');  // Maps to user_license (max 20 chars)
