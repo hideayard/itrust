@@ -4678,11 +4678,12 @@ class MobileController extends Controller
 
             // Generate OTP (6 digits)
             $otp = rand(100000, 999999);
-            $otpExpiry = time() + 600; // OTP valid for 10 minutes
+            $otpExpiry = time() + 600; // OTP valid for 10 minutes (600 seconds)
 
-            // Store OTP and expiry in user_token field
-            // Format: OTP_{otp}_{expiry_timestamp}
-            $user->user_token = 'OTP_' . $otp . '_' . $otpExpiry;
+            // Store OTP in user_token (6 digits only)
+            $user->user_token = $otp;
+            // Store expiry timestamp in remark field
+            $user->remark = (string)$otpExpiry;
 
             if ($user->save()) {
                 $debug['otp_generated'] = true;
@@ -4822,7 +4823,7 @@ class MobileController extends Controller
             }
 
             // Check if user has OTP stored
-            if (empty($user->user_token) || strpos($user->user_token, 'OTP_') !== 0) {
+            if (empty($user->user_token)) {
                 return [
                     'success' => false,
                     'message' => 'No OTP found. Please request a new OTP.',
@@ -4830,20 +4831,17 @@ class MobileController extends Controller
                 ];
             }
 
-            // Parse OTP data from user_token
-            // Format: OTP_{otp}_{expiry_timestamp}
-            $parts = explode('_', $user->user_token);
-
-            if (count($parts) !== 3 || $parts[0] !== 'OTP') {
+            // Check if user has expiry stored
+            if (empty($user->remark)) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid OTP format. Please request a new OTP.',
+                    'message' => 'OTP expiry not found. Please request a new OTP.',
                     'debug' => $debug
                 ];
             }
 
-            $storedOtp = $parts[1];
-            $expiryTimestamp = (int)$parts[2];
+            $storedOtp = $user->user_token;
+            $expiryTimestamp = (int)$user->remark;
             $currentTime = time();
 
             $debug['stored_otp_length'] = strlen($storedOtp);
@@ -4855,6 +4853,7 @@ class MobileController extends Controller
             if ($currentTime > $expiryTimestamp) {
                 // Clear expired OTP
                 $user->user_token = null;
+                $user->remark = null;
                 $user->save();
 
                 return [
@@ -4873,18 +4872,15 @@ class MobileController extends Controller
                 ];
             }
 
-            // OTP is valid - mark as verified but don't clear yet (keep for password reset)
-            $user->user_token = 'OTP_VERIFIED_' . $storedOtp . '_' . $expiryTimestamp;
-            $user->save();
-
             $debug['otp_verified'] = true;
+            $debug['otp_valid'] = true;
 
             // Log activity
             $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
 
             TelegramHelper::sendSimpleMessage(
                 [
-                    'text' => "✅ OTP Verified for Password Reset\n" .
+                    'text' => "✅ OTP Verified\n" .
                         "Email: " . $email . "\n" .
                         "Username: " . $user->user_name . "\n" .
                         "Name: " . $user->user_nama . "\n" .
@@ -5025,39 +5021,38 @@ class MobileController extends Controller
                 ];
             }
 
-            // Check if user has OTP verified
-            if (empty($user->user_token) || strpos($user->user_token, 'OTP_VERIFIED_') !== 0) {
+            // Check if user has OTP stored
+            if (empty($user->user_token)) {
                 return [
                     'success' => false,
-                    'message' => 'OTP not verified. Please verify OTP first.',
+                    'message' => 'No OTP found. Please request a new OTP.',
                     'debug' => $debug
                 ];
             }
 
-            // Parse OTP data from user_token
-            // Format: OTP_VERIFIED_{otp}_{expiry_timestamp}
-            $parts = explode('_', $user->user_token);
-
-            if (count($parts) !== 4 || $parts[0] !== 'OTP' || $parts[1] !== 'VERIFIED') {
+            // Check if user has expiry stored
+            if (empty($user->remark)) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid OTP format. Please request a new OTP.',
+                    'message' => 'OTP expiry not found. Please request a new OTP.',
                     'debug' => $debug
                 ];
             }
 
-            $storedOtp = $parts[2];
-            $expiryTimestamp = (int)$parts[3];
+            $storedOtp = $user->user_token;
+            $expiryTimestamp = (int)$user->remark;
             $currentTime = time();
 
             $debug['stored_otp_length'] = strlen($storedOtp);
             $debug['expiry_timestamp'] = date('Y-m-d H:i:s', $expiryTimestamp);
+            $debug['current_timestamp'] = date('Y-m-d H:i:s', $currentTime);
             $debug['otp_expired'] = $currentTime > $expiryTimestamp;
 
             // Check if OTP has expired
             if ($currentTime > $expiryTimestamp) {
                 // Clear expired OTP
                 $user->user_token = null;
+                $user->remark = null;
                 $user->save();
 
                 return [
@@ -5078,7 +5073,9 @@ class MobileController extends Controller
 
             // Update password
             $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
-            $user->user_token = null; // Clear the token
+            // Clear OTP and expiry after successful password reset
+            $user->user_token = null;
+            $user->remark = null;
             $user->modified_at = date('Y-m-d H:i:s');
 
             if ($user->save()) {
@@ -5090,7 +5087,7 @@ class MobileController extends Controller
 
                 TelegramHelper::sendSimpleMessage(
                     [
-                        'text' => "✅ Password Reset Successful via OTP\n" .
+                        'text' => "✅ Password Reset Successful\n" .
                             "Username: " . $user->user_name . "\n" .
                             "Name: " . $user->user_nama . "\n" .
                             "Email: " . $user->user_email . "\n" .
