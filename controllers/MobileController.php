@@ -4755,7 +4755,7 @@ class MobileController extends Controller
      * POST /check-otp
      * Params: email, otp
      */
-    public function actionCheckOTP()
+    public function actionCheckOtp()
     {
         // Add CORS headers
         Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
