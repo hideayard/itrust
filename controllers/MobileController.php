@@ -4620,7 +4620,7 @@ class MobileController extends Controller
      * POST /generate-otp
      * Params: email
      */
-    public function actionGenerateOTP()
+    public function actionGenerateOtp()
     {
         // Add CORS headers
         Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
