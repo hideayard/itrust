@@ -4319,6 +4319,134 @@ public function actionGetDevices()
         return $summary;
     }
 
+/**
+     * Get list of users where user_tipe is ADMIN or CUSTOMER
+     * 
+     * Endpoint: GET /mobile/get-users
+     * Parameters: token (required), user_tipe (optional: ADMIN, CUSTOMER, or all), limit, offset
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Users retrieved successfully",
+     *   "data": [...],
+     *   "total": 10
+     * }
+     */
+    public function actionGetUsers()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided',
+                    'code' => 401
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID and user type from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+            $userType = isset($payload['data']['user_tipe']) ? strtoupper((string)$payload['data']['user_tipe']) : '';
+
+            if (!$userId && $userType !== 'ADMIN') {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Get query parameters
+            $request = \Yii::$app->request;
+            $userTipe = $request->get('user_tipe'); // Optional filter: ADMIN, CUSTOMER, or omit for all
+            $limit = $request->get('limit', 50);
+            $offset = $request->get('offset', 0);
+            $search = $request->get('search'); // Optional search by name or username
+
+            // Validate limit
+            $limit = min(max(1, (int)$limit), 100); // Min 1, max 100
+
+            // Build query - filter by ADMIN or CUSTOMER user_tipe
+            $query = Users::find()
+                ->where(['user_status' => 1])
+                ->andWhere(['is_deleted' => 0])
+                ->andWhere(['IN', 'user_tipe', ['ADMIN', 'CUSTOMER']]);
+
+            // Apply additional filter if user_tipe is specified
+            if ($userTipe) {
+                $userTipeUpper = strtoupper($userTipe);
+                if (in_array($userTipeUpper, ['ADMIN', 'CUSTOMER'])) {
+                    $query->andWhere(['user_tipe' => $userTipeUpper]);
+                }
+            }
+
+            // Apply search if provided
+            if ($search) {
+                $query->andWhere([
+                    'OR',
+                    ['like', 'user_name', $search],
+                    ['like', 'user_nama', $search],
+                    ['like', 'user_email', $search]
+                ]);
+            }
+
+            // Get total count for pagination
+            $totalCount = $query->count();
+
+            // Apply pagination
+            $users = $query->orderBy(['user_nama' => SORT_ASC])
+                ->limit($limit)
+                ->offset($offset)
+                ->all();
+
+            // Format user data
+            $formattedUsers = [];
+            foreach ($users as $user) {
+                $formattedUsers[] = [
+                    'id' => $user->user_id,
+                    'user_name' => $user->user_name,
+                    'user_nama' => $user->user_nama,
+                    'user_email' => $user->user_email,
+                    'user_hp' => $user->user_hp,
+                    'user_tipe' => $user->user_tipe,
+                    'user_foto' => $user->user_foto,
+                    'user_status' => $user->user_status,
+                    'user_account' => $user->user_account,
+                    'user_license' => $user->user_license,
+                    'created_at' => $user->created_at,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Users retrieved successfully',
+                'data' => $formattedUsers,
+                'total' => $totalCount,
+                'pagination' => [
+                    'limit' => (int)$limit,
+                    'offset' => (int)$offset,
+                    'has_more' => ($offset + $limit) < $totalCount
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get users',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
     /**
      * Handle OPTIONS request for CORS preflight
      */
