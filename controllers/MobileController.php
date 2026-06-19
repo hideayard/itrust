@@ -4333,7 +4333,7 @@ public function actionGetDevices()
      *   "total": 10
      * }
      */
-    public function actionGetUsers()
+    public function actionGetUsersInverter()
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
 
