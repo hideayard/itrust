@@ -2606,7 +2606,7 @@ class MobileController extends Controller
         }
     }
 
-    public function actionGetDevices()
+public function actionGetDevices()
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -2627,21 +2627,29 @@ class MobileController extends Controller
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
 
-            // Extract user ID from payload
+            // Extract user ID and user type from payload
             $userId = $this->extractUserIdFromPayload($payload);
+            $userType = isset($payload['data']['user_tipe']) ? strtoupper((string)$payload['data']['user_tipe']) : '';
 
-            if (!$userId) {
+            if (!$userId && $userType !== 'ADMIN') {
                 return [
                     'success' => false,
                     'message' => 'User ID not found in token'
                 ];
             }
 
-            // Fetch devices
-            $devices = UserDevices::find()
-                ->where(['user_id' => $userId, 'is_active' => 1])
-                ->orderBy(['created_at' => SORT_DESC])
-                ->all();
+            // Fetch devices - if admin, get all devices; otherwise get only user's devices
+            $query = UserDevices::find();
+            
+            if ($userType === 'ADMIN') {
+                // Admin user - get all active devices
+                $query->where(['is_active' => 1]);
+            } else {
+                // Regular user - get only their devices
+                $query->where(['user_id' => $userId, 'is_active' => 1]);
+            }
+            
+            $devices = $query->orderBy(['created_at' => SORT_DESC])->all();
 
             $formattedDevices = [];
             foreach ($devices as $device) {
@@ -2660,8 +2668,9 @@ class MobileController extends Controller
 
             return [
                 'success' => true,
-                'message' => 'Devices retrieved successfully',
-                'data' => $formattedDevices
+                'message' => $userType === 'ADMIN' ? 'All devices retrieved successfully' : 'Devices retrieved successfully',
+                'data' => $formattedDevices,
+                'total' => count($formattedDevices)
             ];
         } catch (\Exception $e) {
             return [
