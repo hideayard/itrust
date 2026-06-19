@@ -2410,6 +2410,202 @@ class MobileController extends Controller
         ];
     }
 
+/**
+     * Create a new device for the authenticated user
+     * POST /mobile/create-device
+     * 
+     * Parameters (POST):
+     * - device_id (required): Unique device identifier
+     * - device_name (optional): Device name
+     * - device_alias (optional): Device alias
+     * - device_description (optional): Device description
+     * - device_remark (optional): Device remark
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Device created successfully",
+     *   "data": {
+     *     "id": 1,
+     *     "device_id": "device_123",
+     *     "device_name": "My Device",
+     *     "device_alias": "Solar Panel",
+     *     "device_description": "Main solar panel",
+     *     "device_remark": "Installed 2024",
+     *     "is_active": true,
+     *     "created_at": "2024-01-01 12:00:00"
+     *   }
+     * }
+     */
+    public function actionCreateDevice()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided',
+                    'code' => 401
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $tokenUserId = $this->extractUserIdFromPayload($payload);
+            $tokenUserType = strtoupper((string)($payload['data']['user_tipe'] ?? ''));
+
+            if (!$tokenUserId && $tokenUserType !== 'ADMIN') {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token',
+                    'code' => 401
+                ];
+            }
+
+            // Get request data
+            $request = \Yii::$app->request;
+            $inputUserId = $request->post('user_id');
+            $deviceId = $request->post('device_id');
+            $deviceName = $request->post('device_name', '');
+            $deviceAlias = $request->post('device_alias', '');
+            $deviceDescription = $request->post('device_description', '');
+            $deviceRemark = $request->post('device_remark', '');
+
+            // Validate required fields
+            $errors = [];
+            if (empty($deviceId)) {
+                $errors[] = 'Device ID is required';
+            }
+
+            // Validate device_id max length (100 chars per model rules)
+            if (!empty($deviceId) && strlen($deviceId) > 100) {
+                $errors[] = 'Device ID must not exceed 100 characters';
+            }
+
+            // Validate device_name max length (255 chars per model rules)
+            if (!empty($deviceName) && strlen($deviceName) > 255) {
+                $errors[] = 'Device name must not exceed 255 characters';
+            }
+
+            // Validate device_alias max length (255 chars per model rules)
+            if (!empty($deviceAlias) && strlen($deviceAlias) > 255) {
+                $errors[] = 'Device alias must not exceed 255 characters';
+            }
+
+            if (!empty($errors)) {
+                return [
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $errors,
+                    'code' => 400
+                ];
+            }
+
+            // Resolve final user_id according to rules:
+            // - if token is ADMIN => always null
+            // - if token is non-admin:
+            //   - if input user_id provided => use input user_id
+            //   - else use token user_id
+            if ($tokenUserType === 'ADMIN') {
+                $userId = null;
+            } else {
+                $userId = ($inputUserId !== null && $inputUserId !== '') ? (int)$inputUserId : (int)$tokenUserId;
+            }
+
+            // Check if device already exists for this user
+            $existingDeviceQuery = UserDevices::find()->where(['device_id' => $deviceId]);
+            if ($userId === null) {
+                $existingDeviceQuery->andWhere(['user_id' => null]);
+            } else {
+                $existingDeviceQuery->andWhere(['user_id' => $userId]);
+            }
+            $existingDevice = $existingDeviceQuery->one();
+
+            if ($existingDevice) {
+                return [
+                    'success' => false,
+                    'message' => 'Device already exists',
+                    'errors' => ['device_id' => 'Device ID already registered'],
+                    'code' => 409
+                ];
+            }
+
+            // Create new device
+            $device = new UserDevices();
+            $device->user_id = $userId;
+            $device->device_id = $deviceId;
+            $device->device_name = $deviceName ?: null;
+            $device->device_alias = $deviceAlias ?: null;
+            $device->device_description = $deviceDescription ?: null;
+            $device->device_remark = $deviceRemark ?: null;
+            $device->is_active = 1;
+            $device->created_at = date('Y-m-d H:i:s');
+
+            if ($device->save()) {
+                // Log activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "📱 New Device Created\n" .
+                            "User ID: " . $userId . "\n" .
+                            "Device ID: " . $deviceId . "\n" .
+                            "Device Name: " . ($deviceName ?: 'N/A') . "\n" .
+                            "IP: " . $clientIp . "\n" .
+                            "Time: " . date('Y-m-d H:i:s'),
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'Device created successfully',
+                    'data' => [
+                        'id' => $device->id,
+                        'device_id' => $device->device_id,
+                        'device_name' => $device->device_name,
+                        'device_alias' => $device->device_alias,
+                        'device_description' => $device->device_description,
+                        'device_remark' => $device->device_remark,
+                        'is_active' => (bool)$device->is_active,
+                        'created_at' => $device->created_at
+                    ],
+                    'code' => 201
+                ];
+            } else {
+                // Get validation errors
+                $validationErrors = [];
+                foreach ($device->errors as $attribute => $errorMessages) {
+                    $validationErrors[$attribute] = $errorMessages;
+                }
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to create device',
+                    'errors' => $validationErrors,
+                    'code' => 400
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to create device',
+                'error' => $e->getMessage(),
+                'code' => 500
+            ];
+        }
+    }
+
     public function actionGetDevices()
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
@@ -2472,6 +2668,97 @@ class MobileController extends Controller
                 'success' => false,
                 'message' => 'Failed to get devices',
                 'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Connect user_id to unassigned device record.
+     * Params: token, user_id, device
+     */
+    public function actionSetDevice()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = \Yii::$app->request;
+
+            $token = $request->post('token', $request->get('token'));
+            $userId = $request->post('user_id', $request->get('user_id'));
+            $deviceId = $request->post('device', $request->get('device'));
+
+            $errors = [];
+
+            if (empty($token)) {
+                $errors[] = 'Token is required';
+            }
+
+            if ($userId === null || $userId === '' || !is_numeric($userId)) {
+                $errors[] = 'user_id is required and must be numeric';
+            }
+
+            if (empty($deviceId)) {
+                $errors[] = 'device is required';
+            }
+
+            if (!empty($errors)) {
+                return [
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $errors,
+                    'code' => 400
+                ];
+            }
+
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token only (endpoint requirement includes token input)
+            JwtHelper::validate($token, $secret);
+
+            $device = UserDevices::find()
+                ->where(['device_id' => $deviceId, 'is_active' => 1])
+                ->andWhere(['user_id' => null])
+                ->one();
+
+            if (!$device) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not found or already assigned',
+                    'code' => 404
+                ];
+            }
+
+            $device->user_id = (int)$userId;
+            $device->updated_at = date('Y-m-d H:i:s');
+
+            if (!$device->save()) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to set device',
+                    'errors' => $device->errors,
+                    'code' => 400
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Device assigned successfully',
+                'data' => [
+                    'id' => $device->id,
+                    'user_id' => $device->user_id,
+                    'device_id' => $device->device_id,
+                    'device_name' => $device->device_name,
+                    'device_alias' => $device->device_alias,
+                    'updated_at' => $device->updated_at
+                ],
+                'code' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to set device',
+                'error' => $e->getMessage(),
+                'code' => 500
             ];
         }
     }
@@ -5825,190 +6112,6 @@ class MobileController extends Controller
         ];
     }
 
-    public function actionCreateDevice()
-    {
-        \Yii::$app->response->format = Response::FORMAT_JSON;
-
-        try {
-            // Get token from request
-            $token = $this->getTokenFromRequest();
-
-            if (!$token) {
-                return [
-                    'success' => false,
-                    'message' => 'No authorization token provided'
-                ];
-            }
-
-            // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
-
-            // Validate token
-            $payload = JwtHelper::validate($token, $secret);
-
-            // Extract current user ID from payload
-            $currentUserId = $this->extractUserIdFromPayload($payload);
-            $currentUser = Users::findOne($currentUserId);
-
-            if (!$currentUser) {
-                return [
-                    'success' => false,
-                    'message' => 'User not found'
-                ];
-            }
-
-            // Get request data - TRY MULTIPLE SOURCES
-            $requestData = [];
-
-            // Method 1: Standard POST data (application/x-www-form-urlencoded)
-            $postData = \Yii::$app->request->post();
-            if (!empty($postData)) {
-                $requestData = $postData;
-            }
-
-            // Method 2: Raw body (for JSON requests)
-            if (empty($requestData)) {
-                $rawBody = \Yii::$app->request->getRawBody();
-                if (!empty($rawBody)) {
-                    $jsonData = json_decode($rawBody, true);
-                    if ($jsonData && json_last_error() === JSON_ERROR_NONE) {
-                        $requestData = $jsonData;
-                    } else {
-                        parse_str($rawBody, $formData);
-                        if (!empty($formData)) {
-                            $requestData = $formData;
-                        }
-                    }
-                }
-            }
-
-            // Method 3: GET parameters (for debugging)
-            if (empty($requestData)) {
-                $requestData = \Yii::$app->request->get();
-            }
-
-            // DEBUG: Log what we received (remove in production)
-            \Yii::info('CreateDevice - Raw POST: ' . json_encode($_POST), 'debug');
-            \Yii::info('CreateDevice - Request Data: ' . json_encode($requestData), 'debug');
-
-            // Determine target user ID
-            $targetUserId = $currentUserId;
-
-            // Check if current user is admin and trying to assign to another user
-            $isAdmin = ($currentUser->user_tipe === 'ADMIN');
-
-            if ($isAdmin && isset($requestData['user_id']) && !empty($requestData['user_id'])) {
-                $targetUserId = $requestData['user_id'];
-
-                // Verify target user exists
-                $targetUser = Users::findOne($targetUserId);
-                if (!$targetUser) {
-                    return [
-                        'success' => false,
-                        'message' => 'Target user not found'
-                    ];
-                }
-            }
-
-            // Check device limit for non-admin users
-            if (!$isAdmin) {
-                $deviceCount = UserDevices::find()
-                    ->where(['user_id' => $targetUserId, 'is_active' => 1])
-                    ->count();
-
-                if ($deviceCount >= 5) {
-                    return [
-                        'success' => false,
-                        'message' => 'Device limit reached. Maximum 5 devices allowed per user.'
-                    ];
-                }
-            }
-
-            // Validate required fields
-            $deviceId = trim($requestData['device_id'] ?? '');
-            $deviceName = trim($requestData['device_name'] ?? '');
-
-            if (empty($deviceId) || empty($deviceName)) {
-                return [
-                    'success' => false,
-                    'message' => 'Device ID and Device Name are required',
-                    'debug' => [
-                        'received_data' => $requestData,
-                        'post_data' => $_POST,
-                        'raw_body' => \Yii::$app->request->getRawBody()
-                    ]
-                ];
-            }
-
-            // Check if device already exists for this user
-            $existingDevice = UserDevices::find()
-                ->where(['user_id' => $targetUserId, 'device_id' => $deviceId])
-                ->one();
-
-            if ($existingDevice) {
-                if ($existingDevice->is_active == 0) {
-                    // Reactivate the device
-                    $existingDevice->is_active = 1;
-                    $existingDevice->device_name = $deviceName;
-                    $existingDevice->device_alias = $requestData['device_alias'] ?? $deviceName;
-                    $existingDevice->device_description = $requestData['device_description'] ?? null;
-                    $existingDevice->device_remark = $requestData['device_remark'] ?? null;
-                    $existingDevice->modified_by = $currentUserId;
-
-                    if ($existingDevice->save()) {
-                        return [
-                            'success' => true,
-                            'message' => 'Device reactivated successfully',
-                            'data' => $this->formatDeviceData($existingDevice)
-                        ];
-                    } else {
-                        return [
-                            'success' => false,
-                            'message' => 'Failed to reactivate device',
-                            'errors' => $existingDevice->errors
-                        ];
-                    }
-                } else {
-                    return [
-                        'success' => false,
-                        'message' => 'Device with this ID already exists for the user'
-                    ];
-                }
-            }
-
-            // Create new device
-            $device = new UserDevices();
-            $device->user_id = $targetUserId;
-            $device->device_id = $deviceId;
-            $device->device_name = $deviceName;
-            $device->device_alias = $requestData['device_alias'] ?? $deviceName;
-            $device->device_description = $requestData['device_description'] ?? null;
-            $device->device_remark = $requestData['device_remark'] ?? null;
-            $device->is_active = 1;
-            $device->created_by = $currentUserId;
-            $device->modified_by = $currentUserId;
-
-            if ($device->save()) {
-                return [
-                    'success' => true,
-                    'message' => 'Device created successfully',
-                    'data' => $this->formatDeviceData($device)
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Failed to create device',
-                    'errors' => $device->errors
-                ];
-            }
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Failed to create device',
-                'error' => $e->getMessage()
-            ];
-        }
-    }
 
     public function actionUpdateDevice($id)
     {
