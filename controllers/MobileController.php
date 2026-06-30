@@ -2522,7 +2522,7 @@ class MobileController extends Controller
         return null;
     }
 
-    public function actionGetDevicesWithData()
+public function actionGetDevicesWithData()
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -2645,6 +2645,125 @@ class MobileController extends Controller
             return [
                 'success' => false,
                 'message' => 'Failed to get devices with data',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get ALL public devices with data - NO AUTHENTICATION REQUIRED
+     * For demo purposes only - returns all active devices from all users with their telemetry data
+     * 
+     * Endpoint: GET /mobile/get-public-devices-with-data
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Public devices retrieved successfully with telemetry data",
+     *   "data": [...],
+     *   "summary": {...}
+     * }
+     */
+    public function actionGetPublicDevicesWithData()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Fetch ALL active devices from ALL users - NO AUTHENTICATION REQUIRED
+            $devices = UserDevices::find()
+                ->where(['is_active' => 1])
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            $formattedDevices = [];
+            foreach ($devices as $device) {
+                // Get latest telemetry data for this device
+                $latestTelemetry = TelemetryData::getLatestByDevice($device->device_id);
+
+                // Format telemetry data
+                $telemetryData = $latestTelemetry ? $this->formatTelemetryData($latestTelemetry) : null;
+
+                // Calculate derived metrics
+                $calculatedMetrics = $this->calculateDeviceMetrics($latestTelemetry);
+
+                // Get device status
+                $status = $this->getDeviceStatus($latestTelemetry);
+
+                // Get location data if available
+                $location = $this->getLocationData($latestTelemetry);
+
+                $formattedDevices[] = [
+                    'id' => $device->id,
+                    'device_id' => $device->device_id,
+                    'device_name' => $device->device_name,
+                    'device_alias' => $device->device_alias,
+                    'device_description' => $device->device_description,
+                    'device_remark' => $device->device_remark,
+                    'is_active' => (bool)$device->is_active,
+                    'created_at' => $device->created_at,
+                    'updated_at' => $device->updated_at,
+                    'user_id' => $device->user_id,
+
+                    // Telemetry data
+                    'telemetry' => $telemetryData,
+                    'metrics' => $calculatedMetrics,
+                    'status' => $status,
+                    'status_text' => $this->getStatusText($status),
+                    'last_updated' => $telemetryData ? $telemetryData['data_timestamp'] : null,
+                    'last_updated_ago' => $telemetryData ? $this->getTimeAgo($telemetryData['data_timestamp']) : 'Never',
+
+                    // Location data
+                    'location' => $location,
+                    'has_location' => !empty($location),
+
+                    // Device hardware info from telemetry
+                    'hardware_info' => [
+                        'manufacturer' => $latestTelemetry->device_manufacturer ?? null,
+                        'model' => $latestTelemetry->device_model ?? null,
+                        'sync_type' => $latestTelemetry->sync_type ?? null,
+                        'data_type' => $latestTelemetry->data_type ?? null,
+                    ],
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Public devices retrieved successfully with telemetry data (DEMO MODE - NO AUTH)',
+                'data' => $formattedDevices,
+                'summary' => [
+                    'total_devices' => count($formattedDevices),
+                    'active_devices' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['status'] === 'active';
+                    })),
+                    'warning_devices' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['status'] === 'warning';
+                    })),
+                    'offline_devices' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['status'] === 'offline';
+                    })),
+                    'with_telemetry' => count(array_filter($formattedDevices, function ($d) {
+                        return !empty($d['telemetry']);
+                    })),
+                    'with_location' => count(array_filter($formattedDevices, function ($d) {
+                        return $d['has_location'];
+                    })),
+                    'total_power' => array_sum(array_map(function ($d) {
+                        return $d['metrics']['calculated_power'] ?? 0;
+                    }, $formattedDevices)),
+                    'total_energy' => array_sum(array_map(function ($d) {
+                        return $d['telemetry']['energy'] ?? 0;
+                    }, $formattedDevices)),
+                    'total_carbon_reduction' => array_sum(array_map(function ($d) {
+                        return $d['metrics']['carbon_reduction'] ?? 0;
+                    }, $formattedDevices)),
+                ],
+                'demo_mode' => true,
+                'note' => 'This endpoint is for demo purposes only - no authentication required'
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get public devices with data',
                 'error' => $e->getMessage()
             ];
         }
