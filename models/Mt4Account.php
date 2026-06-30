@@ -84,28 +84,36 @@ class Mt4Account extends ActiveRecord
         return [
             // Required fields
             [['user_id', 'account_id'], 'required'],
-            
+
             // Integer fields
-            [['user_id', 'buy_order_count', 'sell_order_count', 'leverage', 'created_by', 'modified_by','disabled_ea','buy_status','sell_status'], 'integer'],
-            
+            [['user_id', 'buy_order_count', 'sell_order_count', 'leverage', 'created_by', 'modified_by', 'disabled_ea', 'buy_status', 'sell_status'], 'integer'],
+
             // Decimal fields
-            [['min_lot','total_buy_lot', 'total_sell_lot', 'total_profit', 'total_profit_percentage', 
-              'account_balance', 'account_equity', 'floating_value'], 'number'],
-            
+            [[
+                'min_lot',
+                'total_buy_lot',
+                'total_sell_lot',
+                'total_profit',
+                'total_profit_percentage',
+                'account_balance',
+                'account_equity',
+                'floating_value'
+            ], 'number'],
+
             // String fields
             [['account_id', 'bot_name', 'server', 'broker', 'currency', 'api_key', 'api_secret'], 'string', 'max' => 255],
             [['password', 'path', 'remark'], 'string'],
-            
+
             // ENUM fields with default values
             [['account_type'], 'in', 'range' => array_keys(self::getAccountTypeOptions())],
             [['status'], 'in', 'range' => array_keys(self::getStatusOptions())],
-            
+
             // Default values
             [['account_type'], 'default', 'value' => self::ACCOUNT_TYPE_STANDARD],
             [['status'], 'default', 'value' => self::STATUS_ACTIVE],
             [['currency'], 'default', 'value' => 'USD'],
             [['leverage'], 'default', 'value' => 100],
-            
+
             // Default numeric values
             [['buy_status'], 'default', 'value' => 1],
             [['sell_status'], 'default', 'value' => 1],
@@ -120,29 +128,45 @@ class Mt4Account extends ActiveRecord
             [['account_balance'], 'default', 'value' => 0.00],
             [['account_equity'], 'default', 'value' => 0.00],
             [['floating_value'], 'default', 'value' => 0.00],
-            
+
             // Date/time fields
             [['last_connected', 'last_sync', 'created_at', 'modified_at'], 'safe'],
-            
+
             // Unique constraint
             // [['user_id', 'account_id', 'server'], 'unique', 
             //     'targetAttribute' => ['user_id', 'account_id', 'server'],
             //     'message' => 'This account already exists for this user on the specified server.'],
-            
+
             // Account ID format validation (optional)
-            [['account_id'], 'match', 'pattern' => '/^[A-Za-z0-9\-_]+$/',
-                'message' => 'Account ID can only contain letters, numbers, hyphens and underscores.'],
-            
+            [
+                ['account_id'],
+                'match',
+                'pattern' => '/^[A-Za-z0-9\-_]+$/',
+                'message' => 'Account ID can only contain letters, numbers, hyphens and underscores.'
+            ],
+
             // Foreign key validation - FIXED: Changed from User::class to Users::class
-            [['user_id'], 'exist', 'skipOnError' => true, 
-                'targetClass' => Users::class, 
-                'targetAttribute' => ['user_id' => 'user_id']],  // FIXED: Changed 'id' to 'user_id'
-            [['created_by'], 'exist', 'skipOnError' => true, 
-                'targetClass' => Users::class, 
-                'targetAttribute' => ['created_by' => 'user_id']],  // FIXED: Changed from 'id' to 'user_id'
-            [['modified_by'], 'exist', 'skipOnError' => true, 
-                'targetClass' => Users::class, 
-                'targetAttribute' => ['modified_by' => 'user_id']],  // FIXED: Changed from 'id' to 'user_id'
+            [
+                ['user_id'],
+                'exist',
+                'skipOnError' => true,
+                'targetClass' => Users::class,
+                'targetAttribute' => ['user_id' => 'user_id']
+            ],  // FIXED: Changed 'id' to 'user_id'
+            [
+                ['created_by'],
+                'exist',
+                'skipOnError' => true,
+                'targetClass' => Users::class,
+                'targetAttribute' => ['created_by' => 'user_id']
+            ],  // FIXED: Changed from 'id' to 'user_id'
+            [
+                ['modified_by'],
+                'exist',
+                'skipOnError' => true,
+                'targetClass' => Users::class,
+                'targetAttribute' => ['modified_by' => 'user_id']
+            ],  // FIXED: Changed from 'id' to 'user_id'
         ];
     }
 
@@ -285,7 +309,7 @@ class Mt4Account extends ActiveRecord
             self::STATUS_DISCONNECTED => 'warning',
             self::STATUS_ERROR => 'danger',
         ];
-        
+
         $class = $badges[$this->status] ?? 'secondary';
         return "<span class='badge badge-{$class}'>" . Yii::t('app', ucfirst($this->status)) . "</span>";
     }
@@ -304,7 +328,7 @@ class Mt4Account extends ActiveRecord
             self::ACCOUNT_TYPE_CENT => 'warning',
             self::ACCOUNT_TYPE_DEMO => 'secondary',
         ];
-        
+
         $class = $badges[$this->account_type] ?? 'info';
         return "<span class='badge badge-{$class}'>" . Yii::t('app', ucfirst($this->account_type)) . "</span>";
     }
@@ -319,7 +343,7 @@ class Mt4Account extends ActiveRecord
         $profit = $this->total_profit;
         $class = $profit >= 0 ? 'text-success' : 'text-danger';
         $sign = $profit >= 0 ? '+' : '';
-        
+
         return "<span class='{$class} font-weight-bold'>{$sign}" . Yii::$app->formatter->asCurrency($profit) . "</span>";
     }
 
@@ -333,7 +357,7 @@ class Mt4Account extends ActiveRecord
         $floating = $this->floating_value;
         $class = $floating >= 0 ? 'text-success' : 'text-danger';
         $sign = $floating >= 0 ? '+' : '';
-        
+
         return "<span class='{$class} font-weight-bold'>{$sign}" . Yii::$app->formatter->asCurrency($floating) . "</span>";
     }
 
@@ -386,7 +410,7 @@ class Mt4Account extends ActiveRecord
     {
         $class = $this->total_profit_percentage >= 0 ? 'text-success' : 'text-danger';
         $sign = $this->total_profit_percentage >= 0 ? '+' : '';
-        
+
         return "<span class='{$class}'>{$sign}{$this->total_profit_percentage}%</span>";
     }
 
@@ -397,7 +421,7 @@ class Mt4Account extends ActiveRecord
      */
     public function getTotalOrders()
     {
-        return ($this->buy_order_count ?? 0) + ($this->sell_order_count ?? 0);
+        return (int)$this->buy_order_count + (int)$this->sell_order_count;
     }
 
     /**
@@ -407,7 +431,7 @@ class Mt4Account extends ActiveRecord
      */
     public function getTotalLots()
     {
-        return ($this->total_buy_lot ?? 0) + ($this->total_sell_lot ?? 0);
+        return (float)$this->total_buy_lot + (float)$this->total_sell_lot;
     }
 
     /**
@@ -421,7 +445,7 @@ class Mt4Account extends ActiveRecord
         if ($total === 0) {
             return 0;
         }
-        
+
         // Assuming profitable trades ratio (simplified)
         $profitableTrades = $this->total_profit > 0 ? $total * 0.6 : $total * 0.3;
         return round(($profitableTrades / $total) * 100, 2);
@@ -437,7 +461,7 @@ class Mt4Account extends ActiveRecord
         if ($this->last_connected === null) {
             return Yii::t('app', 'Never');
         }
-        
+
         return Yii::$app->formatter->asRelativeTime($this->last_connected);
     }
 
@@ -521,7 +545,7 @@ class Mt4Account extends ActiveRecord
         $this->account_equity = $data['account_equity'] ?? $this->account_equity;
         $this->floating_value = $data['floating_value'] ?? $this->floating_value;
         $this->last_sync = new Expression('NOW()');
-        
+
         return $this->save(false);
     }
 

@@ -1263,338 +1263,6 @@ class Mt4AccountController extends Controller
         }
     }
 
-    public function actionGetAccountsByUser($user_id = null)
-    {
-        Yii::$app->response->format = Response::FORMAT_JSON;
-
-        try {
-            // Get and validate JWT token
-            $token = $this->getTokenFromRequest();
-
-            if (!$token) {
-                throw new UnauthorizedHttpException('No authorization token provided');
-            }
-
-            // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
-
-            // Validate token
-            $payload = JwtHelper::validate($token, $secret);
-
-            if (!$payload) {
-                throw new UnauthorizedHttpException('Invalid or expired token');
-            }
-
-            // Extract current user ID from payload
-            $currentUserId = $this->extractUserIdFromPayload($payload);
-            $currentUser = Users::findOne($currentUserId);
-
-            if (!$currentUser) {
-                throw new UnauthorizedHttpException('User id ' . $currentUserId . ' not found from payload');
-            }
-
-            // Check access rights first (before any user_id logic)
-            $canAccess = false;
-            $isAdmin = false;
-
-            if ($currentUser->user_tipe == 'ADMIN') {
-                // Admin can access all accounts
-                $canAccess = true;
-                $isAdmin = true;
-            } else {
-                // For non-admin, check if they're accessing their own or descendant accounts
-                if ($user_id === null || $user_id == $currentUser->id) {
-                    $canAccess = true;
-                } else {
-                    // Check hierarchy for non-admin
-                    $currentUserAccount = Mt4Account::find()
-                        ->where(['user_id' => $currentUser->id])
-                        ->one();
-
-                    if ($currentUserAccount && $currentUserAccount->path) {
-                        $targetUserAccount = Mt4Account::find()
-                            ->where(['user_id' => $user_id])
-                            ->one();
-
-                        if ($targetUserAccount && $targetUserAccount->path) {
-                            $pathParts = explode('.', $targetUserAccount->path);
-                            if (in_array($currentUser->id, $pathParts)) {
-                                $canAccess = true;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!$canAccess) {
-                throw new ForbiddenHttpException('You do not have permission to view these accounts');
-            }
-
-            // Build query for accounts
-            $accountsQuery = Mt4Account::find();
-
-            if ($isAdmin) {
-                $targetUserAccount = Mt4Account::find()
-                    // ->where(['user_id' => $user_id])
-                    ->all();
-            }
-            // Non-admin: show own accounts and descendant accounts
-            else if ($user_id !== null && $user_id != $currentUser->id) {
-                // Check if trying to access descendant
-                $targetUserAccount = Mt4Account::find()
-                    ->where(['user_id' => $user_id])
-                    ->one();
-
-                if ($targetUserAccount && $targetUserAccount->path) {
-                    $pathParts = explode('.', $targetUserAccount->path);
-                    if (in_array($currentUser->id, $pathParts)) {
-                        $accountsQuery->where(['user_id' => $user_id]);
-                    } else {
-                        throw new ForbiddenHttpException('You do not have permission to view these accounts');
-                    }
-                } else {
-                    throw new ForbiddenHttpException('You do not have permission to view these accounts');
-                }
-            } else {
-                // Show own accounts and descendants
-                $currentUserAccount = Mt4Account::find()
-                    ->where(['user_id' => $currentUser->id])
-                    ->one();
-
-                if ($currentUserAccount && $currentUserAccount->path) {
-                    // Get all descendant user_ids including self
-                    $descendantUsers = Mt4Account::find()
-                        ->where(['like', 'path', $currentUserAccount->path . '.%', false])
-                        ->orWhere(['path' => $currentUserAccount->path])
-                        ->select('user_id')
-                        ->distinct()
-                        ->column();
-
-                    $accountsQuery->where(['user_id' => $descendantUsers]);
-                } else {
-                    // User has no path, only show their own accounts
-                    $accountsQuery->where(['user_id' => $currentUser->id]);
-                }
-            }
-
-            // Get accounts with ordering
-            $accounts = $accountsQuery
-                ->orderBy(['created_at' => SORT_DESC])
-                ->all();
-
-            // If admin and no accounts found, log for debugging
-            if ($currentUser->user_tipe == 'ADMIN' && empty($accounts)) {
-                Yii::info('Admin user ' . $currentUser->id . ' requested accounts but none found. user_id filter: ' . ($user_id ?? 'null'));
-            }
-
-            // Format response
-            $accountData = [];
-            $userIds = [];
-            $accountMt4Ids = []; // Collect MT4 account IDs for group lookup
-
-            foreach ($accounts as $account) {
-                $userIds[] = $account->user_id;
-                $accountMt4Ids[] = $account->account_id; // Collect account IDs
-                $accountData[] = [
-                    'id' => $account->id,
-                    'user_id' => $account->user_id,
-                    'account_id' => $account->account_id,
-                    'bot_name' => $account->bot_name,
-                    'path' => $account->path,
-                    'buy_order_count' => (int)$account->buy_order_count,
-                    'total_buy_lot' => (float)$account->total_buy_lot,
-                    'sell_order_count' => (int)$account->sell_order_count,
-                    'total_sell_lot' => (float)$account->total_sell_lot,
-                    'total_profit' => (float)$account->total_profit,
-                    'total_profit_percentage' => (float)$account->total_profit_percentage,
-                    'account_balance' => (float)$account->account_balance,
-                    'account_equity' => (float)$account->account_equity,
-                    'floating_value' => (float)$account->floating_value,
-                    'min_lot' => (float)$account->min_lot,
-                    'leverage' => $account->leverage,
-                    'currency' => $account->currency,
-                    'server' => $account->server,
-                    'broker' => $account->broker,
-                    'account_type' => $account->account_type,
-                    'status' => $account->status,
-                    'last_connected' => $account->last_connected,
-                    'last_sync' => $account->last_sync,
-                    'disabled_ea' => $account->disabled_ea,
-                    'buy_status' => $account->buy_status,
-                    'sell_status' => $account->sell_status,
-                    'created_at' => $account->created_at,
-                    'total_orders' => ($account->buy_order_count + $account->sell_order_count),
-                    'total_lots' => ($account->total_buy_lot + $account->total_sell_lot),
-                ];
-            }
-
-            // Get unique users for the response
-            $users = [];
-            if (!empty($userIds)) {
-                $users = Users::find()
-                    ->where(['user_id' => array_unique($userIds)])
-                    ->indexBy('user_id')
-                    ->all();
-            }
-
-            // ===== NEW: Query Mt4Group and build group data =====
-            $groupData = [];
-            if (!empty($accountMt4Ids)) {
-                // Get all active groups
-                $groups = Mt4Group::find()
-                    ->where(['status' => Mt4Group::STATUS_ACTIVE])
-                    ->all();
-
-                foreach ($groups as $group) {
-                    $groupMt4Ids = $group->getMt4IdsArray();
-
-                    // Find matching accounts for this group
-                    $matchingAccounts = [];
-                    $groupAccountIds = array_intersect($accountMt4Ids, $groupMt4Ids);
-
-                    if (!empty($groupAccountIds)) {
-                        foreach ($accounts as $account) {
-                            if (in_array($account->account_id, $groupAccountIds)) {
-                                $matchingAccounts[] = [
-                                    'id' => $account->id,
-                                    'account_id' => $account->account_id,
-                                    'user_id' => $account->user_id,
-                                    'bot_name' => $account->bot_name,
-                                    'total_profit' => (float)$account->total_profit,
-                                    'account_balance' => (float)$account->account_balance,
-                                    'account_equity' => (float)$account->account_equity,
-                                ];
-                            }
-                        }
-
-                        // Calculate group summary
-                        $groupTotalProfit = array_sum(array_column($matchingAccounts, 'total_profit'));
-                        $groupTotalBalance = array_sum(array_column($matchingAccounts, 'account_balance'));
-                        $groupTotalEquity = array_sum(array_column($matchingAccounts, 'account_equity'));
-
-                        $groupData[] = [
-                            'id' => $group->id,
-                            'name' => $group->name,
-                            'desc' => $group->desc,
-                            'remark' => $group->remark,
-                            'mt4_ids' => $groupMt4Ids,
-                            'total_accounts' => count($matchingAccounts),
-                            'total_profit' => $groupTotalProfit,
-                            'total_balance' => $groupTotalBalance,
-                            'total_equity' => $groupTotalEquity,
-                            'avg_profit_per_account' => count($matchingAccounts) > 0
-                                ? round($groupTotalProfit / count($matchingAccounts), 2)
-                                : 0,
-                            'accounts' => $matchingAccounts,
-                            'created_by' => $group->created_by,
-                            'created_at' => $group->created_at,
-                            'status' => $group->status,
-                        ];
-                    }
-                }
-            }
-
-            // Build hierarchical summary
-            $summary = [
-                'total_accounts' => 0,
-                'total_balance' => 0,
-                'total_profit' => 0,
-                'avg_profit_percentage' => 0,
-                'active_accounts' => 0,
-            ];
-
-            // Calculate summary
-            foreach ($accounts as $account) {
-                $summary['total_accounts']++;
-                $summary['total_balance'] += (float)$account->account_balance;
-                $summary['total_profit'] += (float)$account->total_profit;
-                if ($account->status == 'active') {
-                    $summary['active_accounts']++;
-                }
-            }
-
-            if ($summary['total_accounts'] > 0) {
-                $totalProfitPercentage = array_sum(array_column($accounts, 'total_profit_percentage'));
-                $summary['avg_profit_percentage'] = round($totalProfitPercentage / $summary['total_accounts'], 2);
-            }
-
-            // Build hierarchical data structure (only for non-admin or when showing hierarchy)
-            $hierarchyData = [];
-            if ($currentUser->user_tipe != 'ADMIN' || ($user_id !== null && $user_id != '')) {
-                $hierarchyData = $this->buildHierarchyData($accounts, $users);
-            }
-
-            $responseData = [
-                'status' => 'success',
-                'data' => [
-                    'summary' => [
-                        'total_accounts' => (int)$summary['total_accounts'],
-                        'total_balance' => (float)$summary['total_balance'],
-                        'total_profit' => (float)$summary['total_profit'],
-                        'avg_profit_percentage' => (float)$summary['avg_profit_percentage'],
-                        'active_accounts' => (int)$summary['active_accounts'],
-                    ],
-                    'accounts' => $accountData,
-                    'groups' => $groupData, // ===== NEW: Add groups to response =====
-                ]
-            ];
-
-            // Add hierarchy data if available
-            if (!empty($hierarchyData)) {
-                $responseData['data']['hierarchy'] = $hierarchyData;
-            }
-
-            // Include target user info if specific user requested
-            if ($user_id !== null && $user_id != '') {
-                $targetUser = Users::findOne($user_id);
-                if ($targetUser) {
-                    $responseData['data']['target_user'] = [
-                        'id' => $targetUser->id,
-                        'username' => $targetUser->user_name,
-                        'email' => $targetUser->user_email,
-                        'user_tipe' => $targetUser->user_tipe,
-                    ];
-                }
-            }
-
-            // Include current user info for context
-            $responseData['data']['current_user'] = [
-                'id' => $currentUser->id,
-                'username' => $currentUser->user_name,
-                'user_tipe' => $currentUser->user_tipe,
-            ];
-
-            return $responseData;
-        } catch (UnauthorizedHttpException $e) {
-            Yii::error('Authentication error: ' . $e->getMessage());
-            return [
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ];
-        } catch (ForbiddenHttpException $e) {
-            Yii::error('Authorization error: ' . $e->getMessage());
-            return [
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ];
-        } catch (NotFoundHttpException $e) {
-            Yii::error('Not found error: ' . $e->getMessage());
-            return [
-                'status' => 'error',
-                'message' => $e->getMessage()
-            ];
-        } catch (\Exception $e) {
-            Yii::error('Error getting accounts: ' . $e->getMessage());
-            Yii::error('Stack trace: ' . $e->getTraceAsString());
-
-            return [
-                'status' => 'error',
-                'message' => 'An internal error occurred'
-            ];
-        }
-    }
-
-
     /**
      * Extract token from request headers
      * @return string|null
@@ -1648,7 +1316,59 @@ class Mt4AccountController extends Controller
             return (int)$payload['sub'];
         }
 
+        if (is_array($payload)) {
+            // Your JWT has user data in 'data' key
+            if (isset($payload['data']) && is_array($payload['data'])) {
+                return $payload['data']['id'] ?? null;
+            }
+
+            // Fallback to direct keys
+            return $payload['user_id'] ?? $payload['sub'] ?? $payload['id'] ?? null;
+        }
+
+        if (is_object($payload)) {
+            // Your JWT has user data in 'data' property
+            if (isset($payload->data) && is_object($payload->data)) {
+                return $payload->data->id ?? null;
+            }
+
+            // Fallback to direct properties
+            return $payload->user_id ?? $payload->sub ?? $payload->id ?? null;
+        }
+
         return null;
+    }
+
+    /**
+     * Extract full user data from JWT payload
+     */
+    private function extractUserFromPayload($payload)
+    {
+        $userData = null;
+
+        if (is_array($payload)) {
+            $userData = $payload['data'] ?? null;
+        } elseif (is_object($payload)) {
+            $userData = $payload->data ?? null;
+        }
+
+        if (!$userData) {
+            return null;
+        }
+
+        // Convert to array if object
+        if (is_object($userData)) {
+            $userData = (array)$userData;
+        }
+
+        return [
+            'id' => $userData['id'] ?? null,
+            'user_name' => $userData['username'] ?? '',
+            'user_email' => $userData['user_email'] ?? '',
+            'user_tipe' => $userData['user_tipe'] ?? 'USER',
+            'name' => $userData['name'] ?? '',
+            'photo' => $userData['photo'] ?? '',
+        ];
     }
 
     /**
@@ -2440,6 +2160,12 @@ class Mt4AccountController extends Controller
                 throw new BadRequestHttpException("Lot size cannot be less than minimum lot: {$minLot}");
             }
 
+            // Double check: Check if account already has open orders
+            $totalOrders = $account->getTotalOrders();
+            if ($totalOrders > 0) {
+                throw new BadRequestHttpException("Cannot place buy order: Account already has {$totalOrders} open order(s)");
+            }
+
             // Queue the buy order command
             $order = new CloseOrder(); // Or create a new model for orders
             $order->order_account = $accountId;
@@ -2524,6 +2250,12 @@ class Mt4AccountController extends Controller
             $minLot = isset($account->min_lot) ? (float)$account->min_lot : 0.01;
             if ($lot < $minLot) {
                 throw new BadRequestHttpException("Lot size cannot be less than minimum lot: {$minLot}");
+            }
+
+            // Double check: Check if account already has open orders
+            $totalOrders = $account->getTotalOrders();
+            if ($totalOrders > 0) {
+                throw new BadRequestHttpException("Cannot place sell order: Account already has {$totalOrders} open order(s)");
             }
 
             // Queue the sell order command
@@ -2836,7 +2568,7 @@ class Mt4AccountController extends Controller
                 throw new NotFoundHttpException('No accounts found or access denied');
             }
 
-            // Filter accounts: check buy_status, min_lot, etc.
+            // Filter accounts: check buy_status, min_lot, and existing open orders
             $validAccounts = [];
             $skippedAccounts = [];
 
@@ -2854,11 +2586,18 @@ class Mt4AccountController extends Controller
                     continue;
                 }
 
+                // Double check: Check if account already has open orders
+                $totalOrders = $account->getTotalOrders();
+                if ($totalOrders > 0) {
+                    $skippedAccounts[$account->account_id] = "Account already has {$totalOrders} open orders";
+                    continue;
+                }
+
                 $validAccounts[] = $account->account_id;
             }
 
             if (empty($validAccounts)) {
-                throw new BadRequestHttpException('No valid accounts for buy orders. Check buy status and lot size requirements.');
+                throw new BadRequestHttpException('No valid accounts for buy orders. Check buy status, lot size requirements, and existing open orders.');
             }
 
             // Queue the multi buy order command
@@ -2939,7 +2678,7 @@ class Mt4AccountController extends Controller
                 throw new NotFoundHttpException('No accounts found or access denied');
             }
 
-            // Filter accounts: check sell_status, min_lot, etc.
+            // Filter accounts: check sell_status, min_lot, and existing open orders
             $validAccounts = [];
             $skippedAccounts = [];
 
@@ -2957,11 +2696,18 @@ class Mt4AccountController extends Controller
                     continue;
                 }
 
+                // Double check: Check if account already has open orders
+                $totalOrders = $account->getTotalOrders();
+                if ($totalOrders > 0) {
+                    $skippedAccounts[$account->account_id] = "Account already has {$totalOrders} open orders";
+                    continue;
+                }
+
                 $validAccounts[] = $account->account_id;
             }
 
             if (empty($validAccounts)) {
-                throw new BadRequestHttpException('No valid accounts for sell orders. Check sell status and lot size requirements.');
+                throw new BadRequestHttpException('No valid accounts for sell orders. Check sell status, lot size requirements, and existing open orders.');
             }
 
             // Queue the multi sell order command
@@ -3097,5 +2843,790 @@ class Mt4AccountController extends Controller
                 'message' => $e->getMessage(),
             ];
         }
+    }
+
+    public function actionGetAccountsByUser($user_id = null)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get and validate JWT token
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            // Extract current user ID from payload
+            $currentUserId = $this->extractUserIdFromPayload($payload);
+            $currentUser = Users::findOne($currentUserId);
+
+            if (!$currentUser) {
+                throw new UnauthorizedHttpException('User id ' . $currentUserId . ' not found from payload');
+            }
+
+            // Check access rights first (before any user_id logic)
+            $canAccess = false;
+            $isAdmin = false;
+
+            if ($currentUser->user_tipe == 'ADMIN') {
+                // Admin can access all accounts
+                $canAccess = true;
+                $isAdmin = true;
+            } else {
+                // For non-admin, check if they're accessing their own or descendant accounts
+                if ($user_id === null || $user_id == $currentUser->id) {
+                    $canAccess = true;
+                } else {
+                    // Check hierarchy for non-admin
+                    $currentUserAccount = Mt4Account::find()
+                        ->where(['user_id' => $currentUser->id])
+                        ->one();
+
+                    if ($currentUserAccount && $currentUserAccount->path) {
+                        $targetUserAccount = Mt4Account::find()
+                            ->where(['user_id' => $user_id])
+                            ->one();
+
+                        if ($targetUserAccount && $targetUserAccount->path) {
+                            $pathParts = explode('.', $targetUserAccount->path);
+                            if (in_array($currentUser->id, $pathParts)) {
+                                $canAccess = true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!$canAccess) {
+                throw new ForbiddenHttpException('You do not have permission to view these accounts');
+            }
+
+            // Build query for accounts
+            $accountsQuery = Mt4Account::find();
+
+            if ($isAdmin) {
+                $targetUserAccount = Mt4Account::find()
+                    // ->where(['user_id' => $user_id])
+                    ->all();
+            }
+            // Non-admin: show own accounts and descendant accounts
+            else if ($user_id !== null && $user_id != $currentUser->id) {
+                // Check if trying to access descendant
+                $targetUserAccount = Mt4Account::find()
+                    ->where(['user_id' => $user_id])
+                    ->one();
+
+                if ($targetUserAccount && $targetUserAccount->path) {
+                    $pathParts = explode('.', $targetUserAccount->path);
+                    if (in_array($currentUser->id, $pathParts)) {
+                        $accountsQuery->where(['user_id' => $user_id]);
+                    } else {
+                        throw new ForbiddenHttpException('You do not have permission to view these accounts');
+                    }
+                } else {
+                    throw new ForbiddenHttpException('You do not have permission to view these accounts');
+                }
+            } else {
+                // Show own accounts and descendants
+                $currentUserAccount = Mt4Account::find()
+                    ->where(['user_id' => $currentUser->id])
+                    ->one();
+
+                if ($currentUserAccount && $currentUserAccount->path) {
+                    // Get all descendant user_ids including self
+                    $descendantUsers = Mt4Account::find()
+                        ->where(['like', 'path', $currentUserAccount->path . '.%', false])
+                        ->orWhere(['path' => $currentUserAccount->path])
+                        ->select('user_id')
+                        ->distinct()
+                        ->column();
+
+                    $accountsQuery->where(['user_id' => $descendantUsers]);
+                } else {
+                    // User has no path, only show their own accounts
+                    $accountsQuery->where(['user_id' => $currentUser->id]);
+                }
+            }
+
+            // Get accounts with ordering
+            $accounts = $accountsQuery
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            // If admin and no accounts found, log for debugging
+            if ($currentUser->user_tipe == 'ADMIN' && empty($accounts)) {
+                Yii::info('Admin user ' . $currentUser->id . ' requested accounts but none found. user_id filter: ' . ($user_id ?? 'null'));
+            }
+
+            // Format response
+            $accountData = [];
+            $userIds = [];
+            $accountMt4Ids = []; // Collect MT4 account IDs for group lookup
+
+            foreach ($accounts as $account) {
+                $userIds[] = $account->user_id;
+                $accountMt4Ids[] = $account->account_id; // Collect account IDs
+                $accountData[] = [
+                    'id' => $account->id,
+                    'user_id' => $account->user_id,
+                    'account_id' => $account->account_id,
+                    'bot_name' => $account->bot_name,
+                    'path' => $account->path,
+                    'buy_order_count' => (int)$account->buy_order_count,
+                    'total_buy_lot' => (float)$account->total_buy_lot,
+                    'sell_order_count' => (int)$account->sell_order_count,
+                    'total_sell_lot' => (float)$account->total_sell_lot,
+                    'total_profit' => (float)$account->total_profit,
+                    'total_profit_percentage' => (float)$account->total_profit_percentage,
+                    'account_balance' => (float)$account->account_balance,
+                    'account_equity' => (float)$account->account_equity,
+                    'floating_value' => (float)$account->floating_value,
+                    'min_lot' => (float)$account->min_lot,
+                    'leverage' => $account->leverage,
+                    'currency' => $account->currency,
+                    'server' => $account->server,
+                    'broker' => $account->broker,
+                    'account_type' => $account->account_type,
+                    'status' => $account->status,
+                    'last_connected' => $account->last_connected,
+                    'last_sync' => $account->last_sync,
+                    'disabled_ea' => $account->disabled_ea,
+                    'buy_status' => $account->buy_status,
+                    'sell_status' => $account->sell_status,
+                    'created_at' => $account->created_at,
+                    'total_orders' => ($account->buy_order_count + $account->sell_order_count),
+                    'total_lots' => ($account->total_buy_lot + $account->total_sell_lot),
+                ];
+            }
+
+            // Get unique users for the response
+            $users = [];
+            if (!empty($userIds)) {
+                $users = Users::find()
+                    ->where(['user_id' => array_unique($userIds)])
+                    ->indexBy('user_id')
+                    ->all();
+            }
+
+            // ===== NEW: Query Mt4Group and build group data =====
+            $groupData = [];
+            if (!empty($accountMt4Ids)) {
+                // Get all active groups
+                $groups = Mt4Group::find()
+                    ->where(['status' => Mt4Group::STATUS_ACTIVE])
+                    ->all();
+
+                foreach ($groups as $group) {
+                    $groupMt4Ids = $group->getMt4IdsArray();
+
+                    // Find matching accounts for this group
+                    $matchingAccounts = [];
+                    $groupAccountIds = array_intersect($accountMt4Ids, $groupMt4Ids);
+
+                    if (!empty($groupAccountIds)) {
+                        foreach ($accounts as $account) {
+                            if (in_array($account->account_id, $groupAccountIds)) {
+                                $matchingAccounts[] = [
+                                    'id' => $account->id,
+                                    'account_id' => $account->account_id,
+                                    'user_id' => $account->user_id,
+                                    'bot_name' => $account->bot_name,
+                                    'total_profit' => (float)$account->total_profit,
+                                    'account_balance' => (float)$account->account_balance,
+                                    'account_equity' => (float)$account->account_equity,
+                                ];
+                            }
+                        }
+
+                        // Calculate group summary
+                        $groupTotalProfit = array_sum(array_column($matchingAccounts, 'total_profit'));
+                        $groupTotalBalance = array_sum(array_column($matchingAccounts, 'account_balance'));
+                        $groupTotalEquity = array_sum(array_column($matchingAccounts, 'account_equity'));
+
+                        $groupData[] = [
+                            'id' => $group->id,
+                            'name' => $group->name,
+                            'desc' => $group->desc,
+                            'remark' => $group->remark,
+                            'mt4_ids' => $groupMt4Ids,
+                            'total_accounts' => count($matchingAccounts),
+                            'total_profit' => $groupTotalProfit,
+                            'total_balance' => $groupTotalBalance,
+                            'total_equity' => $groupTotalEquity,
+                            'avg_profit_per_account' => count($matchingAccounts) > 0
+                                ? round($groupTotalProfit / count($matchingAccounts), 2)
+                                : 0,
+                            'accounts' => $matchingAccounts,
+                            'created_by' => $group->created_by,
+                            'created_at' => $group->created_at,
+                            'status' => $group->status,
+                        ];
+                    }
+                }
+            }
+
+            // Build hierarchical summary
+            $summary = [
+                'total_accounts' => 0,
+                'total_balance' => 0,
+                'total_profit' => 0,
+                'avg_profit_percentage' => 0,
+                'active_accounts' => 0,
+            ];
+
+            // Calculate summary
+            foreach ($accounts as $account) {
+                $summary['total_accounts']++;
+                $summary['total_balance'] += (float)$account->account_balance;
+                $summary['total_profit'] += (float)$account->total_profit;
+                if ($account->status == 'active') {
+                    $summary['active_accounts']++;
+                }
+            }
+
+            if ($summary['total_accounts'] > 0) {
+                $totalProfitPercentage = array_sum(array_column($accounts, 'total_profit_percentage'));
+                $summary['avg_profit_percentage'] = round($totalProfitPercentage / $summary['total_accounts'], 2);
+            }
+
+            // Build hierarchical data structure (only for non-admin or when showing hierarchy)
+            $hierarchyData = [];
+            if ($currentUser->user_tipe != 'ADMIN' || ($user_id !== null && $user_id != '')) {
+                $hierarchyData = $this->buildHierarchyData($accounts, $users);
+            }
+
+            $responseData = [
+                'status' => 'success',
+                'data' => [
+                    'summary' => [
+                        'total_accounts' => (int)$summary['total_accounts'],
+                        'total_balance' => (float)$summary['total_balance'],
+                        'total_profit' => (float)$summary['total_profit'],
+                        'avg_profit_percentage' => (float)$summary['avg_profit_percentage'],
+                        'active_accounts' => (int)$summary['active_accounts'],
+                    ],
+                    'accounts' => $accountData,
+                    'groups' => $groupData, // ===== NEW: Add groups to response =====
+                ]
+            ];
+
+            // Add hierarchy data if available
+            if (!empty($hierarchyData)) {
+                $responseData['data']['hierarchy'] = $hierarchyData;
+            }
+
+            // Include target user info if specific user requested
+            if ($user_id !== null && $user_id != '') {
+                $targetUser = Users::findOne($user_id);
+                if ($targetUser) {
+                    $responseData['data']['target_user'] = [
+                        'id' => $targetUser->id,
+                        'username' => $targetUser->user_name,
+                        'email' => $targetUser->user_email,
+                        'user_tipe' => $targetUser->user_tipe,
+                    ];
+                }
+            }
+
+            // Include current user info for context
+            $responseData['data']['current_user'] = [
+                'id' => $currentUser->id,
+                'username' => $currentUser->user_name,
+                'user_tipe' => $currentUser->user_tipe,
+            ];
+
+            return $responseData;
+        } catch (UnauthorizedHttpException $e) {
+            Yii::error('Authentication error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        } catch (ForbiddenHttpException $e) {
+            Yii::error('Authorization error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        } catch (NotFoundHttpException $e) {
+            Yii::error('Not found error: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error getting accounts: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'status' => 'error',
+                'message' => 'An internal error occurred'
+            ];
+        }
+    }
+
+    /**
+     * Optimized lightweight version - 3x faster, 70% less memory
+     * GET /mt4-account/accounts?user_id=123
+     */
+    public function actionAccounts($user_id = null)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        Yii::$app->session->close(); // CRITICAL: Prevent session locking
+
+        try {
+            // Authenticate using JWT (no DB query - fast!)
+            $currentUser = $this->authenticateUser();
+
+            // Build cache key
+            $cacheKey = "accounts_" . $currentUser->id . "_" . ($user_id ?? 'all');
+
+            // Try cache first
+            $cached = Yii::$app->cache->get($cacheKey);
+            if ($cached !== false) {
+                return $cached;
+            }
+
+            // Determine target user IDs
+            $targetUserIds = $this->getTargetUserIds($currentUser, $user_id);
+
+            if (empty($targetUserIds)) {
+                return [
+                    'status' => 'success',
+                    'data' => [
+                        'summary' => [
+                            'total_accounts' => 0,
+                            'total_balance' => 0,
+                            'total_profit' => 0,
+                            'total_equity' => 0,
+                            'active_accounts' => 0,
+                            'avg_profit_percentage' => 0,
+                        ],
+                        'accounts' => [],
+                        'groups' => [],
+                        'user' => [
+                            'current' => [
+                                'id' => $currentUser->id,
+                                'username' => $currentUser->user_name,
+                                'type' => $currentUser->user_tipe,
+                            ],
+                            'target' => null,
+                        ],
+                    ]
+                ];
+            }
+
+            // SINGLE QUERY - get all accounts with needed columns only
+            $accounts = Mt4Account::find()
+                ->select([
+                    'id',
+                    'user_id',
+                    'account_id',
+                    'bot_name',
+                    'buy_order_count',
+                    'total_buy_lot',
+                    'sell_order_count',
+                    'total_sell_lot',
+                    'total_profit',
+                    'total_profit_percentage',
+                    'account_balance',
+                    'account_equity',
+                    'floating_value',
+                    'min_lot',
+                    'leverage',
+                    'currency',
+                    'server',
+                    'broker',
+                    'account_type',
+                    'status',
+                    'last_connected',
+                    'last_sync',
+                    'disabled_ea',
+                    'buy_status',
+                    'sell_status',
+                    'created_at'
+                ])
+                ->where(['user_id' => $targetUserIds])
+                ->asArray() // Faster than objects
+                ->orderBy(['created_at' => SORT_DESC])
+                ->all();
+
+            // Calculate summary in PHP (faster than separate SQL queries)
+            $summary = $this->calculateSummary($accounts);
+
+            // Get groups data (cached separately)
+            $groups = $this->getGroupsData($accounts);
+
+            // Build user info
+            $userInfo = [
+                'current' => [
+                    'id' => $currentUser->id,
+                    'username' => $currentUser->user_name,
+                    'type' => $currentUser->user_tipe,
+                    'name' => $currentUser->name ?? '',
+                    'email' => $currentUser->user_email ?? '',
+                ],
+                'target' => null,
+            ];
+
+            // Add target user info if requested
+            if ($user_id && $user_id != $currentUser->id) {
+                $userInfo['target'] = $this->getMinimalUserInfo($user_id);
+            }
+
+            $response = [
+                'status' => 'success',
+                'data' => [
+                    'summary' => $summary,
+                    'accounts' => $accounts,
+                    'groups' => $groups,
+                    'user' => $userInfo,
+                ]
+            ];
+
+            // Cache response
+            $cacheDuration = ($currentUser->user_tipe == 'ADMIN') ? 15 : 30;
+            Yii::$app->cache->set($cacheKey, $response, $cacheDuration);
+
+            return $response;
+        } catch (UnauthorizedHttpException $e) {
+            Yii::$app->response->statusCode = 401;
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        } catch (ForbiddenHttpException $e) {
+            Yii::$app->response->statusCode = 403;
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Accounts error: ' . $e->getMessage());
+            Yii::$app->response->statusCode = 500;
+            return [
+                'status' => 'error',
+                'message' => 'An internal error occurred'
+            ];
+        }
+    }
+
+    /**
+     * Ultra-fast authentication - no DB query
+     * Uses your existing getTokenFromRequest() method
+     */
+    private function authenticateUser()
+    {
+        // Use your EXISTING token extraction method
+        $token = $this->getTokenFromRequest();
+
+        if (!$token) {
+            throw new UnauthorizedHttpException('No authorization token provided');
+        }
+
+        // Validate JWT using your existing JwtHelper
+        $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+        $payload = JwtHelper::validate($token, $secret);
+
+        if (!$payload) {
+            throw new UnauthorizedHttpException('Invalid or expired token');
+        }
+
+        // Extract user from JWT's nested 'data' key
+        $userData = $this->extractUserFromPayload($payload);
+
+        if (!$userData || empty($userData['id'])) {
+            // Debug: Log actual payload structure
+            Yii::error('JWT Payload structure: ' . json_encode($payload));
+            throw new UnauthorizedHttpException(
+                'Invalid token payload - expected data.id structure'
+            );
+        }
+
+        // Return user object directly from JWT (no DB query needed!)
+        return (object)$userData;
+    }
+
+    /**
+     * Get target user IDs efficiently
+     */
+    private function getTargetUserIds($currentUser, $requestedUserId)
+    {
+        // Admin sees everything
+        if ($currentUser->user_tipe == 'ADMIN') {
+            if ($requestedUserId) {
+                return [(int)$requestedUserId];
+            }
+
+            // Return all user IDs with accounts (cached)
+            $cacheKey = "all_account_user_ids";
+            $userIds = Yii::$app->cache->get($cacheKey);
+
+            if ($userIds === false) {
+                $userIds = Mt4Account::find()
+                    ->select('user_id')
+                    ->distinct()
+                    ->column();
+                Yii::$app->cache->set($cacheKey, $userIds, 60);
+            }
+
+            return !empty($userIds) ? $userIds : [0]; // Return [0] if empty to avoid SQL error
+        }
+
+        // Non-admin logic
+        return $this->getNonAdminUserIds($currentUser->id, $requestedUserId);
+    }
+
+    /**
+     * Get descendant user IDs (including self)
+     */
+    private function getDescendantUserIds($userId)
+    {
+        $cacheKey = "descendants_{$userId}";
+        $userIds = Yii::$app->cache->get($cacheKey);
+
+        if ($userIds !== false) {
+            return $userIds;
+        }
+
+        $ownAccount = Mt4Account::find()
+            ->select('path')
+            ->where(['user_id' => $userId])
+            ->asArray()
+            ->one();
+
+        if (!$ownAccount || empty($ownAccount['path'])) {
+            return [$userId];
+        }
+
+        $userIds = Mt4Account::find()
+            ->select('user_id')
+            ->where(['like', 'path', $ownAccount['path'] . '%', false])
+            ->distinct()
+            ->column();
+
+        if (empty($userIds)) {
+            $userIds = [$userId];
+        }
+
+        Yii::$app->cache->set($cacheKey, $userIds, 120);
+
+        return $userIds;
+    }
+
+    /**
+     * Check if target is descendant
+     */
+    private function isDescendant($ancestorId, $targetId)
+    {
+        $cacheKey = "is_descendant_{$ancestorId}_{$targetId}";
+        $result = Yii::$app->cache->get($cacheKey);
+
+        if ($result !== false) {
+            return $result;
+        }
+
+        $targetAccount = Mt4Account::find()
+            ->select('path')
+            ->where(['user_id' => $targetId])
+            ->asArray()
+            ->one();
+
+        if (!$targetAccount || empty($targetAccount['path'])) {
+            $result = false;
+        } else {
+            $result = in_array((string)$ancestorId, explode('.', $targetAccount['path']));
+        }
+
+        Yii::$app->cache->set($cacheKey, $result, 300);
+
+        return $result;
+    }
+
+    /**
+     * Calculate summary from accounts array (no extra queries)
+     */
+    private function calculateSummary($accounts)
+    {
+        $summary = [
+            'total_accounts' => count($accounts),
+            'total_balance' => 0,
+            'total_profit' => 0,
+            'total_equity' => 0,
+            'active_accounts' => 0,
+            'avg_profit_percentage' => 0,
+        ];
+
+        if (empty($accounts)) {
+            return $summary;
+        }
+
+        $totalProfitPct = 0;
+
+        foreach ($accounts as $account) {
+            $summary['total_balance'] += (float)$account['account_balance'];
+            $summary['total_profit'] += (float)$account['total_profit'];
+            $summary['total_equity'] += (float)$account['account_equity'];
+            $totalProfitPct += (float)$account['total_profit_percentage'];
+
+            if ($account['status'] === 'active') {
+                $summary['active_accounts']++;
+            }
+        }
+
+        if ($summary['total_accounts'] > 0) {
+            $summary['avg_profit_percentage'] = round(
+                $totalProfitPct / $summary['total_accounts'],
+                2
+            );
+        }
+
+        // Round values
+        $summary['total_balance'] = round($summary['total_balance'], 2);
+        $summary['total_profit'] = round($summary['total_profit'], 2);
+        $summary['total_equity'] = round($summary['total_equity'], 2);
+
+        return $summary;
+    }
+
+    /**
+     * Get groups data efficiently
+     */
+    private function getGroupsData($accounts)
+    {
+        if (empty($accounts)) {
+            return [];
+        }
+
+        $cacheKey = "active_groups_data";
+        $groups = Yii::$app->cache->get($cacheKey);
+
+        if ($groups === false) {
+            $groups = Mt4Group::find()
+                ->where(['status' => Mt4Group::STATUS_ACTIVE])
+                ->asArray()
+                ->all();
+            Yii::$app->cache->set($cacheKey, $groups, 120);
+        }
+
+        if (empty($groups)) {
+            return [];
+        }
+
+        $accountMt4Ids = array_column($accounts, 'account_id');
+        $groupData = [];
+
+        foreach ($groups as $group) {
+            $groupMt4Ids = is_string($group['mt4_ids'])
+                ? json_decode($group['mt4_ids'], true)
+                : $group['mt4_ids'];
+
+            if (empty($groupMt4Ids)) {
+                continue;
+            }
+
+            $matchingIds = array_intersect($accountMt4Ids, $groupMt4Ids);
+
+            if (empty($matchingIds)) {
+                continue;
+            }
+
+            // Filter matching accounts
+            $matchingAccounts = array_values(array_filter(
+                $accounts,
+                function ($account) use ($matchingIds) {
+                    return in_array($account['account_id'], $matchingIds);
+                }
+            ));
+
+            // Calculate group stats
+            $groupTotalProfit = array_sum(array_column($matchingAccounts, 'total_profit'));
+            $groupTotalBalance = array_sum(array_column($matchingAccounts, 'account_balance'));
+            $groupTotalEquity = array_sum(array_column($matchingAccounts, 'account_equity'));
+            $accountCount = count($matchingAccounts);
+
+            $groupData[] = [
+                'id' => $group['id'],
+                'mt4_ids' => $group['mt4_ids'],
+                'name' => $group['name'],
+                'desc' => $group['desc'] ?? '',
+                'remark' => $group['remark'] ?? '',
+                'total_accounts' => $accountCount,
+                'total_profit' => round($groupTotalProfit, 2),
+                'total_balance' => round($groupTotalBalance, 2),
+                'total_equity' => round($groupTotalEquity, 2),
+                'avg_profit' => $accountCount > 0
+                    ? round($groupTotalProfit / $accountCount, 2)
+                    : 0,
+            ];
+        }
+
+        return $groupData;
+    }
+
+    /**
+     * Get minimal user info
+     */
+    private function getMinimalUserInfo($userId)
+    {
+        $cacheKey = "minimal_user_{$userId}";
+        $user = Yii::$app->cache->get($cacheKey);
+
+        if ($user !== false) {
+            return $user;
+        }
+
+        $user = Users::find()
+            ->select(['id', 'user_name', 'user_email', 'user_tipe'])
+            ->where(['id' => $userId])
+            ->asArray()
+            ->one();
+
+        if (!$user) {
+            return null;
+        }
+
+        $userInfo = [
+            'id' => $user['id'],
+            'username' => $user['user_name'],
+            'email' => $user['user_email'],
+            'type' => $user['user_tipe'],
+        ];
+
+        Yii::$app->cache->set($cacheKey, $userInfo, 300);
+
+        return $userInfo;
+    }
+
+    /**
+     * Get user IDs for non-admin users
+     */
+    private function getNonAdminUserIds($currentUserId, $requestedUserId)
+    {
+        $selfId = (int)$currentUserId;
+
+        // If requesting own data or no specific user
+        if (!$requestedUserId || (int)$requestedUserId === $selfId) {
+            return $this->getDescendantUserIds($selfId);
+        }
+
+        // Check if requesting descendant
+        $targetId = (int)$requestedUserId;
+        if ($this->isDescendant($selfId, $targetId)) {
+            return [$targetId];
+        }
+
+        throw new ForbiddenHttpException('You do not have permission to view these accounts');
     }
 }

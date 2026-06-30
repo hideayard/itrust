@@ -25,6 +25,9 @@ $config = [
         ],
         'cache' => [
             'class' => 'yii\caching\FileCache',
+            'cachePath' => '@runtime/cache/ea',
+            'defaultDuration' => 10, // Default 10 seconds
+
         ],
         'user' => [
             'identityClass' => 'app\models\Users',
@@ -37,11 +40,11 @@ $config = [
             'class' => 'yii\swiftmailer\Mailer',
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => 'mail.itrust-tech.id', //smtp.gmail.com',
-                'username' => 'admin@rochat.id',
-                'password' => 'Bismillah@2021',
-                'port' => '587',
-                'encryption' => 'tls',
+                'host' => $params['smtp']['host'],
+                'username' => $params['smtp']['username'],
+                'password' => $params['smtp']['password'],
+                'port' => $params['smtp']['port'],
+                'encryption' => $params['smtp']['encryption'],
             ],
         ],
         'log' => [
@@ -110,6 +113,12 @@ $config = [
                 'GET ea/get-orders' => 'ea/get-orders',
                 'GET ea/order-stats' => 'ea/order-stats',
 
+                'ea/command-status' => 'ea/command-status',
+                'ea/batch-status' => 'ea/batch-status',
+                'ea/complete' => 'ea/complete',
+                'ea/get' => 'ea/get', // Your existing device get command endpoint
+                'ea/cancel' => 'ea/cancel', // Your existing cancel / finish command endpoint
+                'api/accounts' => 'mt4-account/accounts', // New optimized endpoint
 
             ],
         ],

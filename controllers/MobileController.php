@@ -69,6 +69,7 @@ class MobileController extends Controller
             'save-myfxbook-data',
             'save-investing-data',
             'get-scrape-data',
+            // 'test-email',
             'get-latest-events',
             'get-high-impact-events',
             'get-technical-analysis',
@@ -2409,7 +2410,203 @@ class MobileController extends Controller
         ];
     }
 
-    public function actionGetDevices()
+/**
+     * Create a new device for the authenticated user
+     * POST /mobile/create-device
+     * 
+     * Parameters (POST):
+     * - device_id (required): Unique device identifier
+     * - device_name (optional): Device name
+     * - device_alias (optional): Device alias
+     * - device_description (optional): Device description
+     * - device_remark (optional): Device remark
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Device created successfully",
+     *   "data": {
+     *     "id": 1,
+     *     "device_id": "device_123",
+     *     "device_name": "My Device",
+     *     "device_alias": "Solar Panel",
+     *     "device_description": "Main solar panel",
+     *     "device_remark": "Installed 2024",
+     *     "is_active": true,
+     *     "created_at": "2024-01-01 12:00:00"
+     *   }
+     * }
+     */
+    public function actionCreateDevice()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided',
+                    'code' => 401
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID from payload
+            $tokenUserId = $this->extractUserIdFromPayload($payload);
+            $tokenUserType = strtoupper((string)($payload['data']['user_tipe'] ?? ''));
+
+            if (!$tokenUserId && $tokenUserType !== 'ADMIN') {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token',
+                    'code' => 401
+                ];
+            }
+
+            // Get request data
+            $request = \Yii::$app->request;
+            $inputUserId = $request->post('user_id');
+            $deviceId = $request->post('device_id');
+            $deviceName = $request->post('device_name', '');
+            $deviceAlias = $request->post('device_alias', '');
+            $deviceDescription = $request->post('device_description', '');
+            $deviceRemark = $request->post('device_remark', '');
+
+            // Validate required fields
+            $errors = [];
+            if (empty($deviceId)) {
+                $errors[] = 'Device ID is required';
+            }
+
+            // Validate device_id max length (100 chars per model rules)
+            if (!empty($deviceId) && strlen($deviceId) > 100) {
+                $errors[] = 'Device ID must not exceed 100 characters';
+            }
+
+            // Validate device_name max length (255 chars per model rules)
+            if (!empty($deviceName) && strlen($deviceName) > 255) {
+                $errors[] = 'Device name must not exceed 255 characters';
+            }
+
+            // Validate device_alias max length (255 chars per model rules)
+            if (!empty($deviceAlias) && strlen($deviceAlias) > 255) {
+                $errors[] = 'Device alias must not exceed 255 characters';
+            }
+
+            if (!empty($errors)) {
+                return [
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $errors,
+                    'code' => 400
+                ];
+            }
+
+            // Resolve final user_id according to rules:
+            // - if token is ADMIN => always null
+            // - if token is non-admin:
+            //   - if input user_id provided => use input user_id
+            //   - else use token user_id
+            if ($tokenUserType === 'ADMIN') {
+                $userId = null;
+            } else {
+                $userId = ($inputUserId !== null && $inputUserId !== '') ? (int)$inputUserId : (int)$tokenUserId;
+            }
+
+            // Check if device already exists for this user
+            $existingDeviceQuery = UserDevices::find()->where(['device_id' => $deviceId]);
+            if ($userId === null) {
+                $existingDeviceQuery->andWhere(['user_id' => null]);
+            } else {
+                $existingDeviceQuery->andWhere(['user_id' => $userId]);
+            }
+            $existingDevice = $existingDeviceQuery->one();
+
+            if ($existingDevice) {
+                return [
+                    'success' => false,
+                    'message' => 'Device already exists',
+                    'errors' => ['device_id' => 'Device ID already registered'],
+                    'code' => 409
+                ];
+            }
+
+            // Create new device
+            $device = new UserDevices();
+            $device->user_id = $userId;
+            $device->device_id = $deviceId;
+            $device->device_name = $deviceName ?: null;
+            $device->device_alias = $deviceAlias ?: null;
+            $device->device_description = $deviceDescription ?: null;
+            $device->device_remark = $deviceRemark ?: null;
+            $device->is_active = 1;
+            $device->created_at = date('Y-m-d H:i:s');
+
+            if ($device->save()) {
+                // Log activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "📱 New Device Created\n" .
+                            "User ID: " . $userId . "\n" .
+                            "Device ID: " . $deviceId . "\n" .
+                            "Device Name: " . ($deviceName ?: 'N/A') . "\n" .
+                            "IP: " . $clientIp . "\n" .
+                            "Time: " . date('Y-m-d H:i:s'),
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'Device created successfully',
+                    'data' => [
+                        'id' => $device->id,
+                        'device_id' => $device->device_id,
+                        'device_name' => $device->device_name,
+                        'device_alias' => $device->device_alias,
+                        'device_description' => $device->device_description,
+                        'device_remark' => $device->device_remark,
+                        'is_active' => (bool)$device->is_active,
+                        'created_at' => $device->created_at
+                    ],
+                    'code' => 201
+                ];
+            } else {
+                // Get validation errors
+                $validationErrors = [];
+                foreach ($device->errors as $attribute => $errorMessages) {
+                    $validationErrors[$attribute] = $errorMessages;
+                }
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to create device',
+                    'errors' => $validationErrors,
+                    'code' => 400
+                ];
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to create device',
+                'error' => $e->getMessage(),
+                'code' => 500
+            ];
+        }
+    }
+
+public function actionGetDevices()
     {
         \Yii::$app->response->format = Response::FORMAT_JSON;
 
@@ -2430,21 +2627,29 @@ class MobileController extends Controller
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
 
-            // Extract user ID from payload
+            // Extract user ID and user type from payload
             $userId = $this->extractUserIdFromPayload($payload);
+            $userType = isset($payload['data']['user_tipe']) ? strtoupper((string)$payload['data']['user_tipe']) : '';
 
-            if (!$userId) {
+            if (!$userId && $userType !== 'ADMIN') {
                 return [
                     'success' => false,
                     'message' => 'User ID not found in token'
                 ];
             }
 
-            // Fetch devices
-            $devices = UserDevices::find()
-                ->where(['user_id' => $userId, 'is_active' => 1])
-                ->orderBy(['created_at' => SORT_DESC])
-                ->all();
+            // Fetch devices - if admin, get all devices; otherwise get only user's devices
+            $query = UserDevices::find();
+            
+            if ($userType === 'ADMIN') {
+                // Admin user - get all active devices
+                $query->where(['is_active' => 1]);
+            } else {
+                // Regular user - get only their devices
+                $query->where(['user_id' => $userId, 'is_active' => 1]);
+            }
+            
+            $devices = $query->orderBy(['created_at' => SORT_DESC])->all();
 
             $formattedDevices = [];
             foreach ($devices as $device) {
@@ -2463,14 +2668,106 @@ class MobileController extends Controller
 
             return [
                 'success' => true,
-                'message' => 'Devices retrieved successfully',
-                'data' => $formattedDevices
+                'message' => $userType === 'ADMIN' ? 'All devices retrieved successfully' : 'Devices retrieved successfully',
+                'data' => $formattedDevices,
+                'total' => count($formattedDevices)
             ];
         } catch (\Exception $e) {
             return [
                 'success' => false,
                 'message' => 'Failed to get devices',
                 'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Connect user_id to unassigned device record.
+     * Params: token, user_id, device
+     */
+    public function actionSetDevice()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = \Yii::$app->request;
+
+            $token = $request->post('token', $request->get('token'));
+            $userId = $request->post('user_id', $request->get('user_id'));
+            $deviceId = $request->post('device', $request->get('device'));
+
+            $errors = [];
+
+            if (empty($token)) {
+                $errors[] = 'Token is required';
+            }
+
+            if ($userId === null || $userId === '' || !is_numeric($userId)) {
+                $errors[] = 'user_id is required and must be numeric';
+            }
+
+            if (empty($deviceId)) {
+                $errors[] = 'device is required';
+            }
+
+            if (!empty($errors)) {
+                return [
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $errors,
+                    'code' => 400
+                ];
+            }
+
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token only (endpoint requirement includes token input)
+            JwtHelper::validate($token, $secret);
+
+            $device = UserDevices::find()
+                ->where(['device_id' => $deviceId, 'is_active' => 1])
+                ->andWhere(['user_id' => null])
+                ->one();
+
+            if (!$device) {
+                return [
+                    'success' => false,
+                    'message' => 'Device not found or already assigned',
+                    'code' => 404
+                ];
+            }
+
+            $device->user_id = (int)$userId;
+            $device->updated_at = date('Y-m-d H:i:s');
+
+            if (!$device->save()) {
+                return [
+                    'success' => false,
+                    'message' => 'Failed to set device',
+                    'errors' => $device->errors,
+                    'code' => 400
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Device assigned successfully',
+                'data' => [
+                    'id' => $device->id,
+                    'user_id' => $device->user_id,
+                    'device_id' => $device->device_id,
+                    'device_name' => $device->device_name,
+                    'device_alias' => $device->device_alias,
+                    'updated_at' => $device->updated_at
+                ],
+                'code' => 200
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to set device',
+                'error' => $e->getMessage(),
+                'code' => 500
             ];
         }
     }
@@ -4141,6 +4438,134 @@ public function actionGetDevicesWithData()
         return $summary;
     }
 
+/**
+     * Get list of users where user_tipe is ADMIN or CUSTOMER
+     * 
+     * Endpoint: GET /mobile/get-users
+     * Parameters: token (required), user_tipe (optional: ADMIN, CUSTOMER, or all), limit, offset
+     * 
+     * Response:
+     * {
+     *   "success": true,
+     *   "message": "Users retrieved successfully",
+     *   "data": [...],
+     *   "total": 10
+     * }
+     */
+    public function actionGetUsersInverter()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            // Get token from request
+            $token = $this->getTokenFromRequest();
+
+            if (!$token) {
+                return [
+                    'success' => false,
+                    'message' => 'No authorization token provided',
+                    'code' => 401
+                ];
+            }
+
+            // Get secret key from params
+            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+
+            // Extract user ID and user type from payload
+            $userId = $this->extractUserIdFromPayload($payload);
+            $userType = isset($payload['data']['user_tipe']) ? strtoupper((string)$payload['data']['user_tipe']) : '';
+
+            if (!$userId && $userType !== 'ADMIN') {
+                return [
+                    'success' => false,
+                    'message' => 'User ID not found in token'
+                ];
+            }
+
+            // Get query parameters
+            $request = \Yii::$app->request;
+            $userTipe = $request->get('user_tipe'); // Optional filter: ADMIN, CUSTOMER, or omit for all
+            $limit = $request->get('limit', 50);
+            $offset = $request->get('offset', 0);
+            $search = $request->get('search'); // Optional search by name or username
+
+            // Validate limit
+            $limit = min(max(1, (int)$limit), 100); // Min 1, max 100
+
+            // Build query - filter by ADMIN or CUSTOMER user_tipe
+            $query = Users::find()
+                ->where(['user_status' => 1])
+                ->andWhere(['is_deleted' => 0])
+                ->andWhere(['IN', 'user_tipe', ['ADMIN', 'CUSTOMER']]);
+
+            // Apply additional filter if user_tipe is specified
+            if ($userTipe) {
+                $userTipeUpper = strtoupper($userTipe);
+                if (in_array($userTipeUpper, ['ADMIN', 'CUSTOMER'])) {
+                    $query->andWhere(['user_tipe' => $userTipeUpper]);
+                }
+            }
+
+            // Apply search if provided
+            if ($search) {
+                $query->andWhere([
+                    'OR',
+                    ['like', 'user_name', $search],
+                    ['like', 'user_nama', $search],
+                    ['like', 'user_email', $search]
+                ]);
+            }
+
+            // Get total count for pagination
+            $totalCount = $query->count();
+
+            // Apply pagination
+            $users = $query->orderBy(['user_nama' => SORT_ASC])
+                ->limit($limit)
+                ->offset($offset)
+                ->all();
+
+            // Format user data
+            $formattedUsers = [];
+            foreach ($users as $user) {
+                $formattedUsers[] = [
+                    'id' => $user->user_id,
+                    'user_name' => $user->user_name,
+                    'user_nama' => $user->user_nama,
+                    'user_email' => $user->user_email,
+                    'user_hp' => $user->user_hp,
+                    'user_tipe' => $user->user_tipe,
+                    'user_foto' => $user->user_foto,
+                    'user_status' => $user->user_status,
+                    'user_account' => $user->user_account,
+                    'user_license' => $user->user_license,
+                    'created_at' => $user->created_at,
+                ];
+            }
+
+            return [
+                'success' => true,
+                'message' => 'Users retrieved successfully',
+                'data' => $formattedUsers,
+                'total' => $totalCount,
+                'pagination' => [
+                    'limit' => (int)$limit,
+                    'offset' => (int)$offset,
+                    'has_more' => ($offset + $limit) < $totalCount
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Failed to get users',
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
     /**
      * Handle OPTIONS request for CORS preflight
      */
@@ -4173,24 +4598,26 @@ public function actionGetDevicesWithData()
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            // Get POST data
+            // Get POST data - aligned with Users model fields
             $request = Yii::$app->request;
-            $firstName = $request->post('first_name');
-            $lastName = $request->post('last_name');
-            $email = $request->post('email');
-            $username = $request->post('username');
-            $password = $request->post('password');
+            $name = $request->post('name');  // Maps to user_nama (max 100 chars)
+            $email = $request->post('email');  // Maps to user_email (max 100 chars)
+            $username = $request->post('username');  // Maps to user_name (max 100 chars)
+            $password = $request->post('password');  // Maps to user_pass
             $confirmPassword = $request->post('confirm_password');
-            $phone = $request->post('phone', '');
-            $userType = $request->post('user_type', 'user'); // Default to 'user'
+            $phone = $request->post('phone', '');  // Maps to user_hp (max 20 chars)
+            $userType = $request->post('user_type', 'USER');  // Maps to user_tipe (max 15 chars)
             $acceptTerms = $request->post('accept_terms', '0');
+            $account = $request->post('account', '');  // Maps to user_account (max 20 chars)
+            $license = $request->post('license', '');  // Maps to user_license (max 20 chars)
+            $telegramId = $request->post('telegram_id', null);  // Maps to telegram_id
+            $telegramUsername = $request->post('telegram_username', null);  // Maps to telegram_username
 
             // Validate input
             $errors = [];
 
-            // Required fields
-            if (empty($firstName)) $errors[] = 'First name is required';
-            if (empty($lastName)) $errors[] = 'Last name is required';
+            // Required fields - minimum: name, email, username, password
+            if (empty($name)) $errors[] = 'Name is required';
             if (empty($email)) $errors[] = 'Email is required';
             if (empty($username)) $errors[] = 'Username is required';
             if (empty($password)) $errors[] = 'Password is required';
@@ -4204,6 +4631,24 @@ public function actionGetDevicesWithData()
                 ];
             }
 
+            // Validate name length (max 100 chars per model rules)
+            if (strlen($name) > 100) {
+                return [
+                    'success' => false,
+                    'message' => 'Name must not exceed 100 characters',
+                    'errors' => ['name' => 'Maximum 100 characters allowed']
+                ];
+            }
+
+            // Validate username length (max 100 chars per model rules)
+            if (strlen($username) > 100) {
+                return [
+                    'success' => false,
+                    'message' => 'Username must not exceed 100 characters',
+                    'errors' => ['username' => 'Maximum 100 characters allowed']
+                ];
+            }
+
             // Validate email format
             $emailValidator = new EmailValidator();
             if (!$emailValidator->validate($email, $error)) {
@@ -4211,6 +4656,15 @@ public function actionGetDevicesWithData()
                     'success' => false,
                     'message' => 'Invalid email format',
                     'errors' => ['email' => $error]
+                ];
+            }
+
+            // Validate email length (max 100 chars per model rules)
+            if (strlen($email) > 100) {
+                return [
+                    'success' => false,
+                    'message' => 'Email must not exceed 100 characters',
+                    'errors' => ['email' => 'Maximum 100 characters allowed']
                 ];
             }
 
@@ -4241,6 +4695,41 @@ public function actionGetDevicesWithData()
                 ];
             }
 
+            // Validate phone length if provided (max 20 chars per model rules)
+            if (!empty($phone) && strlen($phone) > 20) {
+                return [
+                    'success' => false,
+                    'message' => 'Phone number must not exceed 20 characters',
+                    'errors' => ['phone' => 'Maximum 20 characters allowed']
+                ];
+            }
+
+            // Validate user_type length (max 15 chars per model rules)
+            if (strlen($userType) > 15) {
+                return [
+                    'success' => false,
+                    'message' => 'User type must not exceed 15 characters',
+                    'errors' => ['user_type' => 'Maximum 15 characters allowed']
+                ];
+            }
+
+            // Validate optional fields lengths
+            if (!empty($account) && strlen($account) > 20) {
+                return [
+                    'success' => false,
+                    'message' => 'Account must not exceed 20 characters',
+                    'errors' => ['account' => 'Maximum 20 characters allowed']
+                ];
+            }
+
+            if (!empty($license) && strlen($license) > 20) {
+                return [
+                    'success' => false,
+                    'message' => 'License must not exceed 20 characters',
+                    'errors' => ['license' => 'Maximum 20 characters allowed']
+                ];
+            }
+
             // Check if username already exists
             if (Users::find()->where(['user_name' => $username])->exists()) {
                 return [
@@ -4263,16 +4752,33 @@ public function actionGetDevicesWithData()
             $user = new Users();
             $user->scenario = Users::SCENARIO_DEFAULT;
             $user->user_name = $username;
-            $user->user_nama = $firstName . ' ' . $lastName;
+            $user->user_nama = $name;  // Direct mapping to user_nama
             $user->user_email = $email;
+            $user->user_pass = Yii::$app->security->generatePasswordHash($password);
             $user->user_hp = $phone;
             $user->user_tipe = $userType;
-            $user->user_pass = Yii::$app->security->generatePasswordHash($password);
-            $user->user_status = 1; // Active
             $user->user_foto = 'default.jpg'; // Default photo
+            $user->user_status = 1; // Active
             $user->is_deleted = 0;
 
-            // Generate token for future use (optional)
+            // Optional fields from model
+            if (!empty($account)) {
+                $user->user_account = $account;
+            }
+
+            if (!empty($license)) {
+                $user->user_license = $license;
+            }
+
+            if (!empty($telegramId)) {
+                $user->telegram_id = $telegramId;
+            }
+
+            if (!empty($telegramUsername)) {
+                $user->telegram_username = $telegramUsername;
+            }
+
+            // Generate token for future use
             $user->user_token = Yii::$app->security->generateRandomString(15);
 
             // Save user
@@ -4283,11 +4789,13 @@ public function actionGetDevicesWithData()
                 TelegramHelper::sendSimpleMessage(
                     [
                         'text' => "📝 New User Registration\n" .
-                            "Name: " . $firstName . " " . $lastName . "\n" .
+                            "Name: " . $name . "\n" .
                             "Username: " . $username . "\n" .
                             "Email: " . $email . "\n" .
                             "Phone: " . $phone . "\n" .
                             "Type: " . $userType . "\n" .
+                            "Account: " . ($account ?: 'N/A') . "\n" .
+                            "License: " . ($license ?: 'N/A') . "\n" .
                             "IP: " . $clientIp,
                         'parse_mode' => 'html'
                     ],
@@ -4309,7 +4817,11 @@ public function actionGetDevicesWithData()
                         'phone' => $user->user_hp,
                         'user_tipe' => $user->user_tipe,
                         'photo' => $user->user_foto,
-                        'status' => $user->user_status
+                        'status' => $user->user_status,
+                        'account' => $user->user_account,
+                        'license' => $user->user_license,
+                        'telegram_id' => $user->telegram_id,
+                        'telegram_username' => $user->telegram_username
                     ]
                 ];
             } else {
@@ -4338,7 +4850,203 @@ public function actionGetDevicesWithData()
     }
 
     /**
-     * Forgot Password Endpoint - Send reset link
+     * Test email function - sends a test email to verify mail configuration
+     * Can be called from an action or directly for testing
+     */
+    private function sendTestEmail($toEmail = null, $toName = null)
+    {
+        // If no email specified, use admin email from params
+        if ($toEmail === null) {
+            $toEmail = Yii::$app->params['adminEmail'] ?? 'admin@example.com';
+        }
+
+        if ($toName === null) {
+            $toName = 'Test User';
+        }
+
+        $subject = 'Test Email - Geran Komuniti Iskandar Puteri';
+
+        $htmlBody = "<h2>Test Email</h2>";
+        $htmlBody .= "<p>Hello <strong>" . $toName . "</strong>,</p>";
+        $htmlBody .= "<p>This is a test email from <strong>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</strong>.</p>";
+        $htmlBody .= "<p>If you receive this email, it means your email configuration is working correctly.</p>";
+        $htmlBody .= "<hr>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Time sent: " . date('Y-m-d H:i:s') . "</p>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Server: " . ($_SERVER['SERVER_NAME'] ?? 'localhost') . "</p>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
+
+        $textBody = "Test Email\n\n";
+        $textBody .= "Hello " . $toName . ",\n\n";
+        $textBody .= "This is a test email from Geran Komuniti Iskandar Puteri Rendah Karbon 5.0.\n\n";
+        $textBody .= "If you receive this email, it means your email configuration is working correctly.\n\n";
+        $textBody .= "Time sent: " . date('Y-m-d H:i:s') . "\n";
+        $textBody .= "Server: " . ($_SERVER['SERVER_NAME'] ?? 'localhost') . "\n\n";
+        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0";
+
+        try {
+            Yii::$app->mailer->compose()
+                ->setFrom([Yii::$app->params['adminEmail'] => 'Geran Komuniti Iskandar Puteri'])
+                ->setTo($toEmail)
+                ->setSubject($subject)
+                ->setTextBody($textBody)
+                ->setHtmlBody($htmlBody)
+                ->send();
+
+            Yii::info('Test email sent successfully to: ' . $toEmail);
+
+            return [
+                'success' => true,
+                'message' => 'Test email sent successfully to: ' . $toEmail,
+                'debug' => [
+                    'to_email' => $toEmail,
+                    'to_name' => $toName,
+                    'from_email' => Yii::$app->params['adminEmail'],
+                    'subject' => $subject,
+                    'timestamp' => date('Y-m-d H:i:s')
+                ]
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Failed to send test email: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to send test email',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'to_email' => $toEmail,
+                    'to_name' => $toName,
+                    'from_email' => Yii::$app->params['adminEmail'],
+                    'timestamp' => date('Y-m-d H:i:s'),
+                    'mailer_config' => YII_DEBUG ? Yii::$app->mailer->transport : null
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Public action to test email sending
+     * Can be called via: POST /test-email with optional email and name fields
+     */
+    public function actionTestEmail()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+            $toEmail = $request->post('email', null);
+            $toName = $request->post('name', 'Test User');
+
+            // If no email provided, try to get from query params for GET requests
+            if ($toEmail === null && Yii::$app->request->isGet) {
+                $toEmail = $request->get('email', null);
+            }
+
+            // Run the test
+            $result = $this->sendTestEmail($toEmail, $toName);
+
+            // Add curl command for debugging
+            $curlCommand = 'curl -X POST "' . Yii::$app->request->hostInfo . '/test-email" '
+                . '-F "email=' . ($toEmail ?? 'admin@example.com') . '" '
+                . '-F "name=' . $toName . '"';
+
+            $result['curl_debug'] = $curlCommand;
+
+            return $result;
+        } catch (\Exception $e) {
+            Yii::error('Test email action error: ' . $e->getMessage());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to send test email',
+                'error' => YII_DEBUG ? $e->getMessage() : null
+            ];
+        }
+    }
+
+    /**
+     * Enhanced password reset email sender with test/debug capability
+     */
+    private function sendPasswordResetEmail($user, $resetLink, $debug = false)
+    {
+        $subject = 'Reset Your Password - Geran Komuniti Iskandar Puteri';
+
+        $htmlBody = "<h2>Password Reset Request</h2>";
+        $htmlBody .= "<p>Hello <strong>" . $user->user_nama . "</strong>,</p>";
+        $htmlBody .= "<p>We received a request to reset your password for your account <strong>" . $user->user_name . "</strong>.</p>";
+        $htmlBody .= "<p>Click the link below to set a new password:</p>";
+        $htmlBody .= "<p style='margin: 30px 0;'><a href='" . $resetLink . "' style='background-color: #FDA300; color: #2C5282; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Reset Password</a></p>";
+        $htmlBody .= "<p>Or copy and paste this link in your browser:</p>";
+        $htmlBody .= "<p style='word-break: break-all; color: #2C5282;'>" . $resetLink . "</p>";
+        $htmlBody .= "<p><strong>This link will expire in 1 hour.</strong></p>";
+        $htmlBody .= "<p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>";
+        $htmlBody .= "<hr>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
+        $htmlBody .= "<p style='color: #999; font-size: 11px;'>This is an automated email. Please do not reply to this email.</p>";
+
+        $textBody = "Password Reset Request\n\n";
+        $textBody .= "Hello " . $user->user_nama . ",\n\n";
+        $textBody .= "We received a request to reset your password for your account " . $user->user_name . ".\n\n";
+        $textBody .= "Click the link below to set a new password:\n";
+        $textBody .= $resetLink . "\n\n";
+        $textBody .= "This link will expire in 1 hour.\n\n";
+        $textBody .= "If you didn't request this, please ignore this email and your password will remain unchanged.\n\n";
+        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0\n";
+        $textBody .= "This is an automated email. Please do not reply to this email.";
+
+        // Send email using Yii's mailer
+        try {
+            $mailer = Yii::$app->mailer->compose()
+                ->setFrom([Yii::$app->params['adminEmail'] => 'Geran Komuniti Iskandar Puteri'])
+                ->setTo($user->user_email)
+                ->setSubject($subject)
+                ->setTextBody($textBody)
+                ->setHtmlBody($htmlBody);
+
+            $sent = $mailer->send();
+
+            if ($sent) {
+                Yii::info('Password reset email sent to: ' . $user->user_email);
+
+                if ($debug) {
+                    Yii::info('Debug - Reset link: ' . $resetLink);
+                    Yii::info('Debug - User: ' . $user->user_name . ' (' . $user->user_email . ')');
+                }
+
+                return true;
+            } else {
+                Yii::error('Failed to send password reset email - mailer returned false');
+
+                if ($debug) {
+                    Yii::error('Debug - Mailer configuration: ' . json_encode(Yii::$app->mailer->transport));
+                }
+
+                return false;
+            }
+        } catch (\Exception $e) {
+            Yii::error('Failed to send password reset email: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            if ($debug) {
+                Yii::error('Debug - Mailer error details: ' . $e->getMessage());
+            }
+
+            return false;
+        }
+    }
+
+    /**
+     * Updated forgot password action with email debugging
      */
     public function actionForgotPassword()
     {
@@ -4356,11 +5064,10 @@ public function actionGetDevicesWithData()
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            // Get POST data
             $request = Yii::$app->request;
             $email = $request->post('email');
 
-            // Validate input
+            // Validate email
             if (empty($email)) {
                 return [
                     'success' => false,
@@ -4368,61 +5075,360 @@ public function actionGetDevicesWithData()
                 ];
             }
 
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            // For security reasons, always return success even if email doesn't exist
+            // This prevents email enumeration
+            if (!$user) {
+                Yii::info('Forgot password attempted for non-existent email: ' . $email);
+                return [
+                    'success' => true,
+                    'message' => 'If your email is registered, you will receive a password reset link',
+                    'info' =>  'Forgot password attempted for non-existent email: ' . $email
+                ];
+            }
+
+            // Generate reset token
+            $resetToken = Yii::$app->security->generateRandomString(64);
+            $timestamp = time();
+
+            // Store token with timestamp in user_token field
+            $user->user_token = $resetToken . '_' . $timestamp;
+
+            if ($user->save()) {
+                // Create reset link (adjust URL to your frontend)
+                $resetLink = Yii::$app->params['frontendUrl'] . '/web/mobile/reset-password?token=' . $resetToken;
+
+                // Send email with debug flag (set to false in production)
+                // $emailSent = $this->sendPasswordResetEmail($user, $resetLink, YII_DEBUG);
+
+                // Log activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                $logMessage = "🔑 Password Reset Requested\n" .
+                    "Email: " . $email . "\n" .
+                    "Username: " . $user->user_name . "\n" .
+                    "Name: " . $user->user_nama . "\n" .
+                    "IP: " . $clientIp . "\n" .
+                    "Email Sent: " . ($emailSent ? 'Yes' : 'No');
+
+                if (YII_DEBUG) {
+                    $logMessage .= "\nDebug - Reset Link: " . $resetLink;
+                }
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => $logMessage,
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['log_group_id'],
+                    Yii::$app->params['log_thread_id']
+
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'If your email is registered, you will receive a password reset link at ' . $email,
+                    // Only include debug info in development
+                    'debug' =>  [
+                        'email_sent' => $emailSent,
+                        'reset_link' => $resetLink,
+                        'token' => $resetToken,
+                        'log' => $logMessage,
+                    ]
+                ];
+            } else {
+                Yii::error('Failed to save reset token for user: ' . $user->user_id);
+
+                return [
+                    'success' => false,
+                    'message' => 'Unable to process request. Please try again.'
+                ];
+            }
+        } catch (\Exception $e) {
+            Yii::error('Forgot password error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'An error occurred. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null
+            ];
+        }
+    }
+
+    /**
+     * Generate OTP for password reset
+     * POST /generate-otp
+     * Params: email
+     */
+    public function actionGenerateOtp()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+            $email = $request->post('email');
+
+            // Debug info
+            $debug = [
+                'method' => $request->method,
+                'email' => $email,
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+
+            // Validate email
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required',
+                    'debug' => $debug
+                ];
+            }
+
             // Validate email format
-            $emailValidator = new EmailValidator();
+            $emailValidator = new \yii\validators\EmailValidator();
             if (!$emailValidator->validate($email, $error)) {
                 return [
                     'success' => false,
-                    'message' => 'Invalid email format'
+                    'message' => 'Invalid email format',
+                    'debug' => $debug
                 ];
             }
 
             // Find user by email
-            $user = Users::find()->where(['user_email' => $email])->one();
+            $user = Users::findOne(['user_email' => $email]);
 
-            // For security, always return success even if email not found
             if (!$user) {
-                // Log the attempt but don't reveal that email doesn't exist
-                Yii::info('Password reset attempted for non-existent email: ' . $email);
-
                 return [
-                    'success' => true,
-                    'message' => 'If the email exists, a reset link has been sent'
+                    'success' => false,
+                    'message' => 'Email not registered',
+                    'debug' => $debug
                 ];
             }
 
-            // Generate password reset token
-            $resetToken = Yii::$app->security->generateRandomString(15); // user_token field is max 15 chars
+            // Generate OTP (6 digits)
+            $otp = rand(100000, 999999);
+            $otpExpiry = time() + 600; // OTP valid for 10 minutes (600 seconds)
 
-            // Save token to user_token field with expiration info embedded
-            // Format: token_timestamp (e.g., abc123_1641234567)
-            $tokenWithExpiry = $resetToken . '_' . time();
+            // Store OTP in user_token (6 digits only)
+            $user->user_token = $otp;
+            // Store expiry timestamp in remark field
+            $user->remark = (string)$otpExpiry;
 
-            // Since we don't have dedicated reset token fields, we'll use user_token
-            // You may want to add dedicated fields later
-            $user->user_token = $tokenWithExpiry;
+            if ($user->save()) {
+                $debug['otp_generated'] = true;
+                $debug['otp_expiry'] = date('Y-m-d H:i:s', $otpExpiry);
+                $debug['otp_valid_minutes'] = 10;
 
-            if (!$user->save()) {
-                Yii::error('Failed to save reset token for user: ' . $user->user_id);
-                throw new \Exception('Failed to generate reset token');
+                // Log OTP in debug mode (remove in production)
+                if (YII_DEBUG) {
+                    $debug['otp'] = $otp;
+                }
+
+                // Send OTP via email
+                $emailSent = $this->sendOTPEmail($user, $otp);
+
+                $debug['email_sent'] = $emailSent;
+
+                // Log activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "📧 Password Reset OTP Requested\n" .
+                            "Email: " . $email . "\n" .
+                            "Username: " . $user->user_name . "\n" .
+                            "Name: " . $user->user_nama . "\n" .
+                            "IP: " . $clientIp . "\n" .
+                            "Time: " . date('Y-m-d H:i:s'),
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'OTP has been sent to your email',
+                    'debug' => $debug,
+                    'data' => [
+                        'email' => $email,
+                        'otp_expires_in_seconds' => 600,
+                        'otp_expires_in_minutes' => 10,
+                    ]
+                ];
+            } else {
+                $debug['save_errors'] = $user->errors;
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to generate OTP',
+                    'debug' => $debug
+                ];
+            }
+        } catch (\Exception $e) {
+            Yii::error('Generate OTP error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to generate OTP. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Check/Verify OTP
+     * POST /check-otp
+     * Params: email, otp
+     */
+    public function actionCheckOtp()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+            $email = $request->post('email');
+            $otp = $request->post('otp');
+
+            // Debug info
+            $debug = [
+                'method' => $request->method,
+                'email' => $email,
+                'otp_length' => strlen($otp ?? ''),
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+
+            // Validate email
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required',
+                    'debug' => $debug
+                ];
             }
 
-            // Build reset link
-            $resetLink = Yii::$app->urlManager->createAbsoluteUrl(['site/reset-password', 'token' => $resetToken]);
+            // Validate OTP
+            if (empty($otp)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP is required',
+                    'debug' => $debug
+                ];
+            }
 
-            // Send email with reset link
-            $this->sendPasswordResetEmail($user, $resetLink);
+            // Validate OTP format (6 digits)
+            if (!preg_match('/^\d{6}$/', $otp)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP must be 6 digits',
+                    'debug' => $debug
+                ];
+            }
 
-            // Log the activity
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Email not found',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has OTP stored
+            if (empty($user->user_token)) {
+                return [
+                    'success' => false,
+                    'message' => 'No OTP found. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has expiry stored
+            if (empty($user->remark)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP expiry not found. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            $storedOtp = $user->user_token;
+            $expiryTimestamp = (int)$user->remark;
+            $currentTime = time();
+
+            $debug['stored_otp_length'] = strlen($storedOtp);
+            $debug['expiry_timestamp'] = date('Y-m-d H:i:s', $expiryTimestamp);
+            $debug['current_timestamp'] = date('Y-m-d H:i:s', $currentTime);
+            $debug['otp_expired'] = $currentTime > $expiryTimestamp;
+
+            // Check if OTP has expired
+            if ($currentTime > $expiryTimestamp) {
+                // Clear expired OTP
+                $user->user_token = null;
+                $user->remark = null;
+                $user->save();
+
+                return [
+                    'success' => false,
+                    'message' => 'OTP has expired. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if OTP matches
+            if ($otp !== $storedOtp) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid OTP. Please try again.',
+                    'debug' => $debug
+                ];
+            }
+
+            $debug['otp_verified'] = true;
+            $debug['otp_valid'] = true;
+
+            // Log activity
             $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
 
             TelegramHelper::sendSimpleMessage(
                 [
-                    'text' => "🔐 Password Reset Request\n" .
+                    'text' => "✅ OTP Verified\n" .
                         "Email: " . $email . "\n" .
                         "Username: " . $user->user_name . "\n" .
                         "Name: " . $user->user_nama . "\n" .
-                        "IP: " . $clientIp,
+                        "IP: " . $clientIp . "\n" .
+                        "Time: " . date('Y-m-d H:i:s'),
                     'parse_mode' => 'html'
                 ],
                 Yii::$app->params['group_id']
@@ -4430,22 +5436,34 @@ public function actionGetDevicesWithData()
 
             return [
                 'success' => true,
-                'message' => 'Password reset link has been sent to your email'
+                'message' => 'OTP verified successfully',
+                'debug' => $debug,
+                'data' => [
+                    'email' => $email,
+                    'username' => $user->user_name,
+                    'verified' => true,
+                ]
             ];
         } catch (\Exception $e) {
-            Yii::error('Mobile forgot password error: ' . $e->getMessage());
+            Yii::error('Check OTP error: ' . $e->getMessage());
             Yii::error('Stack trace: ' . $e->getTraceAsString());
 
             return [
                 'success' => false,
-                'message' => 'Failed to process request. Please try again.',
-                'error' => YII_DEBUG ? $e->getMessage() : null
+                'message' => 'Failed to verify OTP. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]
             ];
         }
     }
 
     /**
-     * Reset Password Endpoint - Actually reset the password using token
+     * Reset password using OTP
+     * POST /reset-password
+     * Params: email, otp, new_password, confirm_password
      */
     public function actionResetPassword()
     {
@@ -4463,9 +5481,740 @@ public function actionGetDevicesWithData()
         Yii::$app->response->format = Response::FORMAT_JSON;
 
         try {
-            // Get POST data
             $request = Yii::$app->request;
-            $token = $request->post('token');
+
+            // Get params from POST
+            $email = $request->post('email');
+            $otp = $request->post('otp');
+            $newPassword = $request->post('new_password');
+            $confirmPassword = $request->post('confirm_password');
+
+            // Debug info
+            $debug = [
+                'method' => $request->method,
+                'email' => $email,
+                'otp_length' => strlen($otp ?? ''),
+                'has_new_password' => !empty($newPassword),
+                'has_confirm_password' => !empty($confirmPassword),
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+
+            // Validate email
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate OTP
+            if (empty($otp)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate new password
+            if (empty($newPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'New password is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate confirm password
+            if (empty($confirmPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'Confirm password is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check password length
+            if (strlen($newPassword) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'Password must be at least 8 characters long',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check password match
+            if ($newPassword !== $confirmPassword) {
+                return [
+                    'success' => false,
+                    'message' => 'Passwords do not match',
+                    'debug' => $debug
+                ];
+            }
+
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Email not found',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has OTP stored
+            if (empty($user->user_token)) {
+                return [
+                    'success' => false,
+                    'message' => 'No OTP found. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has expiry stored
+            if (empty($user->remark)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP expiry not found. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            $storedOtp = $user->user_token;
+            $expiryTimestamp = (int)$user->remark;
+            $currentTime = time();
+
+            $debug['stored_otp_length'] = strlen($storedOtp);
+            $debug['expiry_timestamp'] = date('Y-m-d H:i:s', $expiryTimestamp);
+            $debug['current_timestamp'] = date('Y-m-d H:i:s', $currentTime);
+            $debug['otp_expired'] = $currentTime > $expiryTimestamp;
+
+            // Check if OTP has expired
+            if ($currentTime > $expiryTimestamp) {
+                // Clear expired OTP
+                $user->user_token = null;
+                $user->remark = null;
+                $user->save();
+
+                return [
+                    'success' => false,
+                    'message' => 'OTP has expired. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Verify OTP matches
+            if ($otp !== $storedOtp) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid OTP',
+                    'debug' => $debug
+                ];
+            }
+
+            // Update password
+            $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
+            // Clear OTP and expiry after successful password reset
+            $user->user_token = null;
+            $user->remark = null;
+            $user->modified_at = date('Y-m-d H:i:s');
+
+            if ($user->save()) {
+                $debug['password_updated'] = true;
+                $debug['token_cleared'] = true;
+
+                // Log the activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "✅ Password Reset Successful\n" .
+                            "Username: " . $user->user_name . "\n" .
+                            "Name: " . $user->user_nama . "\n" .
+                            "Email: " . $user->user_email . "\n" .
+                            "IP: " . $clientIp . "\n" .
+                            "Time: " . date('Y-m-d H:i:s'),
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'Password has been reset successfully',
+                    'debug' => $debug
+                ];
+            } else {
+                $debug['save_errors'] = $user->errors;
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to reset password',
+                    'debug' => $debug
+                ];
+            }
+        } catch (\Exception $e) {
+            Yii::error('Reset password error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to reset password. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]
+            ];
+        }
+    }
+
+    public function actionActionResetPassword()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+
+            // Get params from POST
+            $email = $request->post('email');
+            $otp = $request->post('otp');
+            $newPassword = $request->post('new_password');
+            $confirmPassword = $request->post('confirm_password');
+
+            // Debug info
+            $debug = [
+                'method' => $request->method,
+                'email' => $email,
+                'otp_length' => strlen($otp ?? ''),
+                'has_new_password' => !empty($newPassword),
+                'has_confirm_password' => !empty($confirmPassword),
+                'timestamp' => date('Y-m-d H:i:s'),
+            ];
+
+            // Validate email
+            if (empty($email)) {
+                return [
+                    'success' => false,
+                    'message' => 'Email is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate OTP
+            if (empty($otp)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate new password
+            if (empty($newPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'New password is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Validate confirm password
+            if (empty($confirmPassword)) {
+                return [
+                    'success' => false,
+                    'message' => 'Confirm password is required',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check password length
+            if (strlen($newPassword) < 8) {
+                return [
+                    'success' => false,
+                    'message' => 'Password must be at least 8 characters long',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check password match
+            if ($newPassword !== $confirmPassword) {
+                return [
+                    'success' => false,
+                    'message' => 'Passwords do not match',
+                    'debug' => $debug
+                ];
+            }
+
+            // Find user by email
+            $user = Users::findOne(['user_email' => $email]);
+
+            if (!$user) {
+                return [
+                    'success' => false,
+                    'message' => 'Email not found',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has OTP stored
+            if (empty($user->user_token)) {
+                return [
+                    'success' => false,
+                    'message' => 'No OTP found. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Check if user has expiry stored
+            if (empty($user->remark)) {
+                return [
+                    'success' => false,
+                    'message' => 'OTP expiry not found. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            $storedOtp = $user->user_token;
+            $expiryTimestamp = (int)$user->remark;
+            $currentTime = time();
+
+            $debug['stored_otp_length'] = strlen($storedOtp);
+            $debug['expiry_timestamp'] = date('Y-m-d H:i:s', $expiryTimestamp);
+            $debug['current_timestamp'] = date('Y-m-d H:i:s', $currentTime);
+            $debug['otp_expired'] = $currentTime > $expiryTimestamp;
+
+            // Check if OTP has expired
+            if ($currentTime > $expiryTimestamp) {
+                // Clear expired OTP
+                $user->user_token = null;
+                $user->remark = null;
+                $user->save();
+
+                return [
+                    'success' => false,
+                    'message' => 'OTP has expired. Please request a new OTP.',
+                    'debug' => $debug
+                ];
+            }
+
+            // Verify OTP matches
+            if ($otp !== $storedOtp) {
+                return [
+                    'success' => false,
+                    'message' => 'Invalid OTP',
+                    'debug' => $debug
+                ];
+            }
+
+            // Update password
+            $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
+            // Clear OTP and expiry after successful password reset
+            $user->user_token = null;
+            $user->remark = null;
+            $user->modified_at = date('Y-m-d H:i:s');
+
+            if ($user->save()) {
+                $debug['password_updated'] = true;
+                $debug['token_cleared'] = true;
+
+                // Log the activity
+                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+                TelegramHelper::sendSimpleMessage(
+                    [
+                        'text' => "✅ Password Reset Successful\n" .
+                            "Username: " . $user->user_name . "\n" .
+                            "Name: " . $user->user_nama . "\n" .
+                            "Email: " . $user->user_email . "\n" .
+                            "IP: " . $clientIp . "\n" .
+                            "Time: " . date('Y-m-d H:i:s'),
+                        'parse_mode' => 'html'
+                    ],
+                    Yii::$app->params['group_id']
+                );
+
+                return [
+                    'success' => true,
+                    'message' => 'Password has been reset successfully',
+                    'debug' => $debug
+                ];
+            } else {
+                $debug['save_errors'] = $user->errors;
+
+                return [
+                    'success' => false,
+                    'message' => 'Failed to reset password',
+                    'debug' => $debug
+                ];
+            }
+        } catch (\Exception $e) {
+            Yii::error('Reset password error: ' . $e->getMessage());
+            Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+            return [
+                'success' => false,
+                'message' => 'Failed to reset password. Please try again.',
+                'error' => YII_DEBUG ? $e->getMessage() : null,
+                'debug' => [
+                    'exception' => get_class($e),
+                    'message' => $e->getMessage(),
+                ]
+            ];
+        }
+    }
+
+    /**
+     * Send OTP email to user
+     */
+    private function sendOTPEmail($user, $otp)
+    {
+        $subject = 'Password Reset OTP - Geran Komuniti Iskandar Puteri';
+
+        $htmlBody = "<h2>Password Reset OTP</h2>";
+        $htmlBody .= "<p>Hello <strong>" . $user->user_nama . "</strong>,</p>";
+        $htmlBody .= "<p>You have requested to reset your password. Use the following OTP code:</p>";
+        $htmlBody .= "<div style='margin: 30px 0; text-align: center;'>";
+        $htmlBody .= "<div style='background-color: #FDA300; color: #2C5282; padding: 20px; font-size: 32px; font-weight: bold; letter-spacing: 5px; display: inline-block; border-radius: 8px;'>" . $otp . "</div>";
+        $htmlBody .= "</div>";
+        $htmlBody .= "<p>This OTP will expire in <strong>10 minutes</strong>.</p>";
+        $htmlBody .= "<p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>";
+        $htmlBody .= "<hr>";
+        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
+        $htmlBody .= "<p style='color: #999; font-size: 11px;'>This is an automated email. Please do not reply to this email.</p>";
+
+        $textBody = "Password Reset OTP\n\n";
+        $textBody .= "Hello " . $user->user_nama . ",\n\n";
+        $textBody .= "You have requested to reset your password.\n\n";
+        $textBody .= "Your OTP: " . $otp . "\n\n";
+        $textBody .= "This OTP will expire in 10 minutes.\n\n";
+        $textBody .= "If you didn't request this, please ignore this email.\n\n";
+        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0\n";
+        $textBody .= "This is an automated email. Please do not reply to this email.";
+
+        try {
+            $smtpConfig = Yii::$app->params['smtp'] ?? null;
+
+            if ($smtpConfig === null || empty($smtpConfig['username']) || empty($smtpConfig['password'])) {
+                Yii::error('SMTP credentials not configured. Saving OTP email to file.');
+                $this->saveEmailToFile($user->user_email, $subject, $htmlBody, $textBody);
+                return true;
+            }
+
+            $transport = (new \Swift_SmtpTransport(
+                $smtpConfig['host'],
+                $smtpConfig['port'],
+                $smtpConfig['encryption'] ?? 'tls'
+            ))
+                ->setUsername($smtpConfig['username'])
+                ->setPassword($smtpConfig['password']);
+
+            $mailer = new \Swift_Mailer($transport);
+
+            $message = (new \Swift_Message($subject))
+                ->setFrom([$smtpConfig['username'] => 'Geran Komuniti Iskandar Puteri'])
+                ->setTo($user->user_email)
+                ->setBody($htmlBody, 'text/html')
+                ->addPart($textBody, 'text/plain');
+
+            $sent = $mailer->send($message);
+
+            if ($sent) {
+                Yii::info('OTP email sent to: ' . $user->user_email);
+                return true;
+            } else {
+                Yii::error('Failed to send OTP email - mailer returned false');
+                return false;
+            }
+        } catch (\Exception $e) {
+            Yii::error('Failed to send OTP email: ' . $e->getMessage());
+            $this->saveEmailToFile($user->user_email, $subject, $htmlBody, $textBody);
+            return false;
+        }
+    }
+
+
+    /**
+     * Reset Password Endpoint - Actually reset the password using token
+     */
+
+    // public function actionResetPassword()
+    // {
+    //     // Add CORS headers
+    //     Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+    //     Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    //     Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+    //     // Handle OPTIONS request (preflight)
+    //     if (Yii::$app->request->isOptions) {
+    //         Yii::$app->response->statusCode = 200;
+    //         return;
+    //     }
+
+    //     Yii::$app->response->format = Response::FORMAT_JSON;
+
+    //     try {
+    //         $request = Yii::$app->request;
+
+    //         // Get token from GET parameter (from email link)
+    //         $token = $request->get('token');
+
+    //         // For backward compatibility, also check POST if GET is empty
+    //         if (empty($token)) {
+    //             $token = $request->post('token');
+    //         }
+
+    //         // Get passwords from POST data
+    //         $newPassword = $request->post('new_password');
+    //         $confirmPassword = $request->post('confirm_password');
+
+    //         // Debug info
+    //         $debug = [
+    //             'method' => $request->method,
+    //             'token_source' => empty($request->get('token')) ? 'POST' : 'GET',
+    //             'token_length' => strlen($token ?? ''),
+    //             'has_new_password' => !empty($newPassword),
+    //             'has_confirm_password' => !empty($confirmPassword),
+    //             'timestamp' => date('Y-m-d H:i:s'),
+    //         ];
+
+    //         // If only token is provided (GET request without passwords), validate token only
+    //         if (!empty($token) && empty($newPassword) && empty($confirmPassword)) {
+    //             // Find user by reset token
+    //             $users = Users::find()
+    //                 ->where(['like', 'user_token', $token . '_%', false])
+    //                 ->all();
+
+    //             $user = null;
+    //             $currentTime = time();
+    //             $tokenExpiry = 3600; // 1 hour
+
+    //             foreach ($users as $potentialUser) {
+    //                 $parts = explode('_', $potentialUser->user_token);
+    //                 if (count($parts) == 2 && $parts[0] === $token) {
+    //                     $timestamp = (int)$parts[1];
+    //                     $age = $currentTime - $timestamp;
+
+    //                     // Check if token is not expired
+    //                     if ($age <= $tokenExpiry) {
+    //                         $user = $potentialUser;
+    //                         $debug['token_age_seconds'] = $age;
+    //                         $debug['token_age_minutes'] = round($age / 60, 2);
+    //                         $debug['token_expires_in_seconds'] = $tokenExpiry - $age;
+    //                         $debug['token_expires_in_minutes'] = round(($tokenExpiry - $age) / 60, 2);
+    //                         break;
+    //                     } else {
+    //                         $debug['token_expired'] = true;
+    //                         $debug['token_age_seconds'] = $age;
+    //                         $debug['token_age_minutes'] = round($age / 60, 2);
+    //                         $debug['expired_by_seconds'] = $age - $tokenExpiry;
+    //                     }
+    //                 }
+    //             }
+
+    //             if ($user) {
+    //                 // Token is valid
+    //                 return [
+    //                     'success' => true,
+    //                     'message' => 'Token is valid. You can now reset your password.',
+    //                     'debug' => $debug,
+    //                     'data' => [
+    //                         'username' => $user->user_name,
+    //                         'email' => $user->user_email,
+    //                         'token_valid' => true,
+    //                         'token_expires_in_seconds' => $debug['token_expires_in_seconds'] ?? 0,
+    //                         'token_expires_in_minutes' => $debug['token_expires_in_minutes'] ?? 0,
+    //                     ]
+    //                 ];
+    //             } else {
+    //                 // Token is invalid or expired
+    //                 $debug['users_found'] = count($users);
+
+    //                 return [
+    //                     'success' => false,
+    //                     'message' => 'Invalid or expired reset token',
+    //                     'debug' => $debug,
+    //                 ];
+    //             }
+    //         }
+
+    //         // Validate input for password reset
+    //         if (empty($token)) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Reset token is required',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         if (empty($newPassword)) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'New password is required',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         if (empty($confirmPassword)) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Confirm password is required',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Check password length
+    //         if (strlen($newPassword) < 8) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Password must be at least 8 characters long',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Check password match
+    //         if ($newPassword !== $confirmPassword) {
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Passwords do not match',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Find user by reset token
+    //         $users = Users::find()
+    //             ->where(['like', 'user_token', $token . '_%', false])
+    //             ->all();
+
+    //         $user = null;
+    //         $currentTime = time();
+    //         $tokenExpiry = 3600; // 1 hour
+
+    //         foreach ($users as $potentialUser) {
+    //             $parts = explode('_', $potentialUser->user_token);
+    //             if (count($parts) == 2 && $parts[0] === $token) {
+    //                 $timestamp = (int)$parts[1];
+    //                 $age = $currentTime - $timestamp;
+
+    //                 // Check if token is not expired
+    //                 if ($age <= $tokenExpiry) {
+    //                     $user = $potentialUser;
+    //                     $debug['token_age_seconds'] = $age;
+    //                     $debug['token_age_minutes'] = round($age / 60, 2);
+    //                     $debug['token_valid'] = true;
+    //                     break;
+    //                 }
+    //             }
+    //         }
+
+    //         if (!$user) {
+    //             $debug['users_found'] = count($users);
+
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Invalid or expired reset token',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+
+    //         // Update password
+    //         $user->user_pass = Yii::$app->security->generatePasswordHash($newPassword);
+    //         $user->user_token = null; // Clear the token
+    //         $user->modified_at = date('Y-m-d H:i:s');
+
+    //         if ($user->save()) {
+    //             // Log the activity
+    //             $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
+
+    //             TelegramHelper::sendSimpleMessage(
+    //                 [
+    //                     'text' => "✅ Password Reset Successful\n" .
+    //                         "Username: " . $user->user_name . "\n" .
+    //                         "Name: " . $user->user_nama . "\n" .
+    //                         "Email: " . $user->user_email . "\n" .
+    //                         "IP: " . $clientIp . "\n" .
+    //                         "Time: " . date('Y-m-d H:i:s'),
+    //                     'parse_mode' => 'html'
+    //                 ],
+    //                 Yii::$app->params['group_id']
+    //             );
+
+    //             $debug['password_updated'] = true;
+    //             $debug['token_cleared'] = true;
+    //             $debug['user_id'] = $user->user_id;
+
+    //             return [
+    //                 'success' => true,
+    //                 'message' => 'Password has been reset successfully',
+    //                 'debug' => $debug
+    //             ];
+    //         } else {
+    //             $debug['save_errors'] = $user->errors;
+
+    //             return [
+    //                 'success' => false,
+    //                 'message' => 'Failed to reset password',
+    //                 'debug' => $debug
+    //             ];
+    //         }
+    //     } catch (\Exception $e) {
+    //         Yii::error('Mobile reset password error: ' . $e->getMessage());
+    //         Yii::error('Stack trace: ' . $e->getTraceAsString());
+
+    //         return [
+    //             'success' => false,
+    //             'message' => 'Failed to reset password. Please try again.',
+    //             'error' => YII_DEBUG ? $e->getMessage() : null,
+    //             'debug' => [
+    //                 'exception' => get_class($e),
+    //                 'message' => $e->getMessage(),
+    //                 'file' => $e->getFile(),
+    //                 'line' => $e->getLine(),
+    //             ]
+    //         ];
+    //     }
+    // }
+
+    public function actionActionChangePassword()
+    {
+        // Add CORS headers
+        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+        // Handle OPTIONS request (preflight)
+        if (Yii::$app->request->isOptions) {
+            Yii::$app->response->statusCode = 200;
+            return;
+        }
+
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $request = Yii::$app->request;
+
+            // Get token from GET parameter (from email link)
+            $token = $request->get('token');
+
+            // For backward compatibility, also check POST if GET is empty
+            if (empty($token)) {
+                $token = $request->post('token');
+            }
+
+            // Get passwords from POST data
             $newPassword = $request->post('new_password');
             $confirmPassword = $request->post('confirm_password');
 
@@ -4579,50 +6328,6 @@ public function actionGetDevicesWithData()
     }
 
     /**
-     * Send password reset email
-     */
-    private function sendPasswordResetEmail($user, $resetLink)
-    {
-        // Implement your email sending logic here
-        // Using Yii's mailer as an example
-
-        $subject = 'Reset Your Password - Geran Komuniti Iskandar Puteri';
-
-        $htmlBody = "<h2>Password Reset Request</h2>";
-        $htmlBody .= "<p>Hello <strong>" . $user->user_nama . "</strong>,</p>";
-        $htmlBody .= "<p>We received a request to reset your password. Click the link below to set a new password:</p>";
-        $htmlBody .= "<p style='margin: 30px 0;'><a href='" . $resetLink . "' style='background-color: #FDA300; color: #2C5282; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;'>Reset Password</a></p>";
-        $htmlBody .= "<p>This link will expire in 1 hour.</p>";
-        $htmlBody .= "<p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>";
-        $htmlBody .= "<hr>";
-        $htmlBody .= "<p style='color: #666; font-size: 12px;'>Geran Komuniti Iskandar Puteri Rendah Karbon 5.0</p>";
-
-        $textBody = "Password Reset Request\n\n";
-        $textBody .= "Hello " . $user->user_nama . ",\n\n";
-        $textBody .= "We received a request to reset your password. Click the link below to set a new password:\n";
-        $textBody .= $resetLink . "\n\n";
-        $textBody .= "This link will expire in 1 hour.\n\n";
-        $textBody .= "If you didn't request this, please ignore this email and your password will remain unchanged.\n\n";
-        $textBody .= "Geran Komuniti Iskandar Puteri Rendah Karbon 5.0";
-
-        // Send email using Yii's mailer
-        try {
-            Yii::$app->mailer->compose()
-                ->setFrom([Yii::$app->params['adminEmail'] => 'Geran Komuniti Iskandar Puteri'])
-                ->setTo($user->user_email)
-                ->setSubject($subject)
-                ->setTextBody($textBody)
-                ->setHtmlBody($htmlBody)
-                ->send();
-
-            Yii::info('Password reset email sent to: ' . $user->user_email);
-        } catch (\Exception $e) {
-            Yii::error('Failed to send password reset email: ' . $e->getMessage());
-            // Don't throw exception - we don't want to break the response
-        }
-    }
-
-    /**
      * Verify Reset Token (optional endpoint)
      */
     public function actionVerifyResetToken()
@@ -4663,190 +6368,6 @@ public function actionGetDevicesWithData()
         ];
     }
 
-    public function actionCreateDevice()
-    {
-        \Yii::$app->response->format = Response::FORMAT_JSON;
-
-        try {
-            // Get token from request
-            $token = $this->getTokenFromRequest();
-
-            if (!$token) {
-                return [
-                    'success' => false,
-                    'message' => 'No authorization token provided'
-                ];
-            }
-
-            // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
-
-            // Validate token
-            $payload = JwtHelper::validate($token, $secret);
-
-            // Extract current user ID from payload
-            $currentUserId = $this->extractUserIdFromPayload($payload);
-            $currentUser = Users::findOne($currentUserId);
-
-            if (!$currentUser) {
-                return [
-                    'success' => false,
-                    'message' => 'User not found'
-                ];
-            }
-
-            // Get request data - TRY MULTIPLE SOURCES
-            $requestData = [];
-
-            // Method 1: Standard POST data (application/x-www-form-urlencoded)
-            $postData = \Yii::$app->request->post();
-            if (!empty($postData)) {
-                $requestData = $postData;
-            }
-
-            // Method 2: Raw body (for JSON requests)
-            if (empty($requestData)) {
-                $rawBody = \Yii::$app->request->getRawBody();
-                if (!empty($rawBody)) {
-                    $jsonData = json_decode($rawBody, true);
-                    if ($jsonData && json_last_error() === JSON_ERROR_NONE) {
-                        $requestData = $jsonData;
-                    } else {
-                        parse_str($rawBody, $formData);
-                        if (!empty($formData)) {
-                            $requestData = $formData;
-                        }
-                    }
-                }
-            }
-
-            // Method 3: GET parameters (for debugging)
-            if (empty($requestData)) {
-                $requestData = \Yii::$app->request->get();
-            }
-
-            // DEBUG: Log what we received (remove in production)
-            \Yii::info('CreateDevice - Raw POST: ' . json_encode($_POST), 'debug');
-            \Yii::info('CreateDevice - Request Data: ' . json_encode($requestData), 'debug');
-
-            // Determine target user ID
-            $targetUserId = $currentUserId;
-
-            // Check if current user is admin and trying to assign to another user
-            $isAdmin = ($currentUser->user_tipe === 'ADMIN');
-
-            if ($isAdmin && isset($requestData['user_id']) && !empty($requestData['user_id'])) {
-                $targetUserId = $requestData['user_id'];
-
-                // Verify target user exists
-                $targetUser = Users::findOne($targetUserId);
-                if (!$targetUser) {
-                    return [
-                        'success' => false,
-                        'message' => 'Target user not found'
-                    ];
-                }
-            }
-
-            // Check device limit for non-admin users
-            if (!$isAdmin) {
-                $deviceCount = UserDevices::find()
-                    ->where(['user_id' => $targetUserId, 'is_active' => 1])
-                    ->count();
-
-                if ($deviceCount >= 5) {
-                    return [
-                        'success' => false,
-                        'message' => 'Device limit reached. Maximum 5 devices allowed per user.'
-                    ];
-                }
-            }
-
-            // Validate required fields
-            $deviceId = trim($requestData['device_id'] ?? '');
-            $deviceName = trim($requestData['device_name'] ?? '');
-
-            if (empty($deviceId) || empty($deviceName)) {
-                return [
-                    'success' => false,
-                    'message' => 'Device ID and Device Name are required',
-                    'debug' => [
-                        'received_data' => $requestData,
-                        'post_data' => $_POST,
-                        'raw_body' => \Yii::$app->request->getRawBody()
-                    ]
-                ];
-            }
-
-            // Check if device already exists for this user
-            $existingDevice = UserDevices::find()
-                ->where(['user_id' => $targetUserId, 'device_id' => $deviceId])
-                ->one();
-
-            if ($existingDevice) {
-                if ($existingDevice->is_active == 0) {
-                    // Reactivate the device
-                    $existingDevice->is_active = 1;
-                    $existingDevice->device_name = $deviceName;
-                    $existingDevice->device_alias = $requestData['device_alias'] ?? $deviceName;
-                    $existingDevice->device_description = $requestData['device_description'] ?? null;
-                    $existingDevice->device_remark = $requestData['device_remark'] ?? null;
-                    $existingDevice->modified_by = $currentUserId;
-
-                    if ($existingDevice->save()) {
-                        return [
-                            'success' => true,
-                            'message' => 'Device reactivated successfully',
-                            'data' => $this->formatDeviceData($existingDevice)
-                        ];
-                    } else {
-                        return [
-                            'success' => false,
-                            'message' => 'Failed to reactivate device',
-                            'errors' => $existingDevice->errors
-                        ];
-                    }
-                } else {
-                    return [
-                        'success' => false,
-                        'message' => 'Device with this ID already exists for the user'
-                    ];
-                }
-            }
-
-            // Create new device
-            $device = new UserDevices();
-            $device->user_id = $targetUserId;
-            $device->device_id = $deviceId;
-            $device->device_name = $deviceName;
-            $device->device_alias = $requestData['device_alias'] ?? $deviceName;
-            $device->device_description = $requestData['device_description'] ?? null;
-            $device->device_remark = $requestData['device_remark'] ?? null;
-            $device->is_active = 1;
-            $device->created_by = $currentUserId;
-            $device->modified_by = $currentUserId;
-
-            if ($device->save()) {
-                return [
-                    'success' => true,
-                    'message' => 'Device created successfully',
-                    'data' => $this->formatDeviceData($device)
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Failed to create device',
-                    'errors' => $device->errors
-                ];
-            }
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Failed to create device',
-                'error' => $e->getMessage()
-            ];
-        }
-    }
 
     public function actionUpdateDevice($id)
     {

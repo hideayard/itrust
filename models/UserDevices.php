@@ -37,7 +37,7 @@ class UserDevices extends ActiveRecord
     public function rules()
     {
         return [
-            [['user_id', 'device_id'], 'required'],
+            [['device_id'], 'required'],
             [['user_id', 'is_active', 'created_by', 'modified_by'], 'integer'],
             [['device_description','device_remark'], 'string'],
             [['created_at', 'updated_at'], 'safe'],
