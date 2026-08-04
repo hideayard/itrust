@@ -36,15 +36,15 @@ $config = [
         'errorHandler' => [
             'errorAction' => 'site/error',
         ],
-        'mailer' => [
+                'mailer' => [
             'class' => 'yii\swiftmailer\Mailer',
             'transport' => [
                 'class' => 'Swift_SmtpTransport',
-                'host' => $params['smtp']['host'],
-                'username' => $params['smtp']['username'],
-                'password' => $params['smtp']['password'],
-                'port' => $params['smtp']['port'],
-                'encryption' => $params['smtp']['encryption'],
+                'host' => $params['smtp']['host'] ?? 'smtp.gmail.com',
+                'username' => $params['smtp']['username'] ?? ($params['smtpUsername'] ?? ''),
+                'password' => $params['smtp']['password'] ?? ($params['smtpPassword'] ?? ''),
+                'port' => $params['smtp']['port'] ?? 587,
+                'encryption' => $params['smtp']['encryption'] ?? 'tls',
             ],
         ],
         'log' => [
