@@ -2996,6 +2996,7 @@ class Mt4AccountController extends Controller
                     'leverage' => $account->leverage,
                     'currency' => $account->currency,
                     'server' => $account->server,
+                    'remark' => $account->remark,
                     'broker' => $account->broker,
                     'account_type' => $account->account_type,
                     'status' => $account->status,
