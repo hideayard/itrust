@@ -1171,7 +1171,7 @@ class EaController extends Controller
     }
 
     /**
-     * Sync open orders from MT4 dashboard payload.
+     * Sync open/history orders from MT4 dashboard payload.
      *
      * Expected payload:
      * {
@@ -1250,6 +1250,17 @@ class EaController extends Controller
             throw new BadRequestHttpException("Order at index {$index} has invalid openTime");
         }
 
+        $closeTime = 0;
+        if (!empty($data['closeTime'])) {
+            $closeTime = strtotime($data['closeTime']);
+
+            if ($closeTime === false) {
+                throw new BadRequestHttpException("Order at index {$index} has invalid closeTime");
+            }
+        }
+
+        $eventType = $this->resolveDashboardOrderEventType($data, $closeTime);
+
         return [
             'account_id' => $accountId,
             'ticket' => (int)$data['ticket'],
@@ -1258,16 +1269,39 @@ class EaController extends Controller
             'type_desc' => AccountOrders::getOrderTypeDescription((int)$data['type']),
             'lots' => (float)$data['volume'],
             'open_price' => (float)$data['openPrice'],
-            'close_price' => isset($data['currentPrice']) ? (float)$data['currentPrice'] : 0,
+            'close_price' => isset($data['closePrice'])
+                ? (float)$data['closePrice']
+                : (isset($data['currentPrice']) ? (float)$data['currentPrice'] : 0),
             'profit' => isset($data['profit']) ? (float)$data['profit'] : 0,
             'swap' => isset($data['swap']) ? (float)$data['swap'] : 0,
             'commission' => isset($data['commission']) ? (float)$data['commission'] : 0,
             'open_time' => $openTime,
-            'close_time' => 0,
+            'close_time' => $closeTime,
             'magic' => isset($data['magic']) ? (int)$data['magic'] : 0,
             'comment' => isset($data['comment']) ? (string)$data['comment'] : null,
-            'event_type' => 'ORDER_OPEN',
+            'event_type' => $eventType,
         ];
+    }
+
+    private function resolveDashboardOrderEventType(array $data, int $closeTime)
+    {
+        if (!empty($data['status'])) {
+            $status = strtolower((string)$data['status']);
+
+            if (in_array($status, ['closed', 'close', 'history', 'order_close'], true)) {
+                return 'ORDER_CLOSE';
+            }
+
+            if (in_array($status, ['modified', 'modify', 'order_modify'], true)) {
+                return 'ORDER_MODIFY';
+            }
+
+            if (in_array($status, ['open', 'active', 'order_open'], true)) {
+                return 'ORDER_OPEN';
+            }
+        }
+
+        return $closeTime > 0 ? 'ORDER_CLOSE' : 'ORDER_OPEN';
     }
 
     private function handleSingleOrderSync($data)
