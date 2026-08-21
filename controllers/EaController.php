@@ -1170,6 +1170,106 @@ class EaController extends Controller
         }
     }
 
+    /**
+     * Sync open orders from MT4 dashboard payload.
+     *
+     * Expected payload:
+     * {
+     *   "success": true,
+     *   "data": [{"ticket": 1, "openTime": "2026-08-03T16:40:01", ...}],
+     *   "login": "15896020"
+     * }
+     */
+    public function actionSyncDashboardOrders()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $rawInput = Yii::$app->request->getRawBody();
+
+            if (empty($rawInput)) {
+                throw new BadRequestHttpException('No data received');
+            }
+
+            $payload = json_decode($rawInput, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new BadRequestHttpException('Invalid JSON data: ' . json_last_error_msg());
+            }
+
+            if (!isset($payload['data']) || !is_array($payload['data'])) {
+                throw new BadRequestHttpException('Data must be an array of orders');
+            }
+
+            if (empty($payload['login'])) {
+                throw new BadRequestHttpException('Login is required');
+            }
+
+            $accountId = (string)$payload['login'];
+            $orders = [];
+
+            foreach ($payload['data'] as $index => $dashboardOrder) {
+                if (!is_array($dashboardOrder)) {
+                    throw new BadRequestHttpException("Order at index {$index} must be an object");
+                }
+
+                $orders[] = $this->mapDashboardOrderToAccountOrder($dashboardOrder, $accountId, $index);
+            }
+
+            Yii::info('Syncing MT4 dashboard orders for login ' . $accountId . '. Total: ' . count($orders));
+
+            return $this->handleBatchSync($orders);
+        } catch (\Exception $e) {
+            Yii::error('Error in actionSyncDashboardOrders: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    private function mapDashboardOrderToAccountOrder(array $data, string $accountId, int $index)
+    {
+        $required = ['ticket', 'openTime', 'type', 'volume', 'symbol', 'openPrice'];
+        $missing = [];
+
+        foreach ($required as $field) {
+            if (!array_key_exists($field, $data)) {
+                $missing[] = $field;
+            }
+        }
+
+        if (!empty($missing)) {
+            throw new BadRequestHttpException("Order at index {$index} missing fields: " . implode(', ', $missing));
+        }
+
+        $openTime = strtotime($data['openTime']);
+
+        if ($openTime === false) {
+            throw new BadRequestHttpException("Order at index {$index} has invalid openTime");
+        }
+
+        return [
+            'account_id' => $accountId,
+            'ticket' => (int)$data['ticket'],
+            'symbol' => (string)$data['symbol'],
+            'type' => (int)$data['type'],
+            'type_desc' => AccountOrders::getOrderTypeDescription((int)$data['type']),
+            'lots' => (float)$data['volume'],
+            'open_price' => (float)$data['openPrice'],
+            'close_price' => isset($data['currentPrice']) ? (float)$data['currentPrice'] : 0,
+            'profit' => isset($data['profit']) ? (float)$data['profit'] : 0,
+            'swap' => isset($data['swap']) ? (float)$data['swap'] : 0,
+            'commission' => isset($data['commission']) ? (float)$data['commission'] : 0,
+            'open_time' => $openTime,
+            'close_time' => 0,
+            'magic' => isset($data['magic']) ? (int)$data['magic'] : 0,
+            'comment' => isset($data['comment']) ? (string)$data['comment'] : null,
+            'event_type' => 'ORDER_OPEN',
+        ];
+    }
+
     private function handleSingleOrderSync($data)
     {
         // Log received data

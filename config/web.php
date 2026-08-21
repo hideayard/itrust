@@ -110,6 +110,7 @@ $config = [
                 // 'web/mobile/get-latest-investing-data' => 'mobile/get-latest-investing-data',
 
                 'POST ea/sync-orders' => 'ea/sync-orders',
+                'POST ea/sync-dashboard-orders' => 'ea/sync-dashboard-orders',
                 'GET ea/get-orders' => 'ea/get-orders',
                 'GET ea/order-stats' => 'ea/order-stats',
 
