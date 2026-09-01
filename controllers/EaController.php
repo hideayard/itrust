@@ -2,6 +2,7 @@
 
 namespace app\controllers;
 
+use app\helpers\JwtHelper;
 use app\helpers\TelegramHelper;
 use app\models\AccountOrders;
 use app\models\CloseOrder;
@@ -16,6 +17,7 @@ use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
 use yii\web\ServerErrorHttpException;
+use yii\web\UnauthorizedHttpException;
 
 class EaController extends Controller
 {
@@ -1813,6 +1815,182 @@ class EaController extends Controller
             return [
                 'status' => 'error',
                 'message' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Get open and closed orders for an account.
+     *
+     * Fetch orders of the AccountOrders model split into open and closed
+     * groups, with optional pagination, filtering and summary statistics.
+     *
+     * Query parameters (GET or POST):
+     *  - account_id  (required) The MT4/MT5 account number
+     *  - limit       (optional) Number of orders per group, default 100
+     *  - offset      (optional) Offset for pagination, default 0
+     *  - symbol      (optional) Filter orders by symbol
+     *  - from_date   (optional) Only orders opened at/after this date (Y-m-d)
+     *  - to_date     (optional) Only orders opened up to this date (Y-m-d)
+     *  - with_stats  (optional) 1 to include computed statistics
+     *
+     * @return array
+     */
+
+    public function actionGetAccountOrders()
+    {
+        Yii::$app->response->format = \yii\web\Response::FORMAT_JSON;
+
+        try {
+            // JWT authentication
+            $token = $this->getTokenFromRequest();
+            if (!$token) {
+                throw new UnauthorizedHttpException('No authorization token provided');
+            }
+
+            // Get secret key from params
+            $secret = Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+
+            // Validate token
+            $payload = JwtHelper::validate($token, $secret);
+            if (!$payload) {
+                throw new UnauthorizedHttpException('Invalid or expired token');
+            }
+
+            $request = Yii::$app->request;
+            $accountId = $request->get('account_id', $request->post('account_id'));
+            $limit = (int)$request->get('limit', 100);
+            $offset = (int)$request->get('offset', 0);
+            $symbol = $request->get('symbol');
+            $fromDate = $request->get('from_date');
+            $toDate = $request->get('to_date');
+            $withStats = $request->get('with_stats', 0);
+
+            // Validate required parameter
+            if (empty($accountId)) {
+                throw new \yii\web\BadRequestHttpException('Account ID is required');
+            }
+
+            // Normalize limit/offset
+            if ($limit <= 0) {
+                $limit = 100;
+            }
+            if ($limit > 500) {
+                $limit = 500;
+            }
+            if ($offset < 0) {
+                $offset = 0;
+            }
+
+            // Helper to apply shared filters to a query
+            $applyFilters = function ($query) use ($symbol, $fromDate, $toDate) {
+                if (!empty($symbol)) {
+                    $query->andWhere(['symbol' => $symbol]);
+                }
+                if ($fromDate) {
+                    $query->andWhere(['>=', 'open_time', strtotime($fromDate)]);
+                }
+                if ($toDate) {
+                    $query->andWhere(['<=', 'open_time', strtotime($toDate) + 86399]);
+                }
+                return $query;
+            };
+
+            // ===== Open orders (status = open) =====
+            $openQuery = AccountOrders::find()
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_OPEN]);
+            $applyFilters($openQuery);
+
+            $openTotal = (int)$openQuery->count();
+            $openOrders = $openQuery
+                ->orderBy(['open_time' => SORT_DESC])
+                ->limit($limit)
+                ->offset($offset)
+                ->all();
+
+            // ===== Closed orders (status = closed) =====
+            $closedQuery = AccountOrders::find()
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED]);
+            $applyFilters($closedQuery);
+
+            $closedTotal = (int)$closedQuery->count();
+            $closedOrders = $closedQuery
+                ->orderBy(['close_time' => SORT_DESC])
+                ->limit($limit)
+                ->offset($offset)
+                ->all();
+
+            // ===== Modified orders (status = modified) =====
+            $modifiedQuery = AccountOrders::find()
+                ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_MODIFIED]);
+            $applyFilters($modifiedQuery);
+
+            $modifiedTotal = (int)$modifiedQuery->count();
+            $modifiedOrders = $modifiedQuery
+                ->orderBy(['open_time' => SORT_DESC])
+                ->limit($limit)
+                ->offset($offset)
+                ->all();
+
+            $data = [
+                'account_id' => $accountId,
+                'summary' => [
+                    'total' => $openTotal + $closedTotal + $modifiedTotal,
+                    'open' => $openTotal,
+                    'closed' => $closedTotal,
+                    'modified' => $modifiedTotal,
+                ],
+                'open_orders' => [
+                    'count' => $openTotal,
+                    'orders' => $openOrders,
+                ],
+                'closed_orders' => [
+                    'count' => $closedTotal,
+                    'orders' => $closedOrders,
+                ],
+                'modified_orders' => [
+                    'count' => $modifiedTotal,
+                    'orders' => $modifiedOrders,
+                ],
+                'pagination' => [
+                    'limit' => $limit,
+                    'offset' => $offset,
+                ],
+            ];
+
+            // Attach statistics when requested
+            if ((int)$withStats === 1) {
+                $winRate = AccountOrders::getWinRate($accountId);
+                $totalProfit = AccountOrders::getTotalProfitByAccount($accountId);
+
+                $closedProfit = (float)AccountOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_CLOSED])
+                    ->sum('profit');
+
+                $openProfit = (float)AccountOrders::find()
+                    ->where(['account_id' => $accountId, 'status' => AccountOrders::STATUS_OPEN])
+                    ->sum('profit');
+
+                $data['statistics'] = [
+                    'total_profit' => $totalProfit,
+                    'closed_profit' => $closedProfit,
+                    'open_profit' => $openProfit,
+                    'win_rate' => $winRate,
+                ];
+            }
+
+            Yii::info("Fetched account orders for account {$accountId}: open={$openTotal}, closed={$closedTotal}");
+
+            return [
+                'status' => 'success',
+                'message' => 'Account orders retrieved successfully',
+                'data' => $data,
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Error in actionGetAccountOrders: ' . $e->getMessage());
+            return [
+                'status' => 'error',
+                'message' => $e->getMessage(),
             ];
         }
     }

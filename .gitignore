@@ -39,3 +39,4 @@ tests/_support/_generated
 /web/uploads
 vendor.zip
 .antigravity/swarm_locks.json
+ai-skills/

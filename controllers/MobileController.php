@@ -1502,7 +1502,7 @@ class MobileController extends Controller
             // Send Telegram notification about endpoint hit
             $this->sendEndpointHitNotification($postData, $clientIp, $userAgent);
 
-            // Validate required fields
+                        // Validate required fields
             $requiredFields = ['device_id', 'device_name', 'data_timestamp', 'sample_count'];
             $missingFields = [];
 
@@ -1516,8 +1516,15 @@ class MobileController extends Controller
                 // Send Telegram notification for missing fields error
                 $this->sendErrorNotification($postData, $clientIp, 'Missing required fields: ' . implode(', ', $missingFields));
 
+                // Send to PMH error group
+                $this->sendTelemetryErrorReport(
+                    'Missing required fields',
+                    'Missing: ' . implode(', ', $missingFields),
+                    $postData
+                );
+
                 return [
-                    'success' => false,
+                                        'success' => false,
                     'message' => 'Missing required fields: ' . implode(', ', $missingFields),
                     'code' => 400
                 ];
@@ -1532,6 +1539,9 @@ class MobileController extends Controller
             if ($saveResult === true) {
                 // Send success notification to Telegram
                 $this->sendSuccessNotification($postData, $telemetryData, $clientIp);
+
+                // Send formatted telemetry data report to PMH telemetry group
+                $this->sendTelemetryDataReport($postData, $telemetryData);
 
                 return [
                     'success' => true,
@@ -1549,6 +1559,9 @@ class MobileController extends Controller
                 // Database save failed - send error notification
                 $this->sendErrorNotification($postData, $clientIp, $saveResult);
 
+                // Send to PMH error group
+                $this->sendTelemetryErrorReport('Failed to save telemetry data', $saveResult, $postData);
+
                 return [
                     'success' => false,
                     'message' => $saveResult,
@@ -1559,6 +1572,9 @@ class MobileController extends Controller
             // Send exception notification to Telegram
             $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
             $this->sendExceptionNotification($e, $clientIp);
+
+            // Send to PMH error group
+            $this->sendTelemetryErrorReport('Server exception in telemetry endpoint', $e->getMessage());
 
             return [
                 'success' => false,
@@ -1733,6 +1749,129 @@ class MobileController extends Controller
             Yii::info('Telegram notification sent: Server exception');
         } catch (\Exception $e) {
             Yii::error('Failed to send Telegram exception notification: ' . $e->getMessage());
+        }
+        }
+
+    /**
+     * Send a formatted telemetry data report to the PMH telemetry group after a successful save.
+     * Uses the dedicated PMH bot and pmh_telemetry_group_id / pmh_telemetry_thread_id params.
+     */
+    private function sendTelemetryDataReport($postData, $telemetryData)
+    {
+        try {
+            $token = Yii::$app->params['telegramBotPMHToken'] ?? null;
+            $groupId = Yii::$app->params['pmh_telemetry_group_id'] ?? null;
+            $threadId = Yii::$app->params['pmh_telemetry_thread_id'] ?? null;
+
+            if (empty($token) || empty($groupId)) {
+                Yii::warning('PMH telemetry group/token not configured; report skipped.');
+                return;
+            }
+
+            $deviceId = $postData['device_id'] ?? 'Unknown';
+            $deviceName = $postData['device_name'] ?? 'Unknown';
+            $timestamp = $postData['data_timestamp'] ?? date('Y-m-d H:i:s');
+            $syncType = $telemetryData['sync_type'] ?? 'iteration';
+            $dataType = $telemetryData['data_type'] ?? 'averaged_telemetry';
+
+            $message = "📡 <b>Telemetry Report</b>\n";
+            $message .= "────────────────────\n";
+            $message .= "🔧 <b>Device:</b> " . htmlspecialchars($deviceName) . "\n";
+            $message .= "🆔 <b>ID:</b> " . htmlspecialchars($deviceId) . "\n";
+            $message .= "🕐 <b>Time:</b> " . htmlspecialchars($timestamp) . "\n";
+            $message .= "📊 <b>Samples:</b> " . htmlspecialchars($postData['sample_count'] ?? 1) . "\n";
+            $message .= "➡ <b>Type:</b> " . htmlspecialchars($dataType) . " (" . htmlspecialchars($syncType) . ")\n";
+            $message .= "────────────────────\n";
+
+            if ($telemetryData['ac_v'] !== null) {
+                $message .= "⚡ <b>AC Voltage:</b> " . $telemetryData['ac_v'] . " V\n";
+            }
+            if ($telemetryData['ac_i'] !== null) {
+                $message .= "🔌 <b>AC Current:</b> " . $telemetryData['ac_i'] . " A\n";
+            }
+            if ($telemetryData['ac_p'] !== null) {
+                $message .= "💡 <b>AC Power:</b> " . $telemetryData['ac_p'] . " W\n";
+            }
+            if ($telemetryData['energy'] !== null) {
+                $message .= "⚡ <b>Energy:</b> " . $telemetryData['energy'] . " kWh\n";
+            }
+            if ($telemetryData['freq'] !== null) {
+                $message .= "📈 <b>Frequency:</b> " . $telemetryData['freq'] . " Hz\n";
+            }
+            if ($telemetryData['pf'] !== null) {
+                $message .= "🧮 <b>Power Factor:</b> " . $telemetryData['pf'] . "\n";
+            }
+            if ($telemetryData['dc_v'] !== null) {
+                $message .= "🔋 <b>DC Voltage:</b> " . $telemetryData['dc_v'] . " V\n";
+            }
+            if ($telemetryData['dc_i'] !== null) {
+                $message .= "🔋 <b>DC Current:</b> " . $telemetryData['dc_i'] . " A\n";
+            }
+            if (!empty($telemetryData['gps_fixed']) && $telemetryData['lat'] !== null && $telemetryData['lng'] !== null) {
+                $message .= "📍 <b>GPS:</b> " . $telemetryData['lat'] . ", " . $telemetryData['lng'] . "\n";
+            }
+            $message .= "🔀 <b>Relay:</b> " . ($telemetryData['r'] ? 'ON' : 'OFF') . "\n";
+            $message .= "────────────────────";
+
+            $message = mb_substr($message, 0, TelegramHelper::MAX_MESSAGE_LENGTH);
+
+            TelegramHelper::sendMessage(
+                ['text' => $message, 'parse_mode' => 'html'],
+                $groupId,
+                $token,
+                $threadId
+            );
+
+            Yii::info('PMH telemetry report sent to group ' . $groupId);
+        } catch (\Exception $e) {
+            Yii::error('Failed to send PMH telemetry report: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send a formatted telemetry error report to the PMH error group.
+     * Uses the dedicated PMH bot and pmh_error_group_id / pmh_error_thread_id params.
+     */
+    private function sendTelemetryErrorReport($errorTitle, $details, $postData = null)
+    {
+        try {
+            $token = Yii::$app->params['telegramBotPMHToken'] ?? null;
+            $groupId = Yii::$app->params['pmh_error_group_id'] ?? null;
+            $threadId = Yii::$app->params['pmh_error_thread_id'] ?? null;
+
+            if (empty($token) || empty($groupId)) {
+                Yii::warning('PMH error group/token not configured; error report skipped.');
+                return;
+            }
+
+            $message = "🚨 <b>Telemetry Error</b>\n";
+            $message .= "────────────────────\n";
+            $message .= "📝 <b>Error:</b> " . htmlspecialchars($errorTitle) . "\n";
+            if ($postData !== null) {
+                $deviceId = $postData['device_id'] ?? 'N/A';
+                $deviceName = $postData['device_name'] ?? 'N/A';
+                $message .= "🔧 <b>Device:</b> " . htmlspecialchars($deviceName) . "\n";
+                $message .= "🆔 <b>ID:</b> " . htmlspecialchars($deviceId) . "\n";
+            }
+            $message .= "🕐 <b>Time:</b> " . date('Y-m-d H:i:s') . "\n";
+            if (!empty($details)) {
+                $detailsText = is_array($details) ? json_encode($details, JSON_UNESCAPED_UNICODE) : (string)$details;
+                $message .= "📋 <b>Details:</b>\n<code>" . htmlspecialchars($detailsText) . "</code>\n";
+            }
+            $message .= "────────────────────";
+
+            $message = mb_substr($message, 0, TelegramHelper::MAX_MESSAGE_LENGTH);
+
+            TelegramHelper::sendMessage(
+                ['text' => $message, 'parse_mode' => 'html'],
+                $groupId,
+                $token,
+                $threadId
+            );
+
+            Yii::info('PMH telemetry error sent to group ' . $groupId);
+        } catch (\Exception $e) {
+            Yii::error('Failed to send PMH telemetry error: ' . $e->getMessage());
         }
     }
 
