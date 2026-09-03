@@ -15,6 +15,7 @@ use app\models\MyfxbookScrapedData;
 use app\models\MyfxbookScrapedDataNew;
 use app\models\MyfxbookStatistics;
 use app\models\ScrapedDataLog;
+use app\models\Settings;
 use app\models\TelemetryData;
 use app\models\UserDevices;
 use app\models\Users;
@@ -2219,7 +2220,7 @@ class MobileController extends Controller
                     'sync_interval' => Yii::$app->params['syncInterval'] ?? 60,
                     'telemetry_endpoint' => '/mobile/averaged-telemetry',
                     'max_sample_count' => Yii::$app->params['maxSampleCount'] ?? 100,
-                    'timestamp_format' => 'iso8601',
+                                        'timestamp_format' => 'iso8601',
                 ],
                 'data_timestamp' => date('Y-m-d H:i:s'),
                 'code' => 200
@@ -2229,6 +2230,42 @@ class MobileController extends Controller
             return [
                 'success' => false,
                 'message' => 'Failed to get sync configuration',
+                'code' => 500
+            ];
+        }
+    }
+
+    /**
+     * Get all active inverter settings.
+     *
+     * Returns every settings row where settings_status = 1 and settings_type = 'inverter'.
+     *
+     * Endpoint: GET /mobile/get-inverter-settings
+     */
+    public function actionGetInverterSettings()
+    {
+        \Yii::$app->response->format = Response::FORMAT_JSON;
+
+        try {
+            $settings = Settings::find()
+                ->where(['settings_type' => 'inverter', 'settings_status' => '1'])
+                ->orderBy(['settings_name' => SORT_ASC])
+                ->asArray()
+                ->all();
+
+            return [
+                'success' => true,
+                'count' => count($settings),
+                'settings' => $settings,
+                'data_timestamp' => date('Y-m-d H:i:s'),
+                'code' => 200
+            ];
+        } catch (\Exception $e) {
+            Yii::error('Get inverter settings error: ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Failed to get inverter settings',
+                'error' => $e->getMessage(),
                 'code' => 500
             ];
         }
