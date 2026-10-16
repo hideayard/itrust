@@ -121,6 +121,12 @@ $config = [
                 'ea/cancel' => 'ea/cancel', // Your existing cancel / finish command endpoint
                 'api/accounts' => 'mt4-account/accounts', // New optimized endpoint
 
+                // GMR Google Sheets sync (example/gmr-sync.script)
+                'GET gmr' => 'gmr/index',
+                'POST gmr/sync' => 'gmr/sync',
+                'POST gmr/sync-batch' => 'gmr/sync-batch',
+                'POST gmr/sync-invoice' => 'gmr/sync-invoice',
+
             ],
         ],
     ],

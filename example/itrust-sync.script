@@ -1,0 +1,113 @@
+/**
+ * ONE-WAY SYNC: Google Sheets -> External Server
+ * Syncs single-row creations and updates immediately when edited.
+ * 
+ * REQUIRED SETUP:
+ * Simple triggers ('onEdit') CANNOT make network calls (UrlFetchApp).
+ * You MUST configure an Installable Trigger for this script:
+ * 1. Go to Extensions > Apps Script.
+ * 2. Click 'Triggers' (Alarm Clock icon on the left sidebar).
+ * 3. Click '+ Add Trigger' (bottom right).
+ * 4. Set function to run: "handleSheetEdit"
+ * 5. Set event source: "From spreadsheet"
+ * 6. Set event type: "On edit"
+ * 7. Click Save and authorize permissions.
+ */
+
+// Configuration
+const CONFIG = {
+  SERVER_URL: 'https://api.yourdomain.com/v1/sync-row', // Replace with your endpoint
+  API_SECRET: 'YOUR_BEARER_TOKEN_HERE',                  // Replace with your API key
+  STATUS_COLUMN_NAME: 'Sync Status'                       // Column to store sync status
+};
+
+/**
+ * Main event handler called automatically on cell edits.
+ */
+function handleSheetEdit(e) {
+  // Safety check: ensure event object exists
+  if (!e || !e.range) return;
+
+  const sheet = e.range.getSheet();
+  const editedRow = e.range.getRow();
+  const editedCol = e.range.getColumn();
+
+  // 1. Ignore edits on the Header row (Row 1)
+  if (editedRow === 1) return;
+
+  // 2. Fetch row headers and current row data
+  const lastCol = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  const rowValues = sheet.getRange(editedRow, 1, 1, lastCol).getValues()[0];
+
+  // Find index of the Status column (1-based index)
+  const statusColIndex = headers.indexOf(CONFIG.STATUS_COLUMN_NAME) + 1;
+
+  // Prevent infinite loops: skip if the edit happened in the Status column itself
+  if (statusColIndex > 0 && editedCol === statusColIndex) return;
+
+  // 3. Determine if this row is newly CREATED or UPDATED
+  const currentStatus = statusColIndex > 0 ? rowValues[statusColIndex - 1] : '';
+  const actionType = (!currentStatus || currentStatus === '') ? 'CREATE' : 'UPDATE';
+
+  // 4. Map cell values to header keys
+  let rowData = {};
+  headers.forEach((header, index) => {
+    if (header && header !== CONFIG.STATUS_COLUMN_NAME) {
+      rowData[header] = rowValues[index];
+    }
+  });
+
+  // 5. Build payload
+  const payload = {
+    action: actionType,             // 'CREATE' or 'UPDATE'
+    rowIndex: editedRow,            // Physical row number in Google Sheets
+    sheetName: sheet.getName(),
+    timestamp: new Date().toISOString(),
+    data: rowData
+  };
+
+  // 6. Send payload to server
+  const success = sendToServer(payload);
+
+  // 7. Update status column on success
+  if (success && statusColIndex > 0) {
+    const timeString = Utilities.formatDate(
+      new Date(), 
+      Session.getScriptTimeZone(), 
+      "yyyy-MM-dd HH:mm:ss"
+    );
+    sheet.getRange(editedRow, statusColIndex).setValue(`Synced (${timeString})`);
+  }
+}
+
+/**
+ * Sends the row payload to your backend server via HTTP POST.
+ */
+function sendToServer(payload) {
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'Authorization': 'Bearer ' + CONFIG.API_SECRET
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(CONFIG.SERVER_URL, options);
+    const statusCode = response.getResponseCode();
+
+    if (statusCode === 200 || statusCode === 201) {
+      Logger.log(`[SUCCESS] Row ${payload.rowIndex} (${payload.action}): ${response.getContentText()}`);
+      return true;
+    } else {
+      Logger.log(`[ERROR] Server returned status ${statusCode}: ${response.getContentText()}`);
+      return false;
+    }
+  } catch (err) {
+    Logger.log(`[NETWORK ERROR] Failed to connect: ${err.toString()}`);
+    return false;
+  }
+}

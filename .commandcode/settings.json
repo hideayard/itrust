@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Shell(php -v)",
+      "Shell(php -r \"try { $p = new PDO('mysql:host=localhost;dbname=itrust_040826','root',''); $p->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); echo 'CONNECTED'.PHP_EOL; $t = $p->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN); echo 'TABLE_COUNT='.count($t).PHP_EOL; echo (in_array('projects',$t) ? 'projects EXISTS' : 'projects MISSING').PHP_EOL; foreach ($t as $x) { if (strpos($x,'project')!==false || strpos($x,'users')===0) echo 'MATCH: '.$x.PHP_EOL; } } catch (Throwable $e) { echo 'ERR: '.$e->getMessage().PHP_EOL; }\")",
+      "Shell(php -l models\\Projects.php)",
+      "Shell(powershell -NoProfile -Command \"$f='E:\\laragon6\\www\\itrust\\example\\_xlsx_extract\\xl\\sharedStrings.xml'; (Get-Item $f).Length; (Get-Content $f -Raw).Length\")",
+      "Shell(where:*)",
+      "Shell(php C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\6dff069b-3a4e-48a0-94d2-6029728945ba\\scratchpad\\dump_xlsx.php E:\\laragon6\\www\\itrust\\example\\example-itrust-2026.xlsx 2 >& 1)",
+      "Shell(more:*)",
+      "Shell(php -r \"$p=new PDO('mysql:host=localhost;dbname=itrust_040826','root','');$p->setAttribute(PDO::ATTR_ERRMODE,PDO::ERRMODE_EXCEPTION);$t=$p->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);echo 'TABLE_COUNT='.count($t).PHP_EOL;foreach($t as $x){if(preg_match('/gmr|project|buy|invoice|inv_|sell|bank|exchange/i',$x))echo 'MATCH: '.$x.PHP_EOL;}\")",
+      "Shell(php \"C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\6dff069b-3a4e-48a0-94d2-6029728945ba\\scratchpad\\dump_range.php\" \"E:\\laragon6\\www\\itrust\\example\\example-itrust-2026.xlsx\" BANK 1 20)",
+      "Shell(php \"C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\6dff069b-3a4e-48a0-94d2-6029728945ba\\scratchpad\\dump_range.php\" \"E:\\laragon6\\www\\itrust\\example\\example-itrust-2026.xlsx\" AUG 990 999)",
+      "Shell(php -l controllersGmrController.php)",
+      "Shell(php -l modelsGmrBuyTrade.php)",
+      "Shell(php -l modelsGmrExchange.php)",
+      "Shell(php -l modelsGmrInvoice.php)",
+      "Shell(php -l modelsGmrInvoiceDetail.php)",
+      "Shell(php -l modelsGmrMonthlySummary.php)",
+      "Shell(php -l modelsGmrBankBalance.php)",
+      "Shell(php -l configparams.php)",
+      "Shell(php -l configweb.php)",
+      "Shell(set:*)",
+      "Shell(php %S%\\dump_json.php E:\\laragon6\\www\\itrust\\example\\example-itrust-2026.xlsx %S%\\rows.json)",
+      "Shell(node %S%\\harness.js E:\\laragon6\\www\\itrust\\example\\gmr-sync.script %S%\\rows.json)",
+      "Shell(php C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\6dff069b-3a4e-48a0-94d2-6029728945ba\\scratchpad\\dump_json.php E:\\laragon6\\www\\itrust\\example\\example-itrust-2026.xlsx C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\6dff069b-3a4e-48a0-94d2-6029728945ba\\scratchpad\\rows.json)",
+      "Shell(node C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\6dff069b-3a4e-48a0-94d2-6029728945ba\\scratchpad\\harness.js E:\\laragon6\\www\\itrust\\example\\gmr-sync.script C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\6dff069b-3a4e-48a0-94d2-6029728945ba\\scratchpad\\rows.json)",
+      "Shell(findstr:*)",
+      "Shell(rmdir:*)",
+      "Shell(powershell -NoProfile -Command \"$j = Get-Content -Raw 'E:\\laragon6\\www\\itrust\\example\\invoices.json' | ConvertFrom-Json; 'count=' + $j.Count; ($j | Select-Object -First 3 | ConvertTo-Json -Depth 4)\")",
+      "Shell(php -l controllers/GmrController.php)",
+      "Shell(php -l config/web.php)",
+      "Shell(php -r \"try { $p = new PDO('mysql:host=127.0.0.1;port=3306', 'root', ''); echo 'mysql-ok'; } catch (Throwable $e) { echo 'no-db: '.$e->getMessage(); }\")",
+      "Shell(php -r \" \\$invs = json_decode(file_get_contents('example/invoices.json'), true); \\$i = \\$invs[0]; \\$qty = 0.0; \\$amount = 0.0; \\$dir = 'BUY'; foreach (\\$i['lines'] as \\$l) { \\$q = (float)\\$l['qty']; \\$p = (float)\\$l['price']; \\$qty += \\$q; \\$amount += \\$q*\\$p; if (stripos(\\$l['description'],'SELL')!==false) \\$dir='SELL'; } echo json_encode(['id'=>\\$i['id'],'direction'=>\\$dir,'month'=>strtoupper(date('M',strtotime(\\$i['date']))),'qty'=>\\$qty,'rate'=>round(\\$amount/\\$qty,4),'amount'=>\\$amount,'lines'=>count(\\$i['lines'])], JSON_PRETTY_PRINT), PHP_EOL; \")",
+      "Shell(php \"C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\7e4c388d-2fb7-4117-a009-5453e45bb091\\scratchpad\\check.php\")"
+    ],
+    "deny": [],
+    "defaultMode": "default"
+  }
+}

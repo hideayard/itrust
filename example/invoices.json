@@ -1,0 +1,5642 @@
+[
+  {
+    "id": "INV-20260901-1",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 29365.07,
+        "price": 17640
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 113475,
+        "price": 17625
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 15990.92,
+        "price": 17635
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1944.28,
+        "price": 17617
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4135.08,
+        "price": 17645
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 50430.83,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-20260901-2",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 2053.98,
+        "price": 17637
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5997,
+        "price": 17637
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17637
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17637
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17635
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 569.72,
+        "price": 17630
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 575.72,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9378.12,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7874.47,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7455,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3968.97,
+        "price": 17628
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7649.95,
+        "price": 17628
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17628
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2498.75,
+        "price": 17650
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17650
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17650
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17650
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2298.85,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-20260902-1",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17663
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17666
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 14146,
+        "price": 17664
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 13843.98,
+        "price": 17666
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 32483.75,
+        "price": 17675
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5647.18,
+        "price": 17675
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 19990,
+        "price": 17671
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5637.18,
+        "price": 17671
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 13993,
+        "price": 17671
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5472.27,
+        "price": 17671
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6431.79,
+        "price": 17671
+      }
+    ]
+  },
+  {
+    "id": "INV-20260902-2",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 4294.49,
+        "price": 17665
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17665
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8957.54,
+        "price": 17665
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2703.98,
+        "price": 17660
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17656
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1541.73,
+        "price": 17660
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1975.79,
+        "price": 17660
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 29502,
+        "price": 17660
+      }
+    ]
+  },
+  {
+    "id": "INV-20260902-3",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 1699.15,
+        "price": 17647
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 24987.5,
+        "price": 17647
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17645
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17645
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5665.14,
+        "price": 17643
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 15294.38,
+        "price": 17643
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5667.06,
+        "price": 17637
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 24987.5,
+        "price": 17637
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 26017.1,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-20260902-4",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28325.83,
+        "price": 17644
+      }
+    ]
+  },
+  {
+    "id": "INV-20260902-5",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28315.84,
+        "price": 17650
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 28315.84,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-20260903-1",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28360.74,
+        "price": 17630
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 113410.83,
+        "price": 17635
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 33238.79,
+        "price": 17630
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 135847.98,
+        "price": 17630
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 135925.08,
+        "price": 17620
+      }
+    ]
+  },
+  {
+    "id": "INV-20260903-2",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 6996.5,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2839.08,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1420.14,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 16770.62,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2840.29,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 10051.46,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 11182.56,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6826.59,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 10367.08,
+        "price": 17595
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 18440.37,
+        "price": 17590
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4272.11,
+        "price": 17584
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2548.73,
+        "price": 17580
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2498.75,
+        "price": 17580
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3141.92,
+        "price": 17580
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8596.39,
+        "price": 17580
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2298.85,
+        "price": 17580
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17580
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17572
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2720.9,
+        "price": 17572
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8874.87,
+        "price": 17572
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17572
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17572
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17575
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1694.47,
+        "price": 17575
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1999,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-20260904-1",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 263858.85,
+        "price": 17570
+      }
+    ]
+  },
+  {
+    "id": "INV-20260904-2",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 130904.95,
+        "price": 17570
+      }
+    ]
+  },
+  {
+    "id": "INV-20260904-3",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 92655.84,
+        "price": 17565
+      }
+    ]
+  },
+  {
+    "id": "INV-20260904-4",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 63570.83,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 28498.14,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 74095.18,
+        "price": 17545
+      }
+    ]
+  },
+  {
+    "id": "INV-20260904-5",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 29985,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1499.25,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 341.8,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5696.13,
+        "price": 17547
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8295.85,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 12993.5,
+        "price": 17550
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17550
+      }
+    ]
+  },
+  {
+    "id": "INV-20260905-1",
+    "customer": "NABIL",
+    "date": "2026-09-04",
+    "dueDate": "2026-09-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 85470.08,
+        "price": 17550
+      }
+    ]
+  },
+  {
+    "id": "INV-20260907-1",
+    "customer": "NABIL",
+    "date": "2026-09-06",
+    "dueDate": "2026-09-06",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 3347.66,
+        "price": 17570
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1751.29,
+        "price": 17570
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1984.61,
+        "price": 17570
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 13954.88,
+        "price": 17557
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5587.21,
+        "price": 17565
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2798.6,
+        "price": 17565
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1479.2,
+        "price": 17565
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 49975,
+        "price": 17560
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6139.53,
+        "price": 17560
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 26208.89,
+        "price": 17555
+      }
+    ]
+  },
+  {
+    "id": "INV-20260908-1",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 65988.83,
+        "price": 17556
+      }
+    ]
+  },
+  {
+    "id": "INV-20260908-2",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 113921.16,
+        "price": 17556
+      }
+    ]
+  },
+  {
+    "id": "INV-20260908-3",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28480.29,
+        "price": 17556
+      }
+    ]
+  },
+  {
+    "id": "INV-20260908-4",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 131345.32,
+        "price": 17557
+      }
+    ]
+  },
+  {
+    "id": "INV-20260908-5",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 4960.48,
+        "price": 17530
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17532
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1710.33,
+        "price": 17532
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2798.6,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2280.01,
+        "price": 17535
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1618.64,
+        "price": 17530
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2850.83,
+        "price": 17530
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2850.83,
+        "price": 17530
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4792.61,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9989.3,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 20105.57,
+        "price": 17540
+      }
+    ]
+  },
+  {
+    "id": "INV-20260909-1",
+    "customer": "NABIL",
+    "date": "2026-09-08",
+    "dueDate": "2026-09-08",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 1444.84,
+        "price": 17434
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4992.51,
+        "price": 17448
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4992.51,
+        "price": 17450
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 37085.99,
+        "price": 17450
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5433.62,
+        "price": 17475
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1429.9,
+        "price": 17475
+      }
+    ]
+  },
+  {
+    "id": "INV-20260910-1",
+    "customer": "NABIL",
+    "date": "2026-09-09",
+    "dueDate": "2026-09-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 57208.23,
+        "price": 17480
+      }
+    ]
+  },
+  {
+    "id": "INV-20260910-2",
+    "customer": "NABIL",
+    "date": "2026-09-09",
+    "dueDate": "2026-09-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 68630.25,
+        "price": 17485
+      }
+    ]
+  },
+  {
+    "id": "INV-20260910-3",
+    "customer": "NABIL",
+    "date": "2026-09-09",
+    "dueDate": "2026-09-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 18969.11,
+        "price": 17485
+      }
+    ]
+  },
+  {
+    "id": "INV-20260911-1",
+    "customer": "NABIL",
+    "date": "2026-09-10",
+    "dueDate": "2026-09-10",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 3517.47,
+        "price": 17525
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 12779.93,
+        "price": 17515
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1999,
+        "price": 17515
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3919.12,
+        "price": 17515
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4797.6,
+        "price": 17515
+      }
+    ]
+  },
+  {
+    "id": "INV-20260911-2",
+    "customer": "NABIL",
+    "date": "2026-09-10",
+    "dueDate": "2026-09-10",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 130974.69,
+        "price": 17510
+      }
+    ]
+  },
+  {
+    "id": "INV-20260912-1",
+    "customer": "NABIL",
+    "date": "2026-09-11",
+    "dueDate": "2026-09-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 183366.67,
+        "price": 17495
+      }
+    ]
+  },
+  {
+    "id": "INV-20260913-1",
+    "customer": "NABIL",
+    "date": "2026-09-12",
+    "dueDate": "2026-09-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 57175.52,
+        "price": 17490
+      }
+    ]
+  },
+  {
+    "id": "INV-20260913-2",
+    "customer": "NABIL",
+    "date": "2026-09-12",
+    "dueDate": "2026-09-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 125786.16,
+        "price": 17490
+      }
+    ]
+  },
+  {
+    "id": "INV-20260913-3",
+    "customer": "NABIL",
+    "date": "2026-09-12",
+    "dueDate": "2026-09-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 158430.13,
+        "price": 17490
+      }
+    ]
+  },
+  {
+    "id": "INV-20260914-1",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 142409,
+        "price": 17555
+      }
+    ]
+  },
+  {
+    "id": "INV-20260914-2",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 113927.65,
+        "price": 17555
+      }
+    ]
+  },
+  {
+    "id": "INV-20260914-3",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 147668.85,
+        "price": 17555
+      }
+    ]
+  },
+  {
+    "id": "INV-20260914-4",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 113895.21,
+        "price": 17560
+      }
+    ]
+  },
+  {
+    "id": "INV-20260914-5",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 108320.04,
+        "price": 17560
+      }
+    ]
+  },
+  {
+    "id": "INV-20260914-6",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 131016.8,
+        "price": 17555
+      }
+    ]
+  },
+  {
+    "id": "INV-20260915-1",
+    "customer": "NABIL",
+    "date": "2026-09-14",
+    "dueDate": "2026-09-14",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 130570.53,
+        "price": 17615
+      }
+    ]
+  },
+  {
+    "id": "INV-20260916-1",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 16791.6,
+        "price": 17580
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17585
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7631.19,
+        "price": 17585
+      }
+    ]
+  },
+  {
+    "id": "INV-20260916-2",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 17227.98,
+        "price": 17583
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 11194.4,
+        "price": 17586
+      }
+    ]
+  },
+  {
+    "id": "INV-20260916-3",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 26077,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-20260916-4",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 85397.1,
+        "price": 17565
+      }
+    ]
+  },
+  {
+    "id": "INV-20260916-5",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 125284.73,
+        "price": 17560
+      }
+    ]
+  },
+  {
+    "id": "INV-20260916-6",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 159544.15,
+        "price": 17550
+      }
+    ]
+  },
+  {
+    "id": "INV-20260917-1",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 14739.22,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-20260917-2",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 85009.91,
+        "price": 17645
+      }
+    ]
+  },
+  {
+    "id": "INV-20260917-3",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28368.81,
+        "price": 17617
+      }
+    ]
+  },
+  {
+    "id": "INV-20260917-4",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 49975,
+        "price": 17615
+      }
+    ]
+  },
+  {
+    "id": "INV-20260917-5",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 26986.5,
+        "price": 17610
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4497.75,
+        "price": 17610
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6796.6,
+        "price": 17610
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4643.72,
+        "price": 17615
+      }
+    ]
+  },
+  {
+    "id": "INV-20260918-1",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 6996.5,
+        "price": 17617
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3749.13,
+        "price": 17617
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 56734.97,
+        "price": 17617
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17617
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7996,
+        "price": 17615
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5139.19,
+        "price": 17615
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7496.25,
+        "price": 17615
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3694.45,
+        "price": 17610
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 11244.38,
+        "price": 17610
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 21701.1,
+        "price": 17610
+      }
+    ]
+  },
+  {
+    "id": "INV-20260918-2",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 35842.5,
+        "price": 17615
+      }
+    ]
+  },
+  {
+    "id": "INV-20260918-3",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 12895.55,
+        "price": 17620
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 85087.97,
+        "price": 17620
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 85087.97,
+        "price": 17620
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2292.86,
+        "price": 17615
+      }
+    ]
+  },
+  {
+    "id": "INV-20260918-4",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 105053.94,
+        "price": 17610
+      }
+    ]
+  },
+  {
+    "id": "INV-20260918-5",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 83872.79,
+        "price": 17610
+      }
+    ]
+  },
+  {
+    "id": "INV-20260918-6",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 3152.43,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 1999,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3973.02,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5891.73,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5668.67,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4012,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7552.23,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6296.85,
+        "price": 17619
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17618
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9106.45,
+        "price": 17617
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9478.06,
+        "price": 17618
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6196.9,
+        "price": 17618
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3971.22,
+        "price": 17618
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4628.06,
+        "price": 17618
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 15838.64,
+        "price": 17618
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17618
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6996.5,
+        "price": 17620
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2498.75,
+        "price": 17620
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17620
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2498.75,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2268.24,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 14497.75,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7996,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4035.99,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17626
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 29885.05,
+        "price": 17624
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 20051.97,
+        "price": 17624
+      }
+    ]
+  },
+  {
+    "id": "INV-20260919-1",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 59897.49,
+        "price": 17560
+      }
+    ]
+  },
+  {
+    "id": "INV-20260919-2",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28449.5,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-20260919-3",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 14618.77,
+        "price": 17560
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2298.85,
+        "price": 17560
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 11543.15,
+        "price": 17560
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 27986,
+        "price": 17558
+      }
+    ]
+  },
+  {
+    "id": "INV-20260919-4",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 5497.25,
+        "price": 17550
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 51874.05,
+        "price": 17550
+      }
+    ]
+  },
+  {
+    "id": "INV-20260919-5",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 102207.89,
+        "price": 17540
+      }
+    ]
+  },
+  {
+    "id": "INV-20260919-6",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 2396.69,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3998,
+        "price": 17545
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3173.42,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 28465.69,
+        "price": 17565
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5097.45,
+        "price": 17543
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 28467.31,
+        "price": 17564
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 54972.5,
+        "price": 17542
+      }
+    ]
+  },
+  {
+    "id": "INV-20260919-7",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17528
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7996,
+        "price": 17528
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 12373.81,
+        "price": 17522
+      }
+    ]
+  },
+  {
+    "id": "INV-20260920-1",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 85476.06,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5697.11,
+        "price": 17544
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17544
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 12760.62,
+        "price": 17544
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 21689.15,
+        "price": 17544
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 22793.61,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5804.85,
+        "price": 17538
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9690.05,
+        "price": 17535
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 28481.91,
+        "price": 17555
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7720.39,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2849.2,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5275.94,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 30456.6,
+        "price": 17540
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 76578.19,
+        "price": 17520
+      }
+    ]
+  },
+  {
+    "id": "INV-20260920-2",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 57077.62,
+        "price": 17520
+      }
+    ]
+  },
+  {
+    "id": "INV-20260921-1",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 15214.47,
+        "price": 17665
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6669.94,
+        "price": 17660
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 99950,
+        "price": 17660
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 54972.5,
+        "price": 17660
+      }
+    ]
+  },
+  {
+    "id": "INV-20260921-2",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 3491.19,
+        "price": 17690
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 112999.48,
+        "price": 17690
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2895.59,
+        "price": 17685
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 49975,
+        "price": 17685
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2826.16,
+        "price": 17683
+      }
+    ]
+  },
+  {
+    "id": "INV-20260921-3",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 4997.5,
+        "price": 17700
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 12787.61,
+        "price": 17697
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17697
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17697
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5118.44,
+        "price": 17697
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 2998.5,
+        "price": 17697
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6996.5,
+        "price": 17700
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7841.08,
+        "price": 17695
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 11712.32,
+        "price": 17700
+      }
+    ]
+  },
+  {
+    "id": "INV-20260921-4",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28216.7,
+        "price": 17720
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-1",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 112619.72,
+        "price": 17750
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-2",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 112619.72,
+        "price": 17750
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-3",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 10332.14,
+        "price": 17735
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8679.66,
+        "price": 17735
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 49975,
+        "price": 17735
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 23988,
+        "price": 17736
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-4",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 5997,
+        "price": 17754
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7331.34,
+        "price": 17754
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17754
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17754
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 20097.95,
+        "price": 17752
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5965.9,
+        "price": 17752
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-5",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 10113.28,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6780.61,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6582.53,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 11322.77,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 22511.26,
+        "price": 17760
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-6",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 99859.19,
+        "price": 17755
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-7",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 7472.27,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6196.9,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 29659.17,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 22517.6,
+        "price": 17755
+      }
+    ]
+  },
+  {
+    "id": "INV-20260922-8",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 107406.36,
+        "price": 17755
+      }
+    ]
+  },
+  {
+    "id": "INV-20260923-1",
+    "customer": "NABIL",
+    "date": "2026-09-22",
+    "dueDate": "2026-09-22",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 20460.91,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 46486.1,
+        "price": 17767
+      }
+    ]
+  },
+  {
+    "id": "INV-20260923-2",
+    "customer": "NABIL",
+    "date": "2026-09-22",
+    "dueDate": "2026-09-22",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 225288.65,
+        "price": 17755
+      }
+    ]
+  },
+  {
+    "id": "INV-20260923-3",
+    "customer": "NABIL",
+    "date": "2026-09-22",
+    "dueDate": "2026-09-22",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 31292.8,
+        "price": 17755
+      }
+    ]
+  },
+  {
+    "id": "INV-20260924-1",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 5697.15,
+        "price": 17770
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 99950,
+        "price": 17772
+      }
+    ]
+  },
+  {
+    "id": "INV-20260924-2",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28081.99,
+        "price": 17805
+      }
+    ]
+  },
+  {
+    "id": "INV-20260924-3",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 112580.91,
+        "price": 17765
+      }
+    ]
+  },
+  {
+    "id": "INV-20260924-4",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 146928.72,
+        "price": 17765
+      }
+    ]
+  },
+  {
+    "id": "INV-20260924-5",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 7242.21,
+        "price": 17788
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8425.12,
+        "price": 17795
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 9995,
+        "price": 17805
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 99950,
+        "price": 17805
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 56135.91,
+        "price": 17805
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 56135.91,
+        "price": 17805
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 14758.75,
+        "price": 17810
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 11065.98,
+        "price": 17815
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 56104.41,
+        "price": 17815
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 56104.41,
+        "price": 17815
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 56104.41,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-20260924-6",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 50456.91,
+        "price": 17837
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 27986,
+        "price": 17805
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 10597.97,
+        "price": 17805
+      }
+    ]
+  },
+  {
+    "id": "INV-20260924-7",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28065.7,
+        "price": 17810
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6922.87,
+        "price": 17810
+      }
+    ]
+  },
+  {
+    "id": "INV-20260925-1",
+    "customer": "NABIL",
+    "date": "2026-09-24",
+    "dueDate": "2026-09-24",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 7996,
+        "price": 17826
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 109945,
+        "price": 17826
+      }
+    ]
+  },
+  {
+    "id": "INV-20260925-2",
+    "customer": "NABIL",
+    "date": "2026-09-24",
+    "dueDate": "2026-09-24",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 259404.82,
+        "price": 17810
+      }
+    ]
+  },
+  {
+    "id": "INV-20260925-3",
+    "customer": "NABIL",
+    "date": "2026-09-24",
+    "dueDate": "2026-09-24",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 76461.75,
+        "price": 17762
+      }
+    ]
+  },
+  {
+    "id": "INV-20260925-4",
+    "customer": "NABIL",
+    "date": "2026-09-24",
+    "dueDate": "2026-09-24",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 78434.68,
+        "price": 17760
+      }
+    ]
+  },
+  {
+    "id": "INV-20260925-5",
+    "customer": "NABIL",
+    "date": "2026-09-24",
+    "dueDate": "2026-09-24",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 8435.16,
+        "price": 17760
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 7913.47,
+        "price": 17745
+      }
+    ]
+  },
+  {
+    "id": "INV-20260925-6",
+    "customer": "NABIL",
+    "date": "2026-09-24",
+    "dueDate": "2026-09-24",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 28022.99,
+        "price": 17740
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 6996.5,
+        "price": 17745
+      }
+    ]
+  },
+  {
+    "id": "INV-20260925-7",
+    "customer": "NABIL",
+    "date": "2026-09-24",
+    "dueDate": "2026-09-24",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 194291.83,
+        "price": 17750
+      }
+    ]
+  },
+  {
+    "id": "INV-20260926-1",
+    "customer": "NABIL",
+    "date": "2026-09-25",
+    "dueDate": "2026-09-25",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 16491.75,
+        "price": 17732
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 16491.75,
+        "price": 17735
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 16491.75,
+        "price": 17735
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8448.86,
+        "price": 17745
+      }
+    ]
+  },
+  {
+    "id": "INV-20260926-2",
+    "customer": "NABIL",
+    "date": "2026-09-25",
+    "dueDate": "2026-09-25",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 256901.4,
+        "price": 17750
+      }
+    ]
+  },
+  {
+    "id": "INV-20260926-3",
+    "customer": "NABIL",
+    "date": "2026-09-25",
+    "dueDate": "2026-09-25",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 149788.55,
+        "price": 17735
+      }
+    ]
+  },
+  {
+    "id": "INV-20260926-4",
+    "customer": "NABIL",
+    "date": "2026-09-25",
+    "dueDate": "2026-09-25",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 299577.1,
+        "price": 17735
+      }
+    ]
+  },
+  {
+    "id": "INV-20260927-1",
+    "customer": "NABIL",
+    "date": "2026-09-26",
+    "dueDate": "2026-09-26",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 20389.8,
+        "price": 17815
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 112208.81,
+        "price": 17815
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 15922,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-20260927-2",
+    "customer": "NABIL",
+    "date": "2026-09-26",
+    "dueDate": "2026-09-26",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 112303.38,
+        "price": 17800
+      }
+    ]
+  },
+  {
+    "id": "INV-20260927-3",
+    "customer": "NABIL",
+    "date": "2026-09-26",
+    "dueDate": "2026-09-26",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 61867.3,
+        "price": 17780
+      }
+    ]
+  },
+  {
+    "id": "INV-20260928-1",
+    "customer": "NABIL",
+    "date": "2026-09-27",
+    "dueDate": "2026-09-27",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 55162.55,
+        "price": 17840
+      }
+    ]
+  },
+  {
+    "id": "INV-20260928-2",
+    "customer": "NABIL",
+    "date": "2026-09-27",
+    "dueDate": "2026-09-27",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 88000,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20260928-5",
+    "customer": "NABIL",
+    "date": "2026-09-27",
+    "dueDate": "2026-09-27",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 44201.56,
+        "price": 17885
+      }
+    ]
+  },
+  {
+    "id": "INV-20260928-6",
+    "customer": "NABIL",
+    "date": "2026-09-27",
+    "dueDate": "2026-09-27",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 29985,
+        "price": 17920
+      }
+    ]
+  },
+  {
+    "id": "INV-20260928-3",
+    "customer": "NABIL",
+    "date": "2026-09-27",
+    "dueDate": "2026-09-27",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 55000,
+        "price": 17870
+      }
+    ]
+  },
+  {
+    "id": "INV-20260928-4",
+    "customer": "NABIL",
+    "date": "2026-09-27",
+    "dueDate": "2026-09-27",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 55000,
+        "price": 17880
+      }
+    ]
+  },
+  {
+    "id": "INV-20260929-1",
+    "customer": "NABIL",
+    "date": "2026-09-28",
+    "dueDate": "2026-09-28",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 109945,
+        "price": 17930
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 8378.03,
+        "price": 17895
+      }
+    ]
+  },
+  {
+    "id": "INV-20260929-2",
+    "customer": "NABIL",
+    "date": "2026-09-28",
+    "dueDate": "2026-09-28",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 292375.59,
+        "price": 17905
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260901-1",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 49908.72,
+        "price": 17675
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260901-1",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 63245.45,
+        "price": 17675
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260901-1",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28312.57,
+        "price": 17660
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260901-1",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 30000,
+        "price": 17665
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260901-1",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 3401.93,
+        "price": 17637
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260901-1",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 15126.62,
+        "price": 17651
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260901-2",
+    "customer": "NABIL",
+    "date": "2026-08-31",
+    "dueDate": "2026-08-31",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 73612.68,
+        "price": 17660
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260902-1",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 45209.01,
+        "price": 17695
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260902-1",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 69511.16,
+        "price": 17700
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260902-1",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56983.05,
+        "price": 17700
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260902-2",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56497.17,
+        "price": 17700
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260902-3",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113058.22,
+        "price": 17690
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260902-4",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28264.55,
+        "price": 17690
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260902-5",
+    "customer": "NABIL",
+    "date": "2026-09-01",
+    "dueDate": "2026-09-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56529.11,
+        "price": 17690
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260903-1",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 141522.78,
+        "price": 17665
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260903-1",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 33172.94,
+        "price": 17665
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260903-1",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 135900.33,
+        "price": 17660
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260903-1",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 45325.77,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260903-1",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 79320.11,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260903-2",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 107693.67,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260903-2",
+    "customer": "NABIL",
+    "date": "2026-09-02",
+    "dueDate": "2026-09-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 62406.51,
+        "price": 17625
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260904-1",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 266893.81,
+        "price": 17610
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260904-2",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113571,
+        "price": 17610
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260904-2",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 17050.29,
+        "price": 17595
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260904-3",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 92355.78,
+        "price": 17595
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260904-4",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 73947.66,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260904-5",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56866.64,
+        "price": 17585
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260904-4",
+    "customer": "NABIL",
+    "date": "2026-09-03",
+    "dueDate": "2026-09-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 95931.72,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260905-1",
+    "customer": "NABIL",
+    "date": "2026-09-04",
+    "dueDate": "2026-09-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 85348.5,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260907-1",
+    "customer": "NABIL",
+    "date": "2026-09-06",
+    "dueDate": "2026-09-06",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56899.01,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260907-1",
+    "customer": "NABIL",
+    "date": "2026-09-06",
+    "dueDate": "2026-09-06",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56850.48,
+        "price": 17590
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260908-1",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 65930.23,
+        "price": 17572
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260908-2",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113817.43,
+        "price": 17572
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260908-3",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28454.35,
+        "price": 17572
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260908-4",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 131345.32,
+        "price": 17572
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260908-5",
+    "customer": "NABIL",
+    "date": "2026-09-07",
+    "dueDate": "2026-09-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56908.71,
+        "price": 17572
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260909-1",
+    "customer": "NABIL",
+    "date": "2026-09-08",
+    "dueDate": "2026-09-08",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 57208.23,
+        "price": 17480
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260910-1",
+    "customer": "NABIL",
+    "date": "2026-09-09",
+    "dueDate": "2026-09-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 57142.85,
+        "price": 17500
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260910-2",
+    "customer": "NABIL",
+    "date": "2026-09-09",
+    "dueDate": "2026-09-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 68571.42,
+        "price": 17500
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260910-3",
+    "customer": "NABIL",
+    "date": "2026-09-09",
+    "dueDate": "2026-09-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 18952.85,
+        "price": 17500
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260911-1",
+    "customer": "NABIL",
+    "date": "2026-09-10",
+    "dueDate": "2026-09-10",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28506.27,
+        "price": 17540
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260911-2",
+    "customer": "NABIL",
+    "date": "2026-09-10",
+    "dueDate": "2026-09-10",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 129529.24,
+        "price": 17525
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260912-1",
+    "customer": "NABIL",
+    "date": "2026-09-11",
+    "dueDate": "2026-09-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 183157.29,
+        "price": 17515
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260913-1",
+    "customer": "NABIL",
+    "date": "2026-09-12",
+    "dueDate": "2026-09-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 57236.68,
+        "price": 17515
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260913-2",
+    "customer": "NABIL",
+    "date": "2026-09-12",
+    "dueDate": "2026-09-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 128497.99,
+        "price": 17510
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260913-3",
+    "customer": "NABIL",
+    "date": "2026-09-12",
+    "dueDate": "2026-09-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 158340.51,
+        "price": 17510
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-1",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 99573.25,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-1",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 42832.66,
+        "price": 17510
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-2",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113798,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-3",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113798,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-4",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 148909.75,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-5",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 58605.97,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-5",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 134970.12,
+        "price": 17575
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260914-6",
+    "customer": "NABIL",
+    "date": "2026-09-13",
+    "dueDate": "2026-09-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 45532.15,
+        "price": 17570
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260915-1",
+    "customer": "NABIL",
+    "date": "2026-09-14",
+    "dueDate": "2026-09-14",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 130496.45,
+        "price": 17625
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260916-1",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28392.95,
+        "price": 17610
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260916-2",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28392.95,
+        "price": 17610
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260916-3",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 26032.82,
+        "price": 17670
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260916-4",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28401.02,
+        "price": 17605
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260916-4",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56834.32,
+        "price": 17595
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260916-5",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 125071.06,
+        "price": 17590
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260916-6",
+    "customer": "NABIL",
+    "date": "2026-09-15",
+    "dueDate": "2026-09-15",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 159226.61,
+        "price": 17585
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260917-1",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 14722.53,
+        "price": 17660
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260917-2",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 84937.71,
+        "price": 17660
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260917-3",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28328.61,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260917-4",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56657.22,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260917-5",
+    "customer": "NABIL",
+    "date": "2026-09-16",
+    "dueDate": "2026-09-16",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56687.84,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260918-1",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113314.44,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260918-2",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 35781.49,
+        "price": 17645
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260918-3",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 186915.88,
+        "price": 17655
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260918-4",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 104875.28,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260918-5",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 83730.15,
+        "price": 17640
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260918-6",
+    "customer": "NABIL",
+    "date": "2026-09-17",
+    "dueDate": "2026-09-17",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 226628.89,
+        "price": 17650
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-1",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 59772.72,
+        "price": 17600
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-2",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28409.09,
+        "price": 17600
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-3",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 57389.11,
+        "price": 17600
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-4",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56818.18,
+        "price": 17600
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-5",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113765.64,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-6",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56882.882,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-6",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 113765.64,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260919-7",
+    "customer": "NABIL",
+    "date": "2026-09-18",
+    "dueDate": "2026-09-18",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28465.69,
+        "price": 17565
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260920-1",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 85324.23,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260920-1",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 66894.19,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260920-1",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56882.82,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260920-1",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56882.82,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260920-1",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28441.41,
+        "price": 17580
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260920-1",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 45545.11,
+        "price": 17565
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260920-2",
+    "customer": "NABIL",
+    "date": "2026-09-19",
+    "dueDate": "2026-09-19",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 57012.54,
+        "price": 17540
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260921-1",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 59937.8,
+        "price": 17685
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260921-1",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 99491.23,
+        "price": 17690
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260921-1",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56529.11,
+        "price": 17690
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260921-2",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 114124.61,
+        "price": 17735
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260921-2",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56385.67,
+        "price": 17735
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260921-3",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56385.67,
+        "price": 17745
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260921-4",
+    "customer": "NABIL",
+    "date": "2026-09-20",
+    "dueDate": "2026-09-20",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28178.45,
+        "price": 17745
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-1",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112422.7,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-2",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112422.7,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-3",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 101237.34,
+        "price": 17780
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-4",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56242.96,
+        "price": 17780
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-5",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56242.96,
+        "price": 17780
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-6",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 99662.73,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-7",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56211.35,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260922-8",
+    "customer": "NABIL",
+    "date": "2026-09-21",
+    "dueDate": "2026-09-21",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112422.7,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260923-1",
+    "customer": "NABIL",
+    "date": "2026-09-22",
+    "dueDate": "2026-09-22",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56211.35,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260923-2",
+    "customer": "NABIL",
+    "date": "2026-09-22",
+    "dueDate": "2026-09-22",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56211.35,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260923-2",
+    "customer": "NABIL",
+    "date": "2026-09-22",
+    "dueDate": "2026-09-22",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 168728.9,
+        "price": 17780
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260923-3",
+    "customer": "NABIL",
+    "date": "2026-09-22",
+    "dueDate": "2026-09-22",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 31271.62,
+        "price": 17767
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260924-1",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112359.55,
+        "price": 17800
+      }
+    ]
+  },
+  {
+    "id": "INV-S20260924-2",
+    "customer": "NABIL",
+    "date": "2026-09-23",
+    "dueDate": "2026-09-23",
+    "paymentMethod": "BANK BCA",
+    "status": "",
+    "lines": [
+      {
+        "description": "",
+        "qty": 28089.88,
+        "price": 17800
+      }
+    ]
+  },
+  {
+    "id": "INV-20261002-1",
+    "customer": "NABIL",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 112051.57,
+        "price": 17840
+      }
+    ]
+  },
+  {
+    "id": "INV-20261002-2",
+    "customer": "NABIL",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 15924.63,
+        "price": 17790
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 290512.1,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-20261002-3",
+    "customer": "NABIL",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 56178,
+        "price": 17800
+      }
+    ]
+  },
+  {
+    "id": "INV-20261003-1",
+    "customer": "NABIL",
+    "date": "2026-10-02",
+    "dueDate": "2026-10-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 13604,
+        "price": 17805
+      }
+    ]
+  },
+  {
+    "id": "INV-20261004-1",
+    "customer": "NABIL",
+    "date": "2026-10-03",
+    "dueDate": "2026-10-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 140252.45,
+        "price": 17825
+      }
+    ]
+  },
+  {
+    "id": "INV-20261004-2",
+    "customer": "NABIL",
+    "date": "2026-10-03",
+    "dueDate": "2026-10-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 25477.25,
+        "price": 17810
+      }
+    ]
+  },
+  {
+    "id": "INV-20261005-1",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 101249.65,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261005-2",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 22032.5,
+        "price": 17860
+      }
+    ]
+  },
+  {
+    "id": "INV-20261005-3",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 126597.3,
+        "price": 17830
+      }
+    ]
+  },
+  {
+    "id": "INV-20261005-4",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 127558.12,
+        "price": 17835
+      }
+    ]
+  },
+  {
+    "id": "INV-20261005-5",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 27486.25,
+        "price": 17840
+      }
+    ]
+  },
+  {
+    "id": "INV-20261005-6",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 56019.5,
+        "price": 17842
+      }
+    ]
+  },
+  {
+    "id": "INV-20261005-7",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 77871.14,
+        "price": 17850
+      }
+    ]
+  },
+  {
+    "id": "INV-20261006-1",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 26686.84,
+        "price": 17855
+      }
+    ]
+  },
+  {
+    "id": "INV-20261006-2",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 56038.1,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261006-3",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 27843.15,
+        "price": 17850
+      }
+    ]
+  },
+  {
+    "id": "INV-20261006-4",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 49975,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261006-5",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 23423.3,
+        "price": 17835
+      }
+    ]
+  },
+  {
+    "id": "INV-20261006-6",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 15992,
+        "price": 17832
+      }
+    ]
+  },
+  {
+    "id": "INV-20261008-1",
+    "customer": "NABIL",
+    "date": "2026-10-07",
+    "dueDate": "2026-10-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 115998.87,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261009-1",
+    "customer": "NABIL",
+    "date": "2026-10-08",
+    "dueDate": "2026-10-08",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 112076,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261010-1",
+    "customer": "NABIL",
+    "date": "2026-10-09",
+    "dueDate": "2026-10-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 100619.19,
+        "price": 17765
+      }
+    ]
+  },
+  {
+    "id": "INV-20261010-2",
+    "customer": "NABIL",
+    "date": "2026-10-09",
+    "dueDate": "2026-10-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 23131.12,
+        "price": 17730
+      }
+    ]
+  },
+  {
+    "id": "INV-20261012-1",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 4886.26,
+        "price": 17790
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 16491.75,
+        "price": 17790
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3484.73,
+        "price": 17783
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 20851.05,
+        "price": 17783
+      }
+    ]
+  },
+  {
+    "id": "INV-20261012-2",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "BUY USD ",
+        "qty": 22492.26,
+        "price": 17775
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 5846.84,
+        "price": 17775
+      },
+      {
+        "description": "BUY USD ",
+        "qty": 3498.25,
+        "price": 17775
+      },
+      {
+        "description": "",
+        "qty": 5697.15,
+        "price": 17775
+      },
+      {
+        "description": "",
+        "qty": 7802.99,
+        "price": 17770
+      },
+      {
+        "description": "",
+        "qty": 1939.03,
+        "price": 17770
+      },
+      {
+        "description": "",
+        "qty": 2062.13,
+        "price": 17765
+      },
+      {
+        "description": "",
+        "qty": 3269.46,
+        "price": 17780
+      }
+    ]
+  },
+  {
+    "id": "INV-20261012-3",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 140528.38,
+        "price": 17790
+      }
+    ]
+  },
+  {
+    "id": "INV-20261012-4",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 39314.8,
+        "price": 17805
+      }
+    ]
+  },
+  {
+    "id": "INV-20261013-1",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 76541.48,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261013-2",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 309834.68,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261013-3",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 151129.08,
+        "price": 17845
+      }
+    ]
+  },
+  {
+    "id": "INV-20261013-4",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 92481.95,
+        "price": 17840
+      }
+    ]
+  },
+  {
+    "id": "INV-20261013-5",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112139.05,
+        "price": 17835
+      }
+    ]
+  },
+  {
+    "id": "INV-20261013-6",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112327.99,
+        "price": 17805
+      }
+    ]
+  },
+  {
+    "id": "INV-20261014-1",
+    "customer": "NABIL",
+    "date": "2026-10-13",
+    "dueDate": "2026-10-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 5997,
+        "price": 17820
+      },
+      {
+        "description": "",
+        "qty": 14022.17,
+        "price": 17820
+      },
+      {
+        "description": "",
+        "qty": 7323.7,
+        "price": 17817
+      },
+      {
+        "description": "",
+        "qty": 16491.75,
+        "price": 17821
+      }
+    ]
+  },
+  {
+    "id": "INV-20261014-2",
+    "customer": "NABIL",
+    "date": "2026-10-13",
+    "dueDate": "2026-10-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112107.62,
+        "price": 17840
+      }
+    ]
+  },
+  {
+    "id": "INV-20261015-1",
+    "customer": "NABIL",
+    "date": "2026-10-14",
+    "dueDate": "2026-10-14",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 145576.7,
+        "price": 17860
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261002-1",
+    "customer": "NABIL",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 111950.74,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261002-2",
+    "customer": "NABIL",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 16839.74,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261002-2",
+    "customer": "NABIL",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 289163.39,
+        "price": 17810
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261002-3",
+    "customer": "NABIL",
+    "date": "2026-10-01",
+    "dueDate": "2026-10-01",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56163.99,
+        "price": 17805
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261003-1",
+    "customer": "NABIL",
+    "date": "2026-10-02",
+    "dueDate": "2026-10-02",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 13597.12,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261004-1",
+    "customer": "NABIL",
+    "date": "2026-10-03",
+    "dueDate": "2026-10-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 140331.18,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261004-2",
+    "customer": "NABIL",
+    "date": "2026-10-03",
+    "dueDate": "2026-10-03",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 25470.06,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261005-1",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 100812.09,
+        "price": 17855
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261005-2",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 22371.36,
+        "price": 17880
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261005-3",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 123145.81,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261005-4",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 131540.62,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261005-5",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 27404.92,
+        "price": 17880
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261005-6",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 55975.37,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261005-7",
+    "customer": "NABIL",
+    "date": "2026-10-04",
+    "dueDate": "2026-10-04",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 69969.21,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261006-1",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 27964.2,
+        "price": 17880
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261006-2",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 56022.4,
+        "price": 17850
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261006-3",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 36094.01,
+        "price": 17870
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261006-4",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 49916.06,
+        "price": 17870
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261006-5",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 23410.8,
+        "price": 17855
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261006-6",
+    "customer": "NABIL",
+    "date": "2026-10-05",
+    "dueDate": "2026-10-05",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 15952.98,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261008-1",
+    "customer": "NABIL",
+    "date": "2026-10-07",
+    "dueDate": "2026-10-07",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 128779.39,
+        "price": 17860
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261009-1",
+    "customer": "NABIL",
+    "date": "2026-10-08",
+    "dueDate": "2026-10-08",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 83710.95,
+        "price": 17860
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261010-1",
+    "customer": "NABIL",
+    "date": "2026-10-09",
+    "dueDate": "2026-10-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 102924.63,
+        "price": 17780
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261010-2",
+    "customer": "NABIL",
+    "date": "2026-10-09",
+    "dueDate": "2026-10-09",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 23000,
+        "price": 17745
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261012-1",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 44357.1,
+        "price": 17810
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261012-2",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 53340.81,
+        "price": 17810
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261012-3",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 151557.67,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261012-4",
+    "customer": "NABIL",
+    "date": "2026-10-11",
+    "dueDate": "2026-10-11",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 50519.22,
+        "price": 17815
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261013-1",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 78365.51,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261013-2",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 291071.92,
+        "price": 17865
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261013-3",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 145617.47,
+        "price": 17855
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261013-4",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 67189.24,
+        "price": 17860
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261013-5",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112044.81,
+        "price": 17850
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261013-6",
+    "customer": "NABIL",
+    "date": "2026-10-12",
+    "dueDate": "2026-10-12",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112107.62,
+        "price": 17840
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261014-1",
+    "customer": "NABIL",
+    "date": "2026-10-13",
+    "dueDate": "2026-10-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 44875.75,
+        "price": 17827
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261014-2",
+    "customer": "NABIL",
+    "date": "2026-10-13",
+    "dueDate": "2026-10-13",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 112044.81,
+        "price": 17850
+      }
+    ]
+  },
+  {
+    "id": "INV-S20261015-1",
+    "customer": "NABIL",
+    "date": "2026-10-14",
+    "dueDate": "2026-10-14",
+    "paymentMethod": "BANK BCA",
+    "status": "PAID",
+    "lines": [
+      {
+        "description": "",
+        "qty": 145658.26,
+        "price": 17850
+      }
+    ]
+  }
+]
