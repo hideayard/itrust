@@ -224,11 +224,14 @@ class GmrController extends Controller
             $amount += $lineQty * $linePrice;
         }
 
-        $syncKey = 'API:' . $direction . ':' . $invoiceNumber;
+        // Invoices are keyed by their number alone so a re-sync always updates
+        // the existing row instead of inserting a second one when the detected
+        // direction (or the sheet it came from) differs between runs.
+        $syncKey = 'API:' . $invoiceNumber;
 
         $model = GmrInvoice::findOne(['sync_key' => $syncKey]);
         if ($model === null) {
-            $model = GmrInvoice::findOne(['invoice_number' => $invoiceNumber, 'direction' => $direction]);
+            $model = GmrInvoice::findOne(['invoice_number' => $invoiceNumber]);
         }
         if ($model === null) {
             $model = new GmrInvoice();

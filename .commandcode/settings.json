@@ -32,7 +32,10 @@
       "Shell(php -l config/web.php)",
       "Shell(php -r \"try { $p = new PDO('mysql:host=127.0.0.1;port=3306', 'root', ''); echo 'mysql-ok'; } catch (Throwable $e) { echo 'no-db: '.$e->getMessage(); }\")",
       "Shell(php -r \" \\$invs = json_decode(file_get_contents('example/invoices.json'), true); \\$i = \\$invs[0]; \\$qty = 0.0; \\$amount = 0.0; \\$dir = 'BUY'; foreach (\\$i['lines'] as \\$l) { \\$q = (float)\\$l['qty']; \\$p = (float)\\$l['price']; \\$qty += \\$q; \\$amount += \\$q*\\$p; if (stripos(\\$l['description'],'SELL')!==false) \\$dir='SELL'; } echo json_encode(['id'=>\\$i['id'],'direction'=>\\$dir,'month'=>strtoupper(date('M',strtotime(\\$i['date']))),'qty'=>\\$qty,'rate'=>round(\\$amount/\\$qty,4),'amount'=>\\$amount,'lines'=>count(\\$i['lines'])], JSON_PRETTY_PRINT), PHP_EOL; \")",
-      "Shell(php \"C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\7e4c388d-2fb7-4117-a009-5453e45bb091\\scratchpad\\check.php\")"
+      "Shell(php \"C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\7e4c388d-2fb7-4117-a009-5453e45bb091\\scratchpad\\check.php\")",
+      "Shell(E:laragon6binmysqlmysql-8.4.3-winx64binmysql.exe:*)",
+      "Shell(php -l controllers/GmrController.php 2 >& 1)",
+      "Shell(E:laragon6binphpphp-8.3.16-Win32-vs16-x64php.exe:*)"
     ],
     "deny": [],
     "defaultMode": "default"
