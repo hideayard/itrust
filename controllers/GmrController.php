@@ -4,6 +4,7 @@ namespace app\controllers;
 
 use Yii;
 use Throwable;
+use yii\data\Pagination;
 use yii\web\Controller;
 use yii\web\Response;
 use app\models\GmrBuyTrade;
@@ -22,6 +23,8 @@ use app\models\GmrBankBalance;
  *   POST /gmr/sync-batch   many rows, optionally replacing a whole sheet
  *   POST /gmr/sync-invoice rendered invoices (+ lines), example/invoices.json
  *   GET  /gmr              health / entity list
+ *   GET  /gmr/invoices     list invoices, each with its line items
+ *   GET  /gmr/invoice      one invoice (id or invoice_number) with its lines
  *
  * Authentication: "Authorization: Bearer <gmrSyncToken>" (config/params.php).
  */
@@ -185,6 +188,283 @@ class GmrController extends Controller
     }
 
     /**
+     * GET /gmr/invoices - invoice headers, each with its line items.
+     *
+     * Query params (all optional):
+     *   id              - exact invoice id
+     *   invoice_number  - exact invoice number
+     *   direction       - BUY | SELL
+     *   month           - JAN..DEC
+     *   status          - PENDING | PAID | CANCEL
+     *   search          - substring of invoice_number or billed_to
+     *   date_from       - invoice_date >= YYYY-MM-DD
+     *   date_to         - invoice_date <= YYYY-MM-DD
+     *   with_details    - 0 to omit the lines (default 1)
+     *   page            - 1-based page number (default 1)
+     *   per_page        - rows per page, default 50, max 200 (alias: limit)
+     *   offset          - row offset, used when page is not given (alias behaviour)
+     *
+     * Response: { success, count, total, pagination, invoices: [...] }
+     * Also sets X-Pagination-Total-Count / -Page-Count / -Current-Page / -Per-Page.
+     *
+     * @return array
+     */
+    public function actionInvoices()
+    {
+        if (!$this->authorize()) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $request = Yii::$app->request;
+        $query = GmrInvoice::find();
+
+        $this->applyInvoiceFilters($query);
+
+        $total = (int) (clone $query)->count();
+
+        $pagination = new Pagination([
+            'totalCount' => $total,
+            'pageSize' => $this->resolvePageSize($request),
+        ]);
+
+        // Accept either ?page= (preferred) or ?offset= for the position.
+        $page = $request->get('page');
+        if ($page === null || $page === '') {
+            $offset = max(0, (int) $request->get('offset', 0));
+            $page = (int) floor($offset / $pagination->pageSize) + 1;
+        }
+        $pagination->setPage((int) $page - 1, true);
+
+        $withDetails = (string) $request->get('with_details', '1') !== '0';
+        if ($withDetails) {
+            $query->with('details');
+        }
+
+        $invoices = $query
+            ->orderBy(['id' => SORT_DESC])
+            ->limit($pagination->getLimit())
+            ->offset($pagination->getOffset())
+            ->all();
+
+        $page = $pagination->getPage() + 1;
+        $pageCount = $pagination->getPageCount();
+
+        Yii::$app->response->headers->set('X-Pagination-Total-Count', (string) $pagination->totalCount);
+        Yii::$app->response->headers->set('X-Pagination-Page-Count', (string) $pageCount);
+        Yii::$app->response->headers->set('X-Pagination-Current-Page', (string) $page);
+        Yii::$app->response->headers->set('X-Pagination-Per-Page', (string) $pagination->pageSize);
+
+        return [
+            'success' => true,
+            'count' => count($invoices),
+            'total' => $total,
+            'pagination' => [
+                'total' => $pagination->totalCount,
+                'count' => count($invoices),
+                'page' => $page,
+                'per_page' => $pagination->pageSize,
+                'page_count' => $pageCount,
+                'has_next' => $page < $pageCount,
+                'has_prev' => $page > 1,
+            ],
+            'invoices' => array_map(
+                function ($invoice) use ($withDetails) {
+                    return $this->serializeInvoice($invoice, $withDetails);
+                },
+                $invoices
+            ),
+        ];
+    }
+
+    /**
+     * Page size from ?per_page (or ?limit), clamped to 1..200 with a default of 50.
+     *
+     * @param \yii\web\Request $request
+     * @return int
+     */
+    protected function resolvePageSize($request)
+    {
+        $value = $request->get('per_page');
+        if ($value === null || $value === '') {
+            $value = $request->get('limit');
+        }
+
+        $size = (int) $value;
+        if ($size < 1) {
+            return 50;
+        }
+
+        return $size > 200 ? 200 : $size;
+    }
+
+    /**
+     * GET /gmr/invoice - a single invoice header with its line items.
+     *
+     * Query params: id (preferred) or invoice_number.
+     *
+     * Response: { success, invoice: { ...header, details: [...] } }
+     *
+     * @return array
+     */
+    public function actionInvoice()
+    {
+        if (!$this->authorize()) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $request = Yii::$app->request;
+        $id = $request->get('id');
+        $number = trim((string) $request->get('invoice_number', ''));
+
+        if (($id === null || $id === '') && $number === '') {
+            Yii::$app->response->statusCode = 422;
+
+            return ['success' => false, 'message' => 'Provide id or invoice_number'];
+        }
+
+        $query = GmrInvoice::find()->with('details');
+
+        if ($id !== null && $id !== '') {
+            $query->andWhere(['id' => (int) $id]);
+        }
+        if ($number !== '') {
+            $query->andWhere(['invoice_number' => $number]);
+        }
+
+        $model = $query->one();
+
+        if ($model === null) {
+            Yii::$app->response->statusCode = 404;
+
+            return ['success' => false, 'message' => 'Invoice not found'];
+        }
+
+        return [
+            'success' => true,
+            'invoice' => $this->serializeInvoice($model, true),
+        ];
+    }
+
+    /**
+     * Apply the shared invoice filters from the current request to a query.
+     *
+     * @param \yii\db\ActiveQuery $query
+     * @return void
+     */
+    protected function applyInvoiceFilters($query)
+    {
+        $request = Yii::$app->request;
+
+        $id = $request->get('id');
+        if ($id !== null && $id !== '') {
+            $query->andWhere(['id' => (int) $id]);
+        }
+
+        $number = trim((string) $request->get('invoice_number', ''));
+        if ($number !== '') {
+            $query->andWhere(['invoice_number' => $number]);
+        }
+
+        $direction = strtoupper(trim((string) $request->get('direction', '')));
+        if ($direction !== '') {
+            $query->andWhere(['direction' => $direction]);
+        }
+
+        $month = strtoupper(trim((string) $request->get('month', '')));
+        if ($month !== '') {
+            $query->andWhere(['month' => $month]);
+        }
+
+        $status = strtoupper(trim((string) $request->get('status', '')));
+        if ($status !== '') {
+            $query->andWhere(['status' => $status]);
+        }
+
+        $from = $this->normalizeDate($request->get('date_from'));
+        if ($from !== null) {
+            $query->andWhere(['>=', 'invoice_date', $from]);
+        }
+
+        $to = $this->normalizeDate($request->get('date_to'));
+        if ($to !== null) {
+            $query->andWhere(['<=', 'invoice_date', $to]);
+        }
+
+        $search = trim((string) $request->get('search', ''));
+        if ($search !== '') {
+            $query->andWhere([
+                'or',
+                ['like', 'invoice_number', $search],
+                ['like', 'billed_to', $search],
+            ]);
+        }
+    }
+
+    /**
+     * Shape an invoice header for a JSON response.
+     *
+     * @param GmrInvoice $model
+     * @param bool $withDetails
+     * @return array
+     */
+    protected function serializeInvoice($model, $withDetails = true)
+    {
+        $data = [
+            'id' => (int) $model->id,
+            'invoice_number' => $model->invoice_number,
+            'direction' => $model->direction,
+            'month' => $model->month,
+            'source_sheet' => $model->source_sheet,
+            'invoice_date' => $model->invoice_date,
+            'issue_date' => $model->issue_date,
+            'due_date' => $model->due_date,
+            'ref_id' => $model->ref_id,
+            'billed_to' => $model->billed_to,
+            'payment_method' => $model->payment_method,
+            'status' => $model->status,
+            'qty' => $this->toFloat($model->qty),
+            'rate' => $this->toFloat($model->rate),
+            'amount' => $this->toFloat($model->amount),
+        ];
+
+        if ($withDetails) {
+            $data['details'] = array_map([$this, 'serializeInvoiceDetail'], $model->details);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Shape an invoice line for a JSON response.
+     *
+     * @param GmrInvoiceDetail $detail
+     * @return array
+     */
+    protected function serializeInvoiceDetail($detail)
+    {
+        return [
+            'id' => (int) $detail->id,
+            'detail_date' => $detail->detail_date,
+            'ref_id' => $detail->ref_id,
+            'description' => $detail->description,
+            'qty' => $this->toFloat($detail->qty),
+            'unit_price' => $this->toFloat($detail->unit_price),
+            'amount' => $this->toFloat($detail->amount),
+        ];
+    }
+
+    /**
+     * Cast a DECIMAL column (PDO hands it back as a string) to a float.
+     *
+     * @param mixed $value
+     * @return float|null
+     */
+    protected function toFloat($value)
+    {
+        return $value === null ? null : (float) $value;
+    }
+
+    /**
      * Upsert one rendered invoice and replace its API-owned line items.
      *
      * @param array $data
@@ -259,7 +539,9 @@ class GmrController extends Controller
             );
         }
 
-        GmrInvoiceDetail::deleteAll(['source_sheet' => 'API', 'invoice_number' => $invoiceNumber]);
+        // Replace the invoice's whole line set, from any source, so a re-sync
+        // can never leave the previous lines behind and duplicate them.
+        GmrInvoiceDetail::deleteAll(['invoice_number' => $invoiceNumber]);
 
         foreach ($lines as $index => $line) {
             $detail = new GmrInvoiceDetail();

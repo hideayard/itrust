@@ -1,0 +1,373 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "GMR Invoice & Workbook Sync API",
+    "version": "1.0.0",
+    "description": "Endpoints exposed by app\\controllers\\GmrController. The POST endpoints receive the iTrust 2026 workbook sync from the Google Apps Script; the GET endpoints read invoices back. Every endpoint except GET /gmr (health) expects `Authorization: Bearer <gmrSyncToken>` where gmrSyncToken comes from config/params.php."
+  },
+  "servers": [
+    { "url": "/web", "description": "This host (app served under /web)" },
+    { "url": "https://itrust-tech.id/web", "description": "Production" }
+  ],
+  "tags": [
+    { "name": "Health", "description": "Service status" },
+    { "name": "Sync", "description": "Write endpoints driven by the Google Apps Script" },
+    { "name": "Invoices", "description": "Read endpoints for invoice data" }
+  ],
+  "security": [{ "bearerAuth": [] }],
+  "paths": {
+    "/gmr": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Health check / entity list",
+        "description": "Returns the service name and the entity keys accepted by /gmr/sync. No authentication required.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Service is up",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HealthResponse" },
+                "example": { "success": true, "service": "GMR sync", "entities": ["buy_trade", "exchange", "invoice", "invoice_detail", "monthly_summary", "bank_balance"] }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/gmr/sync": {
+      "post": {
+        "tags": ["Sync"],
+        "summary": "Upsert a single row",
+        "description": "Upserts one row for a given entity, keyed by `sync_key` (or `source_sheet:sheet_row`). Used by the on-edit trigger. A row may also be supplied as `record` instead of `rows`.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncPayload" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Row processed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/SyncFailed" }
+        }
+      }
+    },
+    "/gmr/sync-batch": {
+      "post": {
+        "tags": ["Sync"],
+        "summary": "Upsert many rows, optionally replacing a whole sheet",
+        "description": "Same payload as /gmr/sync but for many rows. When `mode` is `replace` and a `source_sheet` is given, all rows of that sheet are deleted first, then the batch is written.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncPayload" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch processed",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/SyncResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/SyncFailed" }
+        }
+      }
+    },
+    "/gmr/sync-invoice": {
+      "post": {
+        "tags": ["Sync"],
+        "summary": "Upsert rendered invoices with their line items",
+        "description": "Accepts a single invoice object, a `{ invoices: [...] }` wrapper, or a raw array of invoices. Each invoice is keyed by its `id` (= invoice_number); repeated calls update the same header and replace its whole line set instead of duplicating.",
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InvoiceSyncPayload" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Invoices written",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/InvoiceSyncResponse" },
+                "example": { "success": true, "count": 1, "invoices": [{ "invoice_id": 42, "invoice_number": "INV-20260901-1", "status": "PAID", "lines": 6 }] }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "422": { "$ref": "#/components/responses/SyncFailed" }
+        }
+      }
+    },
+    "/gmr/invoices": {
+      "get": {
+        "tags": ["Invoices"],
+        "summary": "List invoices with their line items",
+        "description": "Returns invoice headers (newest first) with their line items nested under `details`.",
+        "parameters": [
+          { "name": "id", "in": "query", "schema": { "type": "integer" }, "example": 42, "description": "Exact invoice id." },
+          { "name": "invoice_number", "in": "query", "schema": { "type": "string" }, "example": "INV-20260901-1", "description": "Exact invoice number." },
+          { "name": "direction", "in": "query", "schema": { "type": "string", "enum": ["BUY", "SELL"] }, "description": "Filter by BUY or SELL." },
+          { "name": "month", "in": "query", "schema": { "type": "string" }, "example": "SEP", "description": "Sheet month label JAN..DEC." },
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["PENDING", "PAID", "CANCEL"] }, "description": "Filter by status." },
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "example": "NABIL", "description": "Substring match on invoice_number or billed_to." },
+          { "name": "date_from", "in": "query", "schema": { "type": "string", "format": "date" }, "example": "2026-09-01", "description": "invoice_date >= date_from." },
+          { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date" }, "example": "2026-09-30", "description": "invoice_date <= date_to." },
+          { "name": "with_details", "in": "query", "schema": { "type": "string", "default": "1" }, "description": "Set to 0 to omit the nested line items." },
+          { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1, "minimum": 1 }, "description": "1-based page number." },
+          { "name": "per_page", "in": "query", "schema": { "type": "integer", "default": 50, "minimum": 1, "maximum": 200 }, "description": "Rows per page (default 50, max 200)." },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 200 }, "description": "Alias of per_page." },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0, "minimum": 0 }, "description": "Rows to skip; used when page is omitted." }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matching invoices",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InvoiceListResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      }
+    },
+    "/gmr/invoice": {
+      "get": {
+        "tags": ["Invoices"],
+        "summary": "Get a single invoice with its line items",
+        "description": "Looks up one invoice header by `id` or `invoice_number` and returns it with its line items.",
+        "parameters": [
+          { "name": "id", "in": "query", "schema": { "type": "integer" }, "example": 42, "description": "Invoice id (preferred)." },
+          { "name": "invoice_number", "in": "query", "schema": { "type": "string" }, "example": "INV-20260901-1", "description": "Invoice number." }
+        ],
+        "responses": {
+          "200": {
+            "description": "The invoice",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/InvoiceResponse" } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": {
+            "description": "Not found",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          },
+          "422": {
+            "description": "Neither id nor invoice_number supplied",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ErrorResponse" } } }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The gmrSyncToken from config/params.php, sent as `Authorization: Bearer <token>`."
+      }
+    },
+    "responses": {
+      "Unauthorized": {
+        "description": "Missing or wrong bearer token",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "success": false, "message": "Unauthorized" }
+          }
+        }
+      },
+      "SyncFailed": {
+        "description": "Payload rejected",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ErrorResponse" },
+            "example": { "success": false, "message": "Unknown entity 'foo'" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "service": { "type": "string" },
+          "entities": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string" }
+        }
+      },
+      "SyncPayload": {
+        "type": "object",
+        "required": ["entity", "rows"],
+        "properties": {
+          "entity": {
+            "type": "string",
+            "enum": ["buy_trade", "exchange", "invoice", "invoice_detail", "monthly_summary", "bank_balance"],
+            "description": "Which table to write to."
+          },
+          "source_sheet": { "type": "string", "example": "INV_BUY_SEP", "description": "Originating sheet name." },
+          "month": { "type": "string", "example": "SEP", "description": "Month label applied to new rows." },
+          "mode": { "type": "string", "enum": ["upsert", "replace", "append"], "default": "upsert", "description": "replace deletes the source_sheet's rows first." },
+          "record": { "$ref": "#/components/schemas/SyncRow", "description": "Single row (alternative to rows)." },
+          "rows": { "type": "array", "items": { "$ref": "#/components/schemas/SyncRow" } }
+        }
+      },
+      "SyncRow": {
+        "type": "object",
+        "description": "Column values for one row. Field names depend on the entity (e.g. invoice: invoice_number, invoice_date, qty, rate, amount; exchange: trade_date, nominal, rate_buy, ...). sync_key (or source_sheet:sheet_row) is required to match an existing row.",
+        "properties": {
+          "sync_key": { "type": "string", "example": "INV_BUY_SEP:5" },
+          "sheet_row": { "type": "integer", "example": 5 }
+        },
+        "additionalProperties": true
+      },
+      "SyncResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "entity": { "type": "string" },
+          "source_sheet": { "type": "string" },
+          "mode": { "type": "string" },
+          "received": { "type": "integer" },
+          "created": { "type": "integer" },
+          "updated": { "type": "integer" },
+          "failed": { "type": "integer" },
+          "errors": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+        }
+      },
+      "InvoiceSyncPayload": {
+        "oneOf": [
+          { "$ref": "#/components/schemas/InvoiceInput" },
+          { "type": "array", "items": { "$ref": "#/components/schemas/InvoiceInput" } },
+          {
+            "type": "object",
+            "required": ["invoices"],
+            "properties": { "invoices": { "type": "array", "items": { "$ref": "#/components/schemas/InvoiceInput" } } }
+          }
+        ],
+        "description": "A single invoice, a raw array of invoices, or an { invoices: [...] } wrapper."
+      },
+      "InvoiceInput": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "INV-20260901-1", "description": "Invoice number (also accepted as invoice_number)." },
+          "invoice_number": { "type": "string" },
+          "customer": { "type": "string", "example": "NABIL", "description": "Also accepted as billed_to." },
+          "billed_to": { "type": "string" },
+          "date": { "type": "string", "format": "date", "example": "2026-08-31", "description": "Also accepted as invoice_date." },
+          "invoice_date": { "type": "string", "format": "date" },
+          "dueDate": { "type": "string", "format": "date", "description": "Also accepted as due_date." },
+          "due_date": { "type": "string", "format": "date" },
+          "issueDate": { "type": "string", "format": "date", "description": "Also accepted as issue_date; defaults to date." },
+          "issue_date": { "type": "string", "format": "date" },
+          "paymentMethod": { "type": "string", "example": "BANK BCA", "description": "Also accepted as payment_method." },
+          "payment_method": { "type": "string" },
+          "status": { "type": "string", "enum": ["PENDING", "PAID", "CANCEL"], "example": "PAID" },
+          "month": { "type": "string", "example": "AUG", "description": "Defaults to the month of the invoice date." },
+          "ref_id": { "type": "string" },
+          "refId": { "type": "string" },
+          "direction": { "type": "string", "enum": ["BUY", "SELL"], "description": "Defaults to the direction guessed from the line descriptions." },
+          "lines": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LineInput" }
+          }
+        },
+        "required": ["id"]
+      },
+      "LineInput": {
+        "type": "object",
+        "properties": {
+          "description": { "type": "string", "example": "BUY USD" },
+          "qty": { "type": "number", "example": 29365.07 },
+          "price": { "type": "number", "example": 17640, "description": "Also accepted as unit_price." },
+          "unit_price": { "type": "number" }
+        }
+      },
+      "InvoiceSyncResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "count": { "type": "integer" },
+          "invoices": { "type": "array", "items": { "$ref": "#/components/schemas/InvoiceSyncResult" } }
+        }
+      },
+      "InvoiceSyncResult": {
+        "type": "object",
+        "properties": {
+          "invoice_id": { "type": "integer" },
+          "invoice_number": { "type": "string" },
+          "status": { "type": "string", "nullable": true },
+          "lines": { "type": "integer", "description": "Number of line items written." }
+        }
+      },
+      "InvoiceListResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "count": { "type": "integer", "description": "Rows returned in this page." },
+          "total": { "type": "integer", "description": "Rows matching the filters." },
+          "pagination": { "$ref": "#/components/schemas/Pagination" },
+          "invoices": { "type": "array", "items": { "$ref": "#/components/schemas/Invoice" } }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "description": "Page metadata, mirrored in the X-Pagination-* response headers.",
+        "properties": {
+          "total": { "type": "integer", "description": "Rows matching the filters." },
+          "count": { "type": "integer", "description": "Rows in this page." },
+          "page": { "type": "integer", "description": "Current 1-based page." },
+          "per_page": { "type": "integer" },
+          "page_count": { "type": "integer" },
+          "has_next": { "type": "boolean" },
+          "has_prev": { "type": "boolean" }
+        }
+      },
+      "InvoiceResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean" },
+          "invoice": { "$ref": "#/components/schemas/Invoice" }
+        }
+      },
+      "Invoice": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "invoice_number": { "type": "string", "nullable": true },
+          "direction": { "type": "string", "enum": ["BUY", "SELL"] },
+          "month": { "type": "string", "nullable": true },
+          "source_sheet": { "type": "string" },
+          "invoice_date": { "type": "string", "format": "date", "nullable": true },
+          "issue_date": { "type": "string", "format": "date", "nullable": true },
+          "due_date": { "type": "string", "format": "date", "nullable": true },
+          "ref_id": { "type": "string", "nullable": true },
+          "billed_to": { "type": "string", "nullable": true },
+          "payment_method": { "type": "string", "nullable": true },
+          "status": { "type": "string", "nullable": true },
+          "qty": { "type": "number", "nullable": true, "description": "USD qty." },
+          "rate": { "type": "number", "nullable": true, "description": "IDR per USD." },
+          "amount": { "type": "number", "nullable": true, "description": "IDR total." },
+          "details": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/InvoiceDetail" },
+            "description": "Present unless with_details=0."
+          }
+        }
+      },
+      "InvoiceDetail": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "detail_date": { "type": "string", "format": "date", "nullable": true },
+          "ref_id": { "type": "string", "nullable": true },
+          "description": { "type": "string", "nullable": true },
+          "qty": { "type": "number", "nullable": true },
+          "unit_price": { "type": "number", "nullable": true },
+          "amount": { "type": "number", "nullable": true }
+        }
+      }
+    }
+  }
+}

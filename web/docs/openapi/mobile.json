@@ -1,0 +1,1836 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "MobileController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/MobileController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "MobileController"
+        }
+    ],
+    "paths": {
+        "/mobile/action-change-password": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "action-change-password",
+                "summary": "action-change-password",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    },
+                                    "new_password": {
+                                        "type": "string"
+                                    },
+                                    "confirm_password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/action-reset-password": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "action-reset-password",
+                "summary": "action-reset-password",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "type": "string"
+                                    },
+                                    "new_password": {
+                                        "type": "string"
+                                    },
+                                    "confirm_password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/averaged-telemetry": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "averaged-telemetry",
+                "summary": "Endpoint to receive averaged telemetry data",
+                "description": "POST /mobile/averaged-telemetry",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/change-password": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "change-password",
+                "summary": "change-password",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/check-otp": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "check-otp",
+                "summary": "Check/Verify OTP",
+                "description": "POST /check-otp\nParams: email, otp",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/create-device": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "create-device",
+                "summary": "Create a new device for the authenticated user",
+                "description": "POST /mobile/create-device\n\nParameters (POST):\n- device_id (required): Unique device identifier\n- device_name (optional): Device name\n- device_alias (optional): Device alias\n- device_description (optional): Device description\n- device_remark (optional): Device remark\n\nResponse:\n{\n\"success\": true,\n\"message\": \"Device created successfully\",\n\"data\": {\n\"id\": 1,\n\"device_id\": \"device_123\",\n\"device_name\": \"My Device\",\n\"device_alias\": \"Solar Panel\",\n\"device_description\": \"Main solar panel\",\n\"device_remark\": \"Installed 2024\",\n\"is_active\": true,\n\"created_at\": \"2024-01-01 12:00:00\"\n}\n}",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string"
+                                    },
+                                    "device_id": {
+                                        "type": "string"
+                                    },
+                                    "device_name": {
+                                        "type": "string"
+                                    },
+                                    "device_alias": {
+                                        "type": "string"
+                                    },
+                                    "device_description": {
+                                        "type": "string"
+                                    },
+                                    "device_remark": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/debug-table": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "debug-table",
+                "summary": "debug-table",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/delete-device": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "delete-device",
+                "summary": "delete-device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/device-telemetry": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "device-telemetry",
+                "summary": "Get telemetry data for a specific device by device_id",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "device_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/device-telemetry-by-id": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "device-telemetry-by-id",
+                "summary": "Get specific telemetry record by ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/forgot-password": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "forgot-password",
+                "summary": "Updated forgot password action with email debugging",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/generate-otp": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "generate-otp",
+                "summary": "Generate OTP for password reset",
+                "description": "POST /generate-otp\nParams: email",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-account-status": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-account-status",
+                "summary": "get-account-status",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "license",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-all-scraped-data-v2": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-all-scraped-data-v2",
+                "summary": "get-all-scraped-data-v2",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "pair",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeframe",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-device": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-device",
+                "summary": "get-device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/get-devices": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-devices",
+                "summary": "get-devices",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/get-devices-with-data": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-devices-with-data",
+                "summary": "get-devices-with-data",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/get-high-impact-events": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-high-impact-events",
+                "summary": "Get high impact events",
+                "description": "Endpoint: GET /mobile/get-high-impact-events?currency=USD&limit=10\n\nResponse:\n{\n\"success\": true,\n\"events\": [...],\n\"total\": 8\n}",
+                "parameters": [
+                    {
+                        "name": "currency",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-interest-rates": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-interest-rates",
+                "summary": "Get interest rates",
+                "description": "Endpoint: GET /mobile/get-interest-rates?country=United States&limit=10\n\nResponse:\n{\n\"success\": true,\n\"interestRates\": [...],\n\"total\": 5\n}",
+                "parameters": [
+                    {
+                        "name": "country",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-inverter-settings": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-inverter-settings",
+                "summary": "Get all active inverter settings.",
+                "description": "Returns every settings row where settings_status = 1 and settings_type = 'inverter'.\n\nEndpoint: GET /mobile/get-inverter-settings",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-latest-events": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-latest-events",
+                "summary": "Get latest economic events",
+                "description": "Endpoint: GET /mobile/get-latest-events?currency=EUR&limit=20\n\nResponse:\n{\n\"success\": true,\n\"events\": [...],\n\"total\": 15\n}",
+                "parameters": [
+                    {
+                        "name": "currency",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-latest-scrape-data": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-latest-scrape-data",
+                "summary": "get-latest-scrape-data",
+                "parameters": [
+                    {
+                        "name": "pair",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeframe",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-latest-scrape-data-v2": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-latest-scrape-data-v2",
+                "summary": "Get latest scraped data V2 - Updated to match web page requirements",
+                "description": "Endpoint: GET /mobile/get-latest-scrape-data-v2\nParameters: pair, timeframe (optional)",
+                "parameters": [
+                    {
+                        "name": "pair",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeframe",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "hours",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-latest-scrape-data-v3": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-latest-scrape-data-v3",
+                "summary": "get-latest-scrape-data-v3",
+                "parameters": [
+                    {
+                        "name": "pair",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeframe",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "source",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "hoursBack",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "includeRaw",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-public-devices-with-data": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-public-devices-with-data",
+                "summary": "Get ALL public devices with data - NO AUTHENTICATION REQUIRED",
+                "description": "For demo purposes only - returns all active devices from all users with their telemetry data\n\nEndpoint: GET /mobile/get-public-devices-with-data\n\nResponse:\n{\n\"success\": true,\n\"message\": \"Public devices retrieved successfully with telemetry data\",\n\"data\": [...],\n\"summary\": {...}\n}",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-scrape-data": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-scrape-data",
+                "summary": "Get scraped data by ID or latest",
+                "description": "Endpoint: GET /mobile/get-scrape-data?id=123\nEndpoint: GET /mobile/get-scrape-data?limit=10\nEndpoint: GET /mobile/get-scrape-data?date=2024-01-07\nEndpoint: GET /mobile/get-scrape-data?startDate=2024-01-01&endDate=2024-01-07\n\nResponse:\n{\n\"success\": true,\n\"data\": [...],\n\"total\": 10\n}",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-scraped-data-stats-v2": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-scraped-data-stats-v2",
+                "summary": "get-scraped-data-stats-v2",
+                "parameters": [
+                    {
+                        "name": "pair",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeframe",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "days",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-scraped-data-v2": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-scraped-data-v2",
+                "summary": "get-scraped-data-v2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-statistics": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-statistics",
+                "summary": "Get scraping statistics",
+                "description": "Endpoint: GET /mobile/get-statistics?startDate=2024-01-01&endDate=2024-01-07\n\nResponse:\n{\n\"success\": true,\n\"statistics\": [...],\n\"total\": 7\n}",
+                "parameters": [
+                    {
+                        "name": "startDate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "endDate",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-technical-analysis": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-technical-analysis",
+                "summary": "Get technical analysis data",
+                "description": "Endpoint: GET /mobile/get-technical-analysis?limit=5\n\nResponse:\n{\n\"success\": true,\n\"technicalAnalysis\": [...],\n\"total\": 5\n}",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/get-user-profile": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-user-profile",
+                "summary": "get-user-profile",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/get-user-stats": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-user-stats",
+                "summary": "get-user-stats",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/get-users": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-users",
+                "summary": "get-users",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/get-users-inverter": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-users-inverter",
+                "summary": "Get list of users where user_tipe is ADMIN or CUSTOMER",
+                "description": "Endpoint: GET /mobile/get-users\nParameters: token (required), user_tipe (optional: ADMIN, CUSTOMER, or all), limit, offset\n\nResponse:\n{\n\"success\": true,\n\"message\": \"Users retrieved successfully\",\n\"data\": [...],\n\"total\": 10\n}",
+                "parameters": [
+                    {
+                        "name": "user_tipe",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/get-users-old": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "get-users-old",
+                "summary": "get-users-old",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/health": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "health",
+                "summary": "Health check endpoint",
+                "description": "GET /mobile/health",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/index": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "index",
+                "summary": "index",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/login": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "login",
+                "summary": "login",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/options": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "options",
+                "summary": "Handle OPTIONS request for CORS preflight",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/register": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "register",
+                "summary": "User Registration Endpoint",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "name": {
+                                        "type": "string"
+                                    },
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "username": {
+                                        "type": "string"
+                                    },
+                                    "password": {
+                                        "type": "string"
+                                    },
+                                    "confirm_password": {
+                                        "type": "string"
+                                    },
+                                    "phone": {
+                                        "type": "string"
+                                    },
+                                    "user_type": {
+                                        "type": "string"
+                                    },
+                                    "accept_terms": {
+                                        "type": "string"
+                                    },
+                                    "account": {
+                                        "type": "string"
+                                    },
+                                    "license": {
+                                        "type": "string"
+                                    },
+                                    "telegram_id": {
+                                        "type": "string"
+                                    },
+                                    "telegram_username": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/reset-password": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "reset-password",
+                "summary": "Reset password using OTP",
+                "description": "POST /reset-password\nParams: email, otp, new_password, confirm_password",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "otp": {
+                                        "type": "string"
+                                    },
+                                    "new_password": {
+                                        "type": "string"
+                                    },
+                                    "confirm_password": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/save-investing-data": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "save-investing-data",
+                "summary": "save-investing-data",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/save-myfxbook-data": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "save-myfxbook-data",
+                "summary": "save-myfxbook-data",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/save-scrape-data": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "save-scrape-data",
+                "summary": "save-scrape-data",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/save-scrape-data-v2": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "save-scrape-data-v2",
+                "summary": "save-scrape-data-v2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/save-scrape-data2": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "save-scrape-data2",
+                "summary": "save-scrape-data2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/set-device": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "set-device",
+                "summary": "Connect user_id to unassigned device record.",
+                "description": "Params: token, user_id, device",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "device",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    },
+                                    "user_id": {
+                                        "type": "string"
+                                    },
+                                    "device": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/sync-config": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "sync-config",
+                "summary": "Endpoint to get sync configuration for mobile app",
+                "description": "GET /mobile/sync-config",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/telemetry-stats": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "telemetry-stats",
+                "summary": "Endpoint to get telemetry data statistics",
+                "description": "GET /mobile/telemetry-stats",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/test-email": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "test-email",
+                "summary": "Public action to test email sending",
+                "description": "Can be called via: POST /test-email with optional email and name fields",
+                "parameters": [
+                    {
+                        "name": "email",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "email": {
+                                        "type": "string"
+                                    },
+                                    "name": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/update-device": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "update-device",
+                "summary": "update-device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/update-photo": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "update-photo",
+                "summary": "update-photo",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/update-user": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "update-user",
+                "summary": "update-user",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mobile/user-devices": {
+            "get": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "user-devices",
+                "summary": "Get all devices for the authenticated user",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/validate-token": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "validate-token",
+                "summary": "validate-token",
+                "parameters": [
+                    {
+                        "name": "token",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mobile/verify-reset-token": {
+            "post": {
+                "tags": [
+                    "MobileController"
+                ],
+                "operationId": "verify-reset-token",
+                "summary": "Verify Reset Token (optional endpoint)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "token": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

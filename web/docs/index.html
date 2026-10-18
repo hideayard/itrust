@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>API docs - Swagger UI</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+  <style>
+    body { margin: 0; background: #fafafa; }
+    .topbar { display: none; }
+    #auth-hint {
+      font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #fff3cd; border-bottom: 1px solid #ffe69c; padding: 8px 16px; color: #664d03;
+    }
+    #auth-hint code { background: #fff; padding: 1px 5px; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div id="auth-hint">
+    Pick a spec from the top-right dropdown. Authenticated calls need a bearer token:
+    click <strong>Authorize</strong> and paste the token (GMR uses the
+    <code>gmrSyncToken</code> from <code>config/params.php</code>; mobile/JWT routes use the token from <code>mobile/login</code>).
+  </div>
+  <div id="swagger-ui"></div>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function () {
+      SwaggerUIBundle({
+        urls: [
+    {
+        "name": "GMR Invoice & Workbook Sync API",
+        "url": "./openapi/gmr.json"
+    },
+    {
+        "name": "BotController API",
+        "url": "./openapi/bot.json"
+    },
+    {
+        "name": "DashboardInverterController API",
+        "url": "./openapi/dashboard-inverter.json"
+    },
+    {
+        "name": "EaController API",
+        "url": "./openapi/ea.json"
+    },
+    {
+        "name": "InverterController API",
+        "url": "./openapi/inverter.json"
+    },
+    {
+        "name": "MobileController API",
+        "url": "./openapi/mobile.json"
+    },
+    {
+        "name": "Mt4AccountController API",
+        "url": "./openapi/mt4-account.json"
+    },
+    {
+        "name": "PublicController API",
+        "url": "./openapi/public.json"
+    },
+    {
+        "name": "ScrapedDataController API",
+        "url": "./openapi/scraped-data.json"
+    },
+    {
+        "name": "TelemetryDeviceController API",
+        "url": "./openapi/telemetry-device.json"
+    },
+    {
+        "name": "WebhookController API",
+        "url": "./openapi/webhook.json"
+    }
+],
+        "urls.primaryName": "GMR Invoice & Workbook Sync API",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        tryItOutEnabled: true,
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
+        plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+        layout: 'StandaloneLayout'
+      });
+    };
+  </script>
+</body>
+</html>

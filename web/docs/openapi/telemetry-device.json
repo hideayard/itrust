@@ -1,0 +1,702 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "TelemetryDeviceController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/TelemetryDeviceController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "TelemetryDeviceController"
+        }
+    ],
+    "paths": {
+        "/telemetry-device/activate": {
+            "patch": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "activate",
+                "summary": "PATCH /telemetry-device/{id}/activate - Activate device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/{id}/activate": {
+            "patch": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "activate-1",
+                "summary": "PATCH /telemetry-device/{id}/activate - Activate device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/bulk-assign": {
+            "post": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "bulk-assign",
+                "summary": "POST /telemetry-device/bulk-assign - Bulk assign devices to user (Admin only)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string"
+                                    },
+                                    "device_ids": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/by-user": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "by-user",
+                "summary": "GET /telemetry-device/user/{user_id} - Get devices by user ID (Admin only)",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/user/{user_id}": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "by-user-1",
+                "summary": "GET /telemetry-device/user/{user_id} - Get devices by user ID (Admin only)",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/create": {
+            "post": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "create",
+                "summary": "POST /telemetry-device - Create new device",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/delete": {
+            "delete": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "delete",
+                "summary": "DELETE /telemetry-device/{id} - Delete device (soft delete by setting is_active = 0)",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/{id}/delete": {
+            "delete": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "delete-1",
+                "summary": "DELETE /telemetry-device/{id} - Delete device (soft delete by setting is_active = 0)",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/index": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "index",
+                "summary": "GET /telemetry-device - List all devices with pagination",
+                "description": "Admin: all devices, User: only their devices",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "index-1",
+                "summary": "GET /telemetry-device - List all devices with pagination",
+                "description": "Admin: all devices, User: only their devices",
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/options": {
+            "post": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "options",
+                "summary": "Handle OPTIONS request for CORS preflight",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/search": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "search",
+                "summary": "GET /telemetry-device/search - Search devices",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/stats": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "stats",
+                "summary": "GET /telemetry-device/{id}/stats - Get device statistics",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/{id}/stats": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "stats-1",
+                "summary": "GET /telemetry-device/{id}/stats - Get device statistics",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/telemetry": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "telemetry",
+                "summary": "GET /telemetry-device/{id}/telemetry - Get telemetry data for specific device",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/{id}/telemetry": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "telemetry-1",
+                "summary": "GET /telemetry-device/{id}/telemetry - Get telemetry data for specific device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/update": {
+            "put": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "update",
+                "summary": "PUT /telemetry-device/{id} - Update device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/{id}/update": {
+            "put": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "update-1",
+                "summary": "PUT /telemetry-device/{id} - Update device",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/view": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "view",
+                "summary": "GET /telemetry-device/{id} - Get device by ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        },
+        "/telemetry-device/{id}": {
+            "get": {
+                "tags": [
+                    "TelemetryDeviceController"
+                ],
+                "operationId": "view-1",
+                "summary": "GET /telemetry-device/{id} - Get device by ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    },
+    "security": [
+        {
+            "bearerAuth": []
+        }
+    ]
+}

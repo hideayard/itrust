@@ -35,7 +35,20 @@
       "Shell(php \"C:\\Users\\ASUS\\AppData\\Local\\Temp\\commandcode\\E--laragon6-www-itrust\\7e4c388d-2fb7-4117-a009-5453e45bb091\\scratchpad\\check.php\")",
       "Shell(E:laragon6binmysqlmysql-8.4.3-winx64binmysql.exe:*)",
       "Shell(php -l controllers/GmrController.php 2 >& 1)",
-      "Shell(E:laragon6binphpphp-8.3.16-Win32-vs16-x64php.exe:*)"
+      "Shell(E:laragon6binphpphp-8.3.16-Win32-vs16-x64php.exe:*)",
+      "Shell(php -l models/GmrInvoice.php)",
+      "Shell(php runtime/smoke_gmr.php)",
+      "Shell(del:*)",
+      "Shell(php -r \"$d=json_decode(file_get_contents('web/docs/gmr-openapi.json'),true); if($d===null){echo 'INVALID: '.json_last_error_msg().PHP_EOL; exit(1);} echo 'valid JSON; paths: '.implode(', ', array_keys($d['paths'])).PHP_EOL; echo 'schemas: '.implode(', ', array_keys($d['components']['schemas'])).PHP_EOL;\")",
+      "powershell",
+      "Shell(php -l docs/generate-api-docs.php)",
+      "Shell(php docs/generate-api-docs.php)",
+      "Shell(php -r \"foreach (glob('web/docs/openapi/*.json') as $f) { $d=json_decode(file_get_contents($f),true); echo str_pad(basename($f),24).( $d===null ? 'INVALID '.json_last_error_msg() : 'ok paths='.count($d['paths']) ).PHP_EOL; }\")",
+      "Shell(php -r \"foreach (glob('web/docs/openapi/*.json') as $f) { $d=json_decode(file_get_contents($f),true); if($d===null){echo 'INVALID '.basename($f).' '.json_last_error_msg().PHP_EOL; exit(1);} } echo 'all specs valid'.PHP_EOL;\")",
+      "Shell(php -r foreach (glob('web/docs/openapi/*.json') as ) { if (json_decode(file_get_contents(),true)===null) { echo 'INVALID '.basename().PHP_EOL; exit(1);} } echo 'all specs valid'.PHP_EOL;)",
+      "Shell(php runtime/smoke_pagination.php 2 >& 1)",
+      "Shell(Select-String:*)",
+      "Shell(php -r =json_decode(file_get_contents('web/docs/openapi/gmr.json'),true); if(===null){echo 'INVALID '.json_last_error_msg(); exit(1);} echo 'gmr.json valid; invoices params: '.count(['paths']['/gmr/invoices']['get']['parameters']).PHP_EOL;)"
     ],
     "deny": [],
     "defaultMode": "default"

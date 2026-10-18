@@ -1,0 +1,49 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "PublicController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/PublicController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "PublicController"
+        }
+    ],
+    "paths": {
+        "/public/get-mt4-accounts": {
+            "get": {
+                "tags": [
+                    "PublicController"
+                ],
+                "operationId": "get-mt4-accounts",
+                "summary": "Get MT4 accounts and groups where remark = \"public\"",
+                "description": "This endpoint does NOT require authentication.\n\nGET /public/get-mt4-accounts\n\nAccounts are included if:\n- the account itself has remark = \"public\", OR\n- the account's account_id belongs to an Mt4Group with remark = \"public\"\n(matched via the group's mt4_ids JSON array, as in Mt4AccountController::getGroupsData)",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

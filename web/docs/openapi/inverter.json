@@ -1,0 +1,62 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "InverterController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/InverterController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "InverterController"
+        }
+    ],
+    "paths": {
+        "/inverter/index": {
+            "post": {
+                "tags": [
+                    "InverterController"
+                ],
+                "operationId": "index",
+                "summary": "Lists all Banner models.",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/inverter/s": {
+            "post": {
+                "tags": [
+                    "InverterController"
+                ],
+                "operationId": "s",
+                "summary": "{@inheritdoc}",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

@@ -114,4 +114,15 @@ class GmrInvoice extends ActiveRecord
     {
         return static::find()->where(['direction' => $direction]);
     }
+
+    /**
+     * Line items belonging to this invoice, matched on the invoice number.
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getDetails()
+    {
+        return $this->hasMany(GmrInvoiceDetail::class, ['invoice_number' => 'invoice_number'])
+            ->orderBy(['gmr_invoice_detail.id' => SORT_ASC]);
+    }
 }

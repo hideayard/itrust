@@ -1,0 +1,62 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "DashboardInverterController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/DashboardInverterController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "DashboardInverterController"
+        }
+    ],
+    "paths": {
+        "/dashboard-inverter/index": {
+            "post": {
+                "tags": [
+                    "DashboardInverterController"
+                ],
+                "operationId": "index",
+                "summary": "Lists all Banner models.",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/dashboard-inverter/s": {
+            "post": {
+                "tags": [
+                    "DashboardInverterController"
+                ],
+                "operationId": "s",
+                "summary": "{@inheritdoc}",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

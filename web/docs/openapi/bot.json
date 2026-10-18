@@ -1,0 +1,73 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "BotController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/BotController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "BotController"
+        }
+    ],
+    "paths": {
+        "/bot/index": {
+            "post": {
+                "tags": [
+                    "BotController"
+                ],
+                "operationId": "index",
+                "summary": "index",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/bot/webhook": {
+            "post": {
+                "tags": [
+                    "BotController"
+                ],
+                "operationId": "webhook",
+                "summary": "webhook",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

@@ -1,0 +1,910 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "EaController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/EaController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "EaController"
+        }
+    ],
+    "paths": {
+        "/ea/cancel": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "cancel",
+                "summary": "cancel",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/check-license": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "check-license",
+                "summary": "check-license",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    },
+                                    "license": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/check-license-time": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "check-license-time",
+                "summary": "check-license-time",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "license": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/check-license-time-v2": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "check-license-time-v2",
+                "summary": "check-license-time-v2",
+                "parameters": [
+                    {
+                        "name": "license",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "license": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/check-license-v2": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "check-license-v2",
+                "summary": "check-license-v2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "license": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/close": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "close",
+                "summary": "close",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/get": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "get",
+                "summary": "Simplified version that doesn't modify the multi-account list",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/get-account-orders": {
+            "get": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "get-account-orders",
+                "summary": "Get open and closed orders for an account.",
+                "description": "Fetch orders of the AccountOrders model split into open and closed\ngroups, with optional pagination, filtering and summary statistics.\n\nQuery parameters (GET or POST):\n- account_id  (required) The MT4/MT5 account number\n- limit       (optional) Number of orders per group, default 100\n- offset      (optional) Offset for pagination, default 0\n- symbol      (optional) Filter orders by symbol\n- from_date   (optional) Only orders opened at/after this date (Y-m-d)\n- to_date     (optional) Only orders opened up to this date (Y-m-d)\n- with_stats  (optional) 1 to include computed statistics",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "symbol",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "with_stats",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/ea/get-dd": {
+            "get": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "get-dd",
+                "summary": "Get trade DD data by license",
+                "parameters": [
+                    {
+                        "name": "license",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/get-orders": {
+            "get": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "get-orders",
+                "summary": "Get orders for an account",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/get-total-wd": {
+            "get": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "get-total-wd",
+                "summary": "Get total withdraw value by license",
+                "parameters": [
+                    {
+                        "name": "license",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/get-wd": {
+            "get": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "get-wd",
+                "summary": "Get withdraw data by license",
+                "parameters": [
+                    {
+                        "name": "license",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/index": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "index",
+                "summary": "index",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/license": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "license",
+                "summary": "license",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/order-stats": {
+            "get": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "order-stats",
+                "summary": "Get order statistics for dashboard",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/outlook": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "outlook",
+                "summary": "outlook",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/save-dd": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "save-dd",
+                "summary": "save-dd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "license": {
+                                        "type": "string"
+                                    },
+                                    "account": {
+                                        "type": "string"
+                                    },
+                                    "wk_dd": {
+                                        "type": "string"
+                                    },
+                                    "wk_percentage_dd": {
+                                        "type": "string"
+                                    },
+                                    "wk_date": {
+                                        "type": "string"
+                                    },
+                                    "wk_equity": {
+                                        "type": "string"
+                                    },
+                                    "all_dd": {
+                                        "type": "string"
+                                    },
+                                    "all_percentage_dd": {
+                                        "type": "string"
+                                    },
+                                    "all_date": {
+                                        "type": "string"
+                                    },
+                                    "all_equity": {
+                                        "type": "string"
+                                    },
+                                    "disabled_ea": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/save-dd-backup": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "save-dd-backup",
+                "summary": "Save or update trade DD data",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "license": {
+                                        "type": "string"
+                                    },
+                                    "account": {
+                                        "type": "string"
+                                    },
+                                    "wk_dd": {
+                                        "type": "string"
+                                    },
+                                    "wk_percentage_dd": {
+                                        "type": "string"
+                                    },
+                                    "wk_date": {
+                                        "type": "string"
+                                    },
+                                    "wk_equity": {
+                                        "type": "string"
+                                    },
+                                    "all_dd": {
+                                        "type": "string"
+                                    },
+                                    "all_percentage_dd": {
+                                        "type": "string"
+                                    },
+                                    "all_date": {
+                                        "type": "string"
+                                    },
+                                    "all_equity": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/save-wd": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "save-wd",
+                "summary": "save-wd",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "license": {
+                                        "type": "string"
+                                    },
+                                    "account": {
+                                        "type": "string"
+                                    },
+                                    "wd_value": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/sync-account": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "sync-account",
+                "summary": "sync-account",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "bot_name": {
+                                        "type": "string"
+                                    },
+                                    "disabled_ea": {
+                                        "type": "string"
+                                    },
+                                    "buy_status": {
+                                        "type": "string"
+                                    },
+                                    "sell_status": {
+                                        "type": "string"
+                                    },
+                                    "broker": {
+                                        "type": "string"
+                                    },
+                                    "license": {
+                                        "type": "string"
+                                    },
+                                    "account_id": {
+                                        "type": "string"
+                                    },
+                                    "leverage": {
+                                        "type": "string"
+                                    },
+                                    "currency": {
+                                        "type": "string"
+                                    },
+                                    "server": {
+                                        "type": "string"
+                                    },
+                                    "buy_order_count": {
+                                        "type": "string"
+                                    },
+                                    "total_buy_lot": {
+                                        "type": "string"
+                                    },
+                                    "sell_order_count": {
+                                        "type": "string"
+                                    },
+                                    "total_sell_lot": {
+                                        "type": "string"
+                                    },
+                                    "total_profit": {
+                                        "type": "string"
+                                    },
+                                    "account_balance": {
+                                        "type": "string"
+                                    },
+                                    "account_equity": {
+                                        "type": "string"
+                                    },
+                                    "floating_value": {
+                                        "type": "string"
+                                    },
+                                    "min_lot": {
+                                        "type": "string"
+                                    },
+                                    "timestamp": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/sync-dashboard-orders": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "sync-dashboard-orders",
+                "summary": "Sync open/history orders from MT4 dashboard payload.",
+                "description": "Expected payload:\n{\n\"success\": true,\n\"data\": [{\"ticket\": 1, \"openTime\": \"2026-08-03T16:40:01\", ...}],\n\"login\": \"15896020\"\n}",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/sync-orders": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "sync-orders",
+                "summary": "Sync closed orders from MT4",
+                "description": "Accepts single order or batch array",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/test-error": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "test-error",
+                "summary": "test-error",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/test-message": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "test-message",
+                "summary": "test-message",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/ea/test-post": {
+            "post": {
+                "tags": [
+                    "EaController"
+                ],
+                "operationId": "test-post",
+                "summary": "test-post",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "data": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

@@ -8,7 +8,8 @@
 --
 -- GmrController::syncInvoice() now keys invoices by the invoice number alone,
 -- so no new duplicates are created. This script removes the ones already in
--- the table.
+-- the table, for both the header (gmr_invoice) and its lines
+-- (gmr_invoice_detail).
 --
 -- Manual execution on MySQL:
 --   mysql -u root -p itrust_040826 < sql/gmr_invoice_dedupe.sql
@@ -47,3 +48,30 @@ HAVING COUNT(*) > 1;
 -- WHERE source_sheet = 'API'
 --   AND invoice_number IS NOT NULL
 --   AND sync_key <> CONCAT('API:', invoice_number);
+
+-- ============================================================================
+-- gmr_invoice_detail
+--
+-- The same invoice could keep one set of lines from the sheet sync and another
+-- set from the API sync. syncInvoice() now replaces the whole line set by
+-- invoice number, so review first, then uncomment to drop the extra copies.
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- 4) Review: invoice numbers whose lines come from more than one source.
+-- ----------------------------------------------------------------------------
+SELECT invoice_number, COUNT(*) AS detail_rows, GROUP_CONCAT(DISTINCT source_sheet) AS source_sheets
+FROM gmr_invoice_detail
+WHERE invoice_number IS NOT NULL
+GROUP BY invoice_number
+HAVING COUNT(DISTINCT source_sheet) > 1;
+
+-- ----------------------------------------------------------------------------
+-- 5) Drop the non-API copies for invoices the API has already stored.
+-- ----------------------------------------------------------------------------
+-- DELETE d
+-- FROM gmr_invoice_detail AS d
+-- JOIN gmr_invoice_detail AS a
+--   ON a.invoice_number = d.invoice_number
+--  AND a.source_sheet   = 'API'
+-- WHERE d.source_sheet <> 'API';

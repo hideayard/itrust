@@ -1,0 +1,137 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "ScrapedDataController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/ScrapedDataController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "ScrapedDataController"
+        }
+    ],
+    "paths": {
+        "/scraped-data/logs": {
+            "get": {
+                "tags": [
+                    "ScrapedDataController"
+                ],
+                "operationId": "logs",
+                "summary": "Get logs by pair and timeframe",
+                "parameters": [
+                    {
+                        "name": "pair",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "timeframe",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/scraped-data/save": {
+            "post": {
+                "tags": [
+                    "ScrapedDataController"
+                ],
+                "operationId": "save",
+                "summary": "Save scraped data endpoint",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "additionalProperties": true
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/scraped-data/statistics": {
+            "get": {
+                "tags": [
+                    "ScrapedDataController"
+                ],
+                "operationId": "statistics",
+                "summary": "Get statistics for a pair",
+                "parameters": [
+                    {
+                        "name": "pair",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/scraped-data/test": {
+            "post": {
+                "tags": [
+                    "ScrapedDataController"
+                ],
+                "operationId": "test",
+                "summary": "Test endpoint",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

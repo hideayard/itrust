@@ -123,6 +123,8 @@ $config = [
 
                 // GMR Google Sheets sync (example/gmr-sync.script)
                 'GET gmr' => 'gmr/index',
+                'GET gmr/invoices' => 'gmr/invoices',
+                'GET gmr/invoice' => 'gmr/invoice',
                 'POST gmr/sync' => 'gmr/sync',
                 'POST gmr/sync-batch' => 'gmr/sync-batch',
                 'POST gmr/sync-invoice' => 'gmr/sync-invoice',

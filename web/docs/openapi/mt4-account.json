@@ -1,0 +1,1155 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "Mt4AccountController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/Mt4AccountController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Mt4AccountController"
+        }
+    ],
+    "paths": {
+        "/mt4-account/accounts": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "accounts",
+                "summary": "Optimized lightweight version - 3x faster, 70% less memory",
+                "description": "GET /mt4-account/accounts?user_id=123",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/accounts": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "accounts-1",
+                "summary": "Optimized lightweight version - 3x faster, 70% less memory",
+                "description": "GET /mt4-account/accounts?user_id=123",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/batch-save-accounts": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "batch-save-accounts",
+                "summary": "Batch save multiple accounts at once",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "accounts": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/close-all-positions": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "close-all-positions",
+                "summary": "close-all-positions",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "account_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/close-orders": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "close-orders",
+                "summary": "Close all orders for an account",
+                "description": "POST: account_id",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "account_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/close-orders-multi": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "close-orders-multi",
+                "summary": "Close all orders for multiple accounts",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/get-account": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-account",
+                "summary": "Action to get a single account by ID",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/get-accounts": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-accounts",
+                "summary": "Action to get accounts by user_id or search by path containing text",
+                "description": "GET parameters:\n- user_id (optional) - filter by user ID\n- path (optional) - search text in path field (partial match)\n- search (optional) - search across multiple fields\n- status (optional) - filter by status\n- account_type (optional) - filter by account type",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "account_type",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/get-accounts-by-license": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-accounts-by-license",
+                "summary": "Action to get accounts by user with license (like your example)",
+                "parameters": [
+                    {
+                        "name": "license",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/get-accounts-by-path": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-accounts-by-path",
+                "summary": "get-accounts-by-path",
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "include_children",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "level",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/get-accounts-by-path-license": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-accounts-by-path-license",
+                "summary": "Action to get accounts by path with license (like your example)",
+                "parameters": [
+                    {
+                        "name": "license",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "include_children",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/get-accounts-by-user": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-accounts-by-user",
+                "summary": "get-accounts-by-user",
+                "parameters": [
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/get-accounts-by-user-post": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-accounts-by-user-post",
+                "summary": "get-accounts-by-user-post",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "user_id": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/get-accounts-summary": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-accounts-summary",
+                "summary": "Action to get accounts summary by user",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/get-closed-orders-by-account": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-closed-orders-by-account",
+                "summary": "Get closed orders by account ID",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/get-open-orders-by-account": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-open-orders-by-account",
+                "summary": "Get open/modified orders (not closed) by account ID",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/get-orders-by-account": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-orders-by-account",
+                "summary": "Get all orders by account ID (all statuses)",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/get-orders-summary-by-account": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-orders-summary-by-account",
+                "summary": "Get orders summary by account ID",
+                "parameters": [
+                    {
+                        "name": "account_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/get-path-hierarchy": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "get-path-hierarchy",
+                "summary": "Action to get hierarchy tree for a path",
+                "parameters": [
+                    {
+                        "name": "path",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/order-buy": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "order-buy",
+                "summary": "order-buy",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "account_id": {
+                                        "type": "string"
+                                    },
+                                    "lot": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/order-buy-multi": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "order-buy-multi",
+                "summary": "Place buy orders for multiple accounts",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/order-sell": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "order-sell",
+                "summary": "order-sell",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "account_id": {
+                                        "type": "string"
+                                    },
+                                    "lot": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/order-sell-multi": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "order-sell-multi",
+                "summary": "Place sell orders for multiple accounts",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/save-account": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "save-account",
+                "summary": "Action to save or update MT4 account data",
+                "description": "Client sends POST data: account_id, buy_order_count, total_buy_lot,\nsell_order_count, total_sell_lot, total_profit, account_balance,\naccount_equity, floating_value",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "account_id": {
+                                        "type": "string"
+                                    },
+                                    "buy_order_count": {
+                                        "type": "string"
+                                    },
+                                    "total_buy_lot": {
+                                        "type": "string"
+                                    },
+                                    "sell_order_count": {
+                                        "type": "string"
+                                    },
+                                    "total_sell_lot": {
+                                        "type": "string"
+                                    },
+                                    "total_profit": {
+                                        "type": "string"
+                                    },
+                                    "account_balance": {
+                                        "type": "string"
+                                    },
+                                    "account_equity": {
+                                        "type": "string"
+                                    },
+                                    "floating_value": {
+                                        "type": "string"
+                                    },
+                                    "bot_name": {
+                                        "type": "string"
+                                    },
+                                    "leverage": {
+                                        "type": "string"
+                                    },
+                                    "currency": {
+                                        "type": "string"
+                                    },
+                                    "server": {
+                                        "type": "string"
+                                    },
+                                    "broker": {
+                                        "type": "string"
+                                    },
+                                    "account_type": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/save-account-by-license": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "save-account-by-license",
+                "summary": "Alternative version with license authentication (similar to your example)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "license": {
+                                        "type": "string"
+                                    },
+                                    "account_id": {
+                                        "type": "string"
+                                    },
+                                    "buy_order_count": {
+                                        "type": "string"
+                                    },
+                                    "total_buy_lot": {
+                                        "type": "string"
+                                    },
+                                    "sell_order_count": {
+                                        "type": "string"
+                                    },
+                                    "total_sell_lot": {
+                                        "type": "string"
+                                    },
+                                    "total_profit": {
+                                        "type": "string"
+                                    },
+                                    "account_balance": {
+                                        "type": "string"
+                                    },
+                                    "account_equity": {
+                                        "type": "string"
+                                    },
+                                    "floating_value": {
+                                        "type": "string"
+                                    },
+                                    "bot_name": {
+                                        "type": "string"
+                                    },
+                                    "server": {
+                                        "type": "string"
+                                    },
+                                    "broker": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/search-by-path": {
+            "get": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "search-by-path",
+                "summary": "Action to search accounts by path (advanced)",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "exact",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/mt4-account/toggle-auto-trade": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "toggle-auto-trade",
+                "summary": "Toggle EA (disabled_ea) for an account",
+                "description": "POST: account_id, disabled_ea (0 = enabled, 1 = disabled)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "account_id": {
+                                        "type": "string"
+                                    },
+                                    "disabled_ea": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/toggle-auto-trade-multi": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "toggle-auto-trade-multi",
+                "summary": "Toggle auto trade for multiple accounts",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/mt4-account/toggle-buy-sell-status": {
+            "post": {
+                "tags": [
+                    "Mt4AccountController"
+                ],
+                "operationId": "toggle-buy-sell-status",
+                "summary": "Toggle buy or sell status for an account",
+                "description": "POST: account_id, type (buy|sell), status (0=disabled, 1=enabled)",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "account_id": {
+                                        "type": "string"
+                                    },
+                                    "type": {
+                                        "type": "string"
+                                    },
+                                    "status": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "401": {
+                        "description": "Unauthorized"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}

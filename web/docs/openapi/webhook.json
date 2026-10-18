@@ -1,0 +1,62 @@
+{
+    "openapi": "3.0.3",
+    "info": {
+        "title": "WebhookController API",
+        "version": "1.0.0",
+        "description": "Generated from controllers/WebhookController.php by docs/generate-api-docs.php."
+    },
+    "servers": [
+        {
+            "url": "/web",
+            "description": "This host (app served under /web)"
+        },
+        {
+            "url": "https://itrust-tech.id/web",
+            "description": "Production"
+        }
+    ],
+    "tags": [
+        {
+            "name": "WebhookController"
+        }
+    ],
+    "paths": {
+        "/webhook/index": {
+            "post": {
+                "tags": [
+                    "WebhookController"
+                ],
+                "operationId": "index",
+                "summary": "index",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        },
+        "/webhook/telegram": {
+            "post": {
+                "tags": [
+                    "WebhookController"
+                ],
+                "operationId": "telegram",
+                "summary": "telegram",
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "description": "JWT (jwtSecret in config/params.php)."
+            }
+        }
+    }
+}
