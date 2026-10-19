@@ -79,7 +79,17 @@ curl -s "https://itrust-tech.id/web/gmr"
 ### POST /gmr/sync — upsert a single row
 
 Body: `entity`, optional `source_sheet` / `month` / `mode`, and `rows` (or a
-single `record`). Response counts are `created` / `updated` / `failed`.
+single `record`). Response counts are `created` / `updated` / `skipped` /
+`failed`.
+
+Two row rules apply to `/gmr/sync` and `/gmr/sync-batch`:
+
+- **Rows with `amount` <= 0 are skipped** (not inserted or updated) and counted
+  in `skipped`. Rows without an `amount` field (e.g. `exchange`, `bank_balance`)
+  are unaffected.
+- The originating sheet name is saved to `source_sheet`. A row-level
+  `source_sheet` wins over the payload-level one; it is written on insert and
+  refreshed on update.
 
 ```bash
 curl -s -X POST "https://itrust-tech.id/web/gmr/sync" \
@@ -116,6 +126,7 @@ curl -s -X POST "https://itrust-tech.id/web/gmr/sync" \
   "received": 1,
   "created": 1,
   "updated": 0,
+  "skipped": 0,
   "failed": 0,
   "errors": []
 }
@@ -125,7 +136,7 @@ curl -s -X POST "https://itrust-tech.id/web/gmr/sync" \
 
 ### POST /gmr/sync-batch — upsert many rows / replace a sheet
 
-Same payload as `/gmr/sync`, but `rows` is the full batch. With
+Same payload and row rules as `/gmr/sync`, but `rows` is the full batch. With
 `"mode": "replace"` and a `source_sheet`, the sheet's existing rows are deleted
 first (used for a full-sheet resync).
 
@@ -201,9 +212,19 @@ descriptions. `month` defaults to the month of the invoice date.
 
 Returns headers newest-first, each with its line items under `details`.
 
-**Filters** (all optional): `id`, `invoice_number`, `direction` (`BUY`/`SELL`),
-`month` (`JAN`..`DEC`), `status`, `search` (matches `invoice_number` or
-`billed_to`), `date_from`, `date_to`, `with_details` (`0` to omit lines).
+**Filters** (all optional): `id`, `invoice_number`; `direction` (`BUY`/`SELL`),
+`month` (`JAN`..`DEC`) and `status` each accept a comma-separated list
+(e.g. `status=PAID,CANCEL`); `ref_id`; `source_sheet` (e.g. `API`);
+`billed_to` (substring); `search` (substring of `invoice_number` or
+`billed_to`); `date_from`/`date_to` (invoice date); `created_from`/`created_to`
+and `updated_from`/`updated_to` (record timestamps, `YYYY-MM-DD`, inclusive);
+`with_details` (`0` to omit lines).
+
+**Sorting**: `sort_by` (default `id`) and `sort_order` (`asc`/`desc`, default
+`desc`). Sortable columns: `id`, `invoice_number`, `direction`, `month`,
+`invoice_date`, `issue_date`, `due_date`, `billed_to`, `payment_method`,
+`status`, `qty`, `rate`, `amount`, `created_at`, `updated_at`. Unknown fields
+fall back to `id`.
 
 **Pagination**: `page` (1-based, default 1), `per_page` (default 50, max 200,
 alias `limit`), or `offset` (rows to skip; used when `page` is omitted). The
@@ -219,6 +240,14 @@ curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \
 # second page of a filtered set
 curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \
   "https://itrust-tech.id/web/gmr/invoices?direction=BUY&status=PAID&month=SEP&search=NABIL&page=2&per_page=25"
+
+# sorted by amount, biggest first
+curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \
+  "https://itrust-tech.id/web/gmr/invoices?sort_by=amount&sort_order=desc"
+
+# multi-value filter, sorted by invoice date ascending
+curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \
+  "https://itrust-tech.id/web/gmr/invoices?status=PAID,CANCEL&sort_by=invoice_date&sort_order=asc"
 
 # headers only
 curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \

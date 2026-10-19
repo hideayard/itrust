@@ -193,13 +193,24 @@ class GmrController extends Controller
      * Query params (all optional):
      *   id              - exact invoice id
      *   invoice_number  - exact invoice number
-     *   direction       - BUY | SELL
-     *   month           - JAN..DEC
-     *   status          - PENDING | PAID | CANCEL
+     *   direction       - BUY | SELL (comma-separated list allowed)
+     *   month           - JAN..DEC (comma-separated list allowed)
+     *   status          - PENDING | PAID | CANCEL (comma-separated list allowed)
+     *   ref_id          - exact sheet ref id
+     *   source_sheet    - exact source sheet (e.g. API, INV_BUY_SEP)
+     *   billed_to       - substring of the billed-to name
      *   search          - substring of invoice_number or billed_to
      *   date_from       - invoice_date >= YYYY-MM-DD
      *   date_to         - invoice_date <= YYYY-MM-DD
+     *   created_from    - created_at >= YYYY-MM-DD
+     *   created_to      - created_at <= YYYY-MM-DD
+     *   updated_from    - updated_at >= YYYY-MM-DD
+     *   updated_to      - updated_at <= YYYY-MM-DD
      *   with_details    - 0 to omit the lines (default 1)
+     *   sort_by         - id | invoice_number | direction | month | invoice_date | issue_date
+     *                     | due_date | billed_to | payment_method | status | qty | rate
+     *                     | amount | created_at | updated_at (default id)
+     *   sort_order      - asc | desc (default desc)
      *   page            - 1-based page number (default 1)
      *   per_page        - rows per page, default 50, max 200 (alias: limit)
      *   offset          - row offset, used when page is not given (alias behaviour)
@@ -240,8 +251,9 @@ class GmrController extends Controller
             $query->with('details');
         }
 
+        $this->applyInvoiceSort($query, $request);
+
         $invoices = $query
-            ->orderBy(['id' => SORT_DESC])
             ->limit($pagination->getLimit())
             ->offset($pagination->getOffset())
             ->all();
@@ -365,19 +377,35 @@ class GmrController extends Controller
             $query->andWhere(['invoice_number' => $number]);
         }
 
-        $direction = strtoupper(trim((string) $request->get('direction', '')));
-        if ($direction !== '') {
-            $query->andWhere(['direction' => $direction]);
+        // direction / month / status accept a comma-separated list (or an array).
+        $directions = array_map('strtoupper', $this->csvParam($request, 'direction'));
+        if ($directions !== []) {
+            $query->andWhere(['in', 'direction', $directions]);
         }
 
-        $month = strtoupper(trim((string) $request->get('month', '')));
-        if ($month !== '') {
-            $query->andWhere(['month' => $month]);
+        $months = array_map('strtoupper', $this->csvParam($request, 'month'));
+        if ($months !== []) {
+            $query->andWhere(['in', 'month', $months]);
         }
 
-        $status = strtoupper(trim((string) $request->get('status', '')));
-        if ($status !== '') {
-            $query->andWhere(['status' => $status]);
+        $statuses = array_map('strtoupper', $this->csvParam($request, 'status'));
+        if ($statuses !== []) {
+            $query->andWhere(['in', 'status', $statuses]);
+        }
+
+        $refId = trim((string) $request->get('ref_id', ''));
+        if ($refId !== '') {
+            $query->andWhere(['ref_id' => $refId]);
+        }
+
+        $sourceSheet = trim((string) $request->get('source_sheet', ''));
+        if ($sourceSheet !== '') {
+            $query->andWhere(['source_sheet' => $sourceSheet]);
+        }
+
+        $billedTo = trim((string) $request->get('billed_to', ''));
+        if ($billedTo !== '') {
+            $query->andWhere(['like', 'billed_to', $billedTo]);
         }
 
         $from = $this->normalizeDate($request->get('date_from'));
@@ -390,6 +418,9 @@ class GmrController extends Controller
             $query->andWhere(['<=', 'invoice_date', $to]);
         }
 
+        $this->applyDateRange($query, 'created_at', $request->get('created_from'), $request->get('created_to'));
+        $this->applyDateRange($query, 'updated_at', $request->get('updated_from'), $request->get('updated_to'));
+
         $search = trim((string) $request->get('search', ''));
         if ($search !== '') {
             $query->andWhere([
@@ -398,6 +429,80 @@ class GmrController extends Controller
                 ['like', 'billed_to', $search],
             ]);
         }
+    }
+
+    /**
+     * Apply ?sort_by / ?sort_order (whitelisted) to the invoice query.
+     *
+     * @param \yii\db\ActiveQuery $query
+     * @param \yii\web\Request $request
+     * @return void
+     */
+    protected function applyInvoiceSort($query, $request)
+    {
+        $allowed = [
+            'id', 'invoice_number', 'direction', 'month', 'invoice_date', 'issue_date',
+            'due_date', 'billed_to', 'payment_method', 'status', 'qty', 'rate', 'amount',
+            'created_at', 'updated_at',
+        ];
+
+        $sortBy = trim((string) $request->get('sort_by', ''));
+        if (!in_array($sortBy, $allowed, true)) {
+            $sortBy = 'id';
+        }
+
+        $order = strtoupper(trim((string) $request->get('sort_order', '')));
+        $order = $order === 'ASC' ? SORT_ASC : SORT_DESC;
+
+        $query->orderBy([$sortBy => $order]);
+    }
+
+    /**
+     * Apply an inclusive date range to a DATETIME column.
+     *
+     * @param \yii\db\ActiveQuery $query
+     * @param string $column
+     * @param mixed $from
+     * @param mixed $to
+     * @return void
+     */
+    protected function applyDateRange($query, $column, $from, $to)
+    {
+        $start = $this->normalizeDate($from);
+        if ($start !== null) {
+            $query->andWhere(['>=', $column, $start . ' 00:00:00']);
+        }
+
+        $end = $this->normalizeDate($to);
+        if ($end !== null) {
+            $query->andWhere(['<=', $column, $end . ' 23:59:59']);
+        }
+    }
+
+    /**
+     * Read a request param that may be a comma-separated string or an array.
+     *
+     * @param \yii\web\Request $request
+     * @param string $name
+     * @return string[]
+     */
+    protected function csvParam($request, $name)
+    {
+        $value = $request->get($name);
+        if ($value === null || $value === '') {
+            return [];
+        }
+
+        $values = is_array($value) ? $value : explode(',', (string) $value);
+        $out = [];
+        foreach ($values as $item) {
+            $item = trim((string) $item);
+            if ($item !== '') {
+                $out[] = $item;
+            }
+        }
+
+        return array_values(array_unique($out));
     }
 
     /**
@@ -653,6 +758,7 @@ class GmrController extends Controller
 
         $created = 0;
         $updated = 0;
+        $skipped = 0;
         $errors = [];
 
         try {
@@ -666,8 +772,15 @@ class GmrController extends Controller
                     continue;
                 }
 
+                // A zero or negative amount means the row carries no value; skip it.
+                if (array_key_exists('amount', $row) && (float) $row['amount'] <= 0) {
+                    $skipped++;
+                    continue;
+                }
+
                 $sheetRow = $row['sheet_row'] ?? null;
-                $key = $row['sync_key'] ?? ($sourceSheet !== '' && $sheetRow !== null ? $sourceSheet . ':' . $sheetRow : null);
+                $rowSheet = trim((string) ($row['source_sheet'] ?? $sourceSheet));
+                $key = $row['sync_key'] ?? ($rowSheet !== '' && $sheetRow !== null ? $rowSheet . ':' . $sheetRow : null);
 
                 if ($key === null || $key === '') {
                     $errors[] = ['row' => $index, 'message' => 'Missing sync_key'];
@@ -681,15 +794,17 @@ class GmrController extends Controller
                 if ($isNew) {
                     $model = new $class();
                     $model->sync_key = $key;
-                    if ($sourceSheet !== '') {
-                        $model->source_sheet = $sourceSheet;
-                    }
                     if ($sheetRow !== null) {
                         $model->sheet_row = $sheetRow;
                     }
                     if ($month !== null && $model->hasAttribute('month')) {
                         $model->month = $month;
                     }
+                }
+
+                // Persist the originating sheet name (a row value wins over the payload).
+                if ($rowSheet !== '' && $model->hasAttribute('source_sheet')) {
+                    $model->source_sheet = $rowSheet;
                 }
 
                 foreach ($fields as $field) {
@@ -718,6 +833,7 @@ class GmrController extends Controller
             'received' => count($rows),
             'created' => $created,
             'updated' => $updated,
+            'skipped' => $skipped,
             'failed' => count($errors),
             'errors' => $errors,
         ];

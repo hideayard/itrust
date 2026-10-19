@@ -48,7 +48,10 @@
       "Shell(php -r foreach (glob('web/docs/openapi/*.json') as ) { if (json_decode(file_get_contents(),true)===null) { echo 'INVALID '.basename().PHP_EOL; exit(1);} } echo 'all specs valid'.PHP_EOL;)",
       "Shell(php runtime/smoke_pagination.php 2 >& 1)",
       "Shell(Select-String:*)",
-      "Shell(php -r =json_decode(file_get_contents('web/docs/openapi/gmr.json'),true); if(===null){echo 'INVALID '.json_last_error_msg(); exit(1);} echo 'gmr.json valid; invoices params: '.count(['paths']['/gmr/invoices']['get']['parameters']).PHP_EOL;)"
+      "Shell(php -r =json_decode(file_get_contents('web/docs/openapi/gmr.json'),true); if(===null){echo 'INVALID '.json_last_error_msg(); exit(1);} echo 'gmr.json valid; invoices params: '.count(['paths']['/gmr/invoices']['get']['parameters']).PHP_EOL;)",
+      "Shell(php -r \"$d=json_decode(file_get_contents('web/docs/openapi/gmr.json'),true); if($d===null){echo 'INVALID '.json_last_error_msg(); exit(1);} echo 'gmr.json valid; invoices params: '.count($d['paths']['/gmr/invoices']['get']['parameters']).PHP_EOL;\")",
+      "Shell(php runtime/smoke_gmr2.php 2>nul)",
+      "Shell(php -r \"$d=json_decode(file_get_contents('web/docs/openapi/gmr.json'),true); if($d===null){echo 'INVALID '.json_last_error_msg(); exit(1);} echo 'gmr.json valid; SyncResponse props: '.implode(', ', array_keys($d['components']['schemas']['SyncResponse']['properties'])).PHP_EOL;\")"
     ],
     "deny": [],
     "defaultMode": "default"

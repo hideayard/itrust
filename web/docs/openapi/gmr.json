@@ -105,13 +105,22 @@
         "parameters": [
           { "name": "id", "in": "query", "schema": { "type": "integer" }, "example": 42, "description": "Exact invoice id." },
           { "name": "invoice_number", "in": "query", "schema": { "type": "string" }, "example": "INV-20260901-1", "description": "Exact invoice number." },
-          { "name": "direction", "in": "query", "schema": { "type": "string", "enum": ["BUY", "SELL"] }, "description": "Filter by BUY or SELL." },
-          { "name": "month", "in": "query", "schema": { "type": "string" }, "example": "SEP", "description": "Sheet month label JAN..DEC." },
-          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["PENDING", "PAID", "CANCEL"] }, "description": "Filter by status." },
+          { "name": "direction", "in": "query", "schema": { "type": "string" }, "example": "BUY", "description": "BUY or SELL; comma-separated list allowed." },
+          { "name": "month", "in": "query", "schema": { "type": "string" }, "example": "SEP", "description": "Sheet month label JAN..DEC; comma-separated list allowed." },
+          { "name": "status", "in": "query", "schema": { "type": "string" }, "example": "PAID,CANCEL", "description": "PENDING, PAID and/or CANCEL; comma-separated list allowed." },
+          { "name": "ref_id", "in": "query", "schema": { "type": "string" }, "description": "Exact sheet ref id." },
+          { "name": "source_sheet", "in": "query", "schema": { "type": "string" }, "example": "API", "description": "Exact source sheet." },
+          { "name": "billed_to", "in": "query", "schema": { "type": "string" }, "example": "NABIL", "description": "Substring match on the billed-to name." },
           { "name": "search", "in": "query", "schema": { "type": "string" }, "example": "NABIL", "description": "Substring match on invoice_number or billed_to." },
           { "name": "date_from", "in": "query", "schema": { "type": "string", "format": "date" }, "example": "2026-09-01", "description": "invoice_date >= date_from." },
           { "name": "date_to", "in": "query", "schema": { "type": "string", "format": "date" }, "example": "2026-09-30", "description": "invoice_date <= date_to." },
+          { "name": "created_from", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "created_at >= date (inclusive, whole day)." },
+          { "name": "created_to", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "created_at <= date (inclusive, whole day)." },
+          { "name": "updated_from", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "updated_at >= date (inclusive, whole day)." },
+          { "name": "updated_to", "in": "query", "schema": { "type": "string", "format": "date" }, "description": "updated_at <= date (inclusive, whole day)." },
           { "name": "with_details", "in": "query", "schema": { "type": "string", "default": "1" }, "description": "Set to 0 to omit the nested line items." },
+          { "name": "sort_by", "in": "query", "schema": { "type": "string", "default": "id", "enum": ["id", "invoice_number", "direction", "month", "invoice_date", "issue_date", "due_date", "billed_to", "payment_method", "status", "qty", "rate", "amount", "created_at", "updated_at"] }, "description": "Column to sort by (unknown values fall back to id)." },
+          { "name": "sort_order", "in": "query", "schema": { "type": "string", "default": "desc", "enum": ["asc", "desc"] }, "description": "Sort direction." },
           { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1, "minimum": 1 }, "description": "1-based page number." },
           { "name": "per_page", "in": "query", "schema": { "type": "integer", "default": 50, "minimum": 1, "maximum": 200 }, "description": "Rows per page (default 50, max 200)." },
           { "name": "limit", "in": "query", "schema": { "type": "integer", "minimum": 1, "maximum": 200 }, "description": "Alias of per_page." },
@@ -215,10 +224,11 @@
       },
       "SyncRow": {
         "type": "object",
-        "description": "Column values for one row. Field names depend on the entity (e.g. invoice: invoice_number, invoice_date, qty, rate, amount; exchange: trade_date, nominal, rate_buy, ...). sync_key (or source_sheet:sheet_row) is required to match an existing row.",
+        "description": "Column values for one row. Field names depend on the entity (e.g. invoice: invoice_number, invoice_date, qty, rate, amount; exchange: trade_date, nominal, rate_buy, ...). sync_key (or source_sheet:sheet_row) is required to match an existing row. Rows whose amount is 0 or negative are skipped; the saved source_sheet comes from this row or, failing that, the payload.",
         "properties": {
           "sync_key": { "type": "string", "example": "INV_BUY_SEP:5" },
-          "sheet_row": { "type": "integer", "example": 5 }
+          "sheet_row": { "type": "integer", "example": 5 },
+          "source_sheet": { "type": "string", "example": "INV_BUY_SEP", "description": "Sheet name to save (overrides the payload-level source_sheet)." }
         },
         "additionalProperties": true
       },
@@ -232,6 +242,7 @@
           "received": { "type": "integer" },
           "created": { "type": "integer" },
           "updated": { "type": "integer" },
+          "skipped": { "type": "integer", "description": "Rows skipped because amount was 0 or negative." },
           "failed": { "type": "integer" },
           "errors": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
         }
