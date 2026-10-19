@@ -13,6 +13,7 @@ use app\models\GmrInvoice;
 use app\models\GmrInvoiceDetail;
 use app\models\GmrMonthlySummary;
 use app\models\GmrBankBalance;
+use app\helpers\Toon;
 
 /**
  * Receives the iTrust 2026 workbook sync from the Google Apps Script
@@ -22,9 +23,11 @@ use app\models\GmrBankBalance;
  *   POST /gmr/sync         single row (on-edit trigger)
  *   POST /gmr/sync-batch   many rows, optionally replacing a whole sheet
  *   POST /gmr/sync-invoice rendered invoices (+ lines), example/invoices.json
+ *   POST /gmr/sync-toon    same payloads as sync / sync-invoice, TOON-encoded
  *   GET  /gmr              health / entity list
  *   GET  /gmr/invoices     list invoices, each with its line items
  *   GET  /gmr/invoice      one invoice (id or invoice_number) with its lines
+ *   GET  /gmr/invoice-toon one invoice, encoded as TOON
  *
  * Authentication: "Authorization: Bearer <gmrSyncToken>" (config/params.php).
  */
@@ -148,8 +151,52 @@ class GmrController extends Controller
             return ['success' => false, 'message' => 'Unauthorized'];
         }
 
-        $payload = $this->jsonBody();
+        $result = $this->processInvoices($this->jsonBody());
 
+        if (!$result['success']) {
+            Yii::$app->response->statusCode = 422;
+        }
+
+        return $result;
+    }
+
+    /**
+     * POST /gmr/sync-toon - upsert rows from a TOON-encoded payload.
+     *
+     * The request body is TOON text (helpers/Toon.php) carrying the same shapes
+     * as /gmr/sync (entity + rows) or /gmr/sync-invoice (rendered invoices with
+     * lines). The response is JSON, like the other sync endpoints.
+     *
+     * @return array
+     */
+    public function actionSyncToon()
+    {
+        if (!$this->authorize()) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $payload = $this->toonBody();
+
+        $result = isset($payload['entity'])
+            ? $this->process($payload)
+            : $this->processInvoices($payload);
+
+        if (!$result['success']) {
+            Yii::$app->response->statusCode = 422;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Upsert rendered invoices (single object, a list, or under "invoices"),
+     * replacing each invoice's line items in one transaction.
+     *
+     * @param array $payload
+     * @return array
+     */
+    protected function processInvoices($payload)
+    {
         if (isset($payload['invoices']) && is_array($payload['invoices'])) {
             $invoices = $payload['invoices'];
         } elseif (isset($payload['id']) || isset($payload['invoice_number'])) {
@@ -159,8 +206,6 @@ class GmrController extends Controller
         }
 
         if ($invoices === []) {
-            Yii::$app->response->statusCode = 422;
-
             return ['success' => false, 'message' => 'No invoices supplied'];
         }
 
@@ -175,7 +220,6 @@ class GmrController extends Controller
         } catch (Throwable $e) {
             $transaction->rollBack();
             Yii::error('GMR invoice sync failed: ' . $e->getMessage(), 'gmr');
-            Yii::$app->response->statusCode = 422;
 
             return ['success' => false, 'message' => $e->getMessage()];
         }
@@ -355,6 +399,55 @@ class GmrController extends Controller
             'success' => true,
             'invoice' => $this->serializeInvoice($model, true),
         ];
+    }
+
+    /**
+     * GET /gmr/invoice-toon - a single invoice (id or invoice_number) as TOON.
+     *
+     * Query params: id (preferred) or invoice_number.
+     *
+     * Response: TOON text (helpers/Toon.php). 422 when neither id nor
+     * invoice_number is given, 404 when the invoice does not exist.
+     *
+     * @return array|\yii\web\Response
+     */
+    public function actionInvoiceToon()
+    {
+        if (!$this->authorize()) {
+            return ['success' => false, 'message' => 'Unauthorized'];
+        }
+
+        $request = Yii::$app->request;
+        $id = $request->get('id');
+        $number = trim((string) $request->get('invoice_number', ''));
+
+        if (($id === null || $id === '') && $number === '') {
+            Yii::$app->response->statusCode = 422;
+
+            return ['success' => false, 'message' => 'Provide id or invoice_number'];
+        }
+
+        $query = GmrInvoice::find()->with('details');
+
+        if ($id !== null && $id !== '') {
+            $query->andWhere(['id' => (int) $id]);
+        }
+        if ($number !== '') {
+            $query->andWhere(['invoice_number' => $number]);
+        }
+
+        $model = $query->one();
+
+        if ($model === null) {
+            Yii::$app->response->statusCode = 404;
+
+            return ['success' => false, 'message' => 'Invoice not found'];
+        }
+
+        return $this->toonResponse([
+            'success' => true,
+            'invoice' => $this->serializeInvoice($model, true),
+        ]);
     }
 
     /**
@@ -877,5 +970,33 @@ class GmrController extends Controller
         }
 
         return is_array($data) ? $data : [];
+    }
+
+    /**
+     * Decode the request body as TOON into a PHP array.
+     *
+     * @return array
+     */
+    protected function toonBody()
+    {
+        $decoded = Toon::decode(Yii::$app->request->getRawBody());
+
+        return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * Encode a payload as a TOON response body.
+     *
+     * @param array $data
+     * @return \yii\web\Response
+     */
+    protected function toonResponse($data)
+    {
+        $response = Yii::$app->response;
+        $response->format = Response::FORMAT_RAW;
+        $response->headers->set('Content-Type', 'text/toon; charset=UTF-8');
+        $response->data = Toon::encode($data);
+
+        return $response;
     }
 }
