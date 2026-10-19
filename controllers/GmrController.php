@@ -209,12 +209,14 @@ class GmrController extends Controller
             return ['success' => false, 'message' => 'No invoices supplied'];
         }
 
+        $sourceSheet = trim((string) ($payload['source_sheet'] ?? ''));
+
         $results = [];
         $transaction = Yii::$app->db->beginTransaction();
 
         try {
             foreach ($invoices as $invoice) {
-                $results[] = $this->syncInvoice($invoice);
+                $results[] = $this->syncInvoice($invoice, $sourceSheet);
             }
             $transaction->commit();
         } catch (Throwable $e) {
@@ -666,9 +668,11 @@ class GmrController extends Controller
      * Upsert one rendered invoice and replace its API-owned line items.
      *
      * @param array $data
+     * @param string $sourceSheet payload-level source sheet, used when the
+     *                            invoice itself does not carry one
      * @return array
      */
-    protected function syncInvoice($data)
+    protected function syncInvoice($data, $sourceSheet = '')
     {
         if (!is_array($data)) {
             throw new \InvalidArgumentException('Invoice is not an object');
@@ -707,6 +711,13 @@ class GmrController extends Controller
         // direction (or the sheet it came from) differs between runs.
         $syncKey = 'API:' . $invoiceNumber;
 
+        // The row-level source_sheet wins over the payload-level one; both fall
+        // back to the API pseudo-sheet so the required column is never empty.
+        $sheet = trim((string) ($data['source_sheet'] ?? ''));
+        if ($sheet === '') {
+            $sheet = trim((string) $sourceSheet);
+        }
+
         $model = GmrInvoice::findOne(['sync_key' => $syncKey]);
         if ($model === null) {
             $model = GmrInvoice::findOne(['invoice_number' => $invoiceNumber]);
@@ -714,7 +725,9 @@ class GmrController extends Controller
         if ($model === null) {
             $model = new GmrInvoice();
             $model->sync_key = $syncKey;
-            $model->source_sheet = 'API';
+            $model->source_sheet = $sheet !== '' ? $sheet : 'API';
+        } elseif ($sheet !== '') {
+            $model->source_sheet = $sheet;
         }
 
         $model->month = $data['month'] ?? $this->monthFromDate($date ?? $dueDate);
@@ -743,7 +756,7 @@ class GmrController extends Controller
 
         foreach ($lines as $index => $line) {
             $detail = new GmrInvoiceDetail();
-            $detail->source_sheet = 'API';
+            $detail->source_sheet = $model->source_sheet;
             $detail->sync_key = 'API:' . $invoiceNumber . ':' . $index;
             $detail->month = $model->month;
             $detail->detail_date = $date;

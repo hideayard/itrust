@@ -206,6 +206,13 @@ Accepted aliases: `invoice_number` for `id`; `billed_to` for `customer`;
 `direction` (`BUY`/`SELL`) is optional and otherwise inferred from the line
 descriptions. `month` defaults to the month of the invoice date.
 
+`source_sheet` may be given per invoice or at the payload level
+(`{ "source_sheet": "INV_BUY_SEP", "invoices": [ ... ] }`); the invoice-level
+value wins. It is stored on the header and copied to its line items, and
+refreshed on update when supplied. When omitted, a new invoice defaults to
+`"API"` and an existing one keeps its current value. (`/gmr/sync-toon` behaves
+the same.)
+
 ---
 
 ### GET /gmr/invoices — list invoices with line items
