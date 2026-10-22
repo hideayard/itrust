@@ -10,9 +10,9 @@ use yii\db\Expression;
  * This is the model class for table "gmr_invoice".
  *
  * Sourced from the INV_BUY_<MON> and INV_SELL_<MON> sheets. Both sheet families
- * are normalised into the same shape (qty = USD, rate = IDR/USD, amount = IDR,
- * total = amount + tax + fee); direction distinguishes the buy and sell
- * invoices.
+ * are normalised into the same shape (qty = USD, rate = IDR/USD, amount = IDR;
+ * total is the sheet's own Total column); direction distinguishes the buy and
+ * sell invoices.
  *
  * @property int $id
  * @property string|null $month
@@ -63,27 +63,6 @@ class GmrInvoice extends ActiveRecord
                 'value' => new Expression('NOW()'),
             ],
         ];
-    }
-
-    /**
-     * Keep `total` in step with its components: a total supplied by the sheet
-     * is kept as-is, otherwise it is derived (this is what gives SELL invoices,
-     * whose sheet has no total column, one too).
-     *
-     * @param bool $insert
-     * @return bool
-     */
-    public function beforeSave($insert)
-    {
-        if (!parent::beforeSave($insert)) {
-            return false;
-        }
-
-        if ($this->total === null || (float) $this->total <= 0) {
-            $this->total = (float) $this->amount + (float) $this->tax_amount + (float) $this->fee_amount;
-        }
-
-        return true;
     }
 
     public function rules()

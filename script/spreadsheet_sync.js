@@ -29,8 +29,8 @@ var CONFIG = CONFIG || {
   PAUSE_MS_BETWEEN_BATCHES: 300,
 
   // Dipertahankan sebagai fallback default
-  SYNC_STATUS_COLUMN:      12,   // L
-  SYNC_MODIFIED_AT_COLUMN: 13,   // M
+  SYNC_STATUS_COLUMN:      15,   // O
+  SYNC_MODIFIED_AT_COLUMN: 16,   // P
 
   // Teks status untuk baris dengan amount 0 / kosong
   INVALID_STATUS_TEXT: 'not valid data'
@@ -40,13 +40,12 @@ var CONFIG = CONFIG || {
  * ============================================================
  * KOLOM SYNC PER JENIS INVOICE (1-based, untuk getRange)
  * ------------------------------------------------------------
- * BUY  : K=AMOUNT | L=Fee % | M=Fee Rp | N=Total | O=Sync Status | P=Date Sync
- * SELL : K=AMOUNT | L=Sync Status | M=Date Sync
+ * BUY + SELL : K=AMOUNT | L=Fee % | M=Fee Rp | N=Total | O=Sync Status | P=Date Sync
  * ============================================================
  */
 var SYNC_COLUMNS = {
   BUY:  { STATUS: 15, MODIFIED_AT: 16 },  // O, P
-  SELL: { STATUS: 12, MODIFIED_AT: 13 }   // L, M
+  SELL: { STATUS: 15, MODIFIED_AT: 16 }   // O, P
 };
 
 /**
@@ -70,8 +69,8 @@ var INV_COL = {
   STATUS: 7, QTY: 8, PRICE: 9, AMOUNT: 10
 };
 
-// Kolom tambahan khusus BUY
-var INV_COL_BUY = {
+// Kolom tambahan setelah AMOUNT (dipakai BUY dan SELL)
+var INV_COL_EXTRA = {
   FEE_PCT: 11,       // L
   FEE_RP:  12,       // M
   TOTAL:   13,       // N
@@ -518,9 +517,9 @@ function buildBuyInvoices(mainSheetName, detailSheetName) {
       dueDate:       formatDateValue(row[INV_COL.DUE_DATE]),
       paymentMethod: row[INV_COL.PAYMENT_METHOD] || '',
       status:        row[INV_COL.STATUS] || '',
-      fee_pct:       Number(row[INV_COL_BUY.FEE_PCT]) || 0,
-      fee_amount:    Number(row[INV_COL_BUY.FEE_RP])  || 0,
-      total:         Number(row[INV_COL_BUY.TOTAL])   || 0,
+      fee_pct:       Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,
+      fee_amount:    Number(row[INV_COL_EXTRA.FEE_RP])  || 0,
+      total:         Number(row[INV_COL_EXTRA.TOTAL])   || 0,
       lines:         lines,
       __src:         src
     });
@@ -558,6 +557,9 @@ function buildSellInvoices(mainSheetName) {
       dueDate:       formatDateValue(row[INV_COL.DUE_DATE]),
       paymentMethod: row[INV_COL.PAYMENT_METHOD] || '',
       status:        row[INV_COL.STATUS] || '',
+      fee_pct:       Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,
+      fee_amount:    Number(row[INV_COL_EXTRA.FEE_RP])  || 0,
+      total:         Number(row[INV_COL_EXTRA.TOTAL])   || 0,
       lines: [{
         description: '',
         qty:   Number(row[INV_COL.QTY])   || 0,

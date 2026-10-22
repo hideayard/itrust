@@ -281,7 +281,7 @@
           "direction": { "type": "string", "enum": ["BUY", "SELL"], "description": "Defaults to the direction guessed from the line descriptions." },
           "fee_pct": { "type": "number", "example": 0.5, "description": "Header fee percentage (%). Also accepted as feePct; defaults to 0." },
           "fee_amount": { "type": "number", "example": 2590000, "description": "Header fee value in IDR. Also accepted as feeValue; defaults to 0." },
-          "total": { "type": "number", "example": 520590000, "description": "amount + tax_amount + fee_amount. Derived when omitted or 0." },
+          "total": { "type": "number", "example": 520590000, "description": "The sheet's Total column (N), stored verbatim; empty cell becomes 0." },
           "lines": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/LineInput" }
@@ -369,7 +369,7 @@
           "tax_amount": { "type": "number", "nullable": true, "description": "Tax value (IDR)." },
           "fee_pct": { "type": "number", "nullable": true, "description": "Header fee percentage (%)." },
           "fee_amount": { "type": "number", "nullable": true, "description": "Header fee value (IDR)." },
-          "total": { "type": "number", "nullable": true, "description": "amount + tax_amount + fee_amount." },
+          "total": { "type": "number", "nullable": true, "description": "The sheet's Total column (IDR)." },
           "details": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/InvoiceDetail" },

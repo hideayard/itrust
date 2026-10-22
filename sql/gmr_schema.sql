@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS `gmr_invoice` (
   `qty`            DECIMAL(24,4)   DEFAULT NULL COMMENT 'USD qty',
   `rate`           DECIMAL(18,4)   DEFAULT NULL COMMENT 'IDR per USD',
   `amount`         DECIMAL(24,2)   DEFAULT NULL COMMENT 'Qty x rate (IDR)',
-  `total`          DECIMAL(24,2)   DEFAULT NULL COMMENT 'Amount + tax + fee (IDR)',
+  `total`          DECIMAL(24,2)   DEFAULT NULL COMMENT 'Sheet Total (IDR)',
   `tax_pct`        DECIMAL(8,4)    DEFAULT NULL COMMENT 'Tax percentage (%)',
   `tax_amount`     DECIMAL(24,2)   DEFAULT NULL COMMENT 'Tax value (IDR)',
   `fee_pct`        DECIMAL(8,4)    DEFAULT NULL COMMENT 'Fee percentage (%)',

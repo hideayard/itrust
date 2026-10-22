@@ -215,10 +215,9 @@ A fee can sit on the invoice header and on each line, always as a pair:
 `fee_pct`, `feeValue` for `fee_amount`, and on a line a legacy `fee` is read as
 `fee_amount`.
 
-The header also carries `total` = `amount` + `tax_amount` + `fee_amount`. Send it
-when the sheet already has the number (the "Total" column on INV_BUY sheets); if
-it is omitted or `0`, the server derives it — which is what gives SELL invoices,
-whose sheet has no total column, a total as well.
+The header also carries `total`, taken verbatim from the sheet's own Total column
+(N on both the BUY and SELL sheets). The sheet formula is the source of truth, so
+the server never recomputes it; an empty cell is stored as `0`.
 
 `source_sheet` may be given per invoice or at the payload level
 (`{ "source_sheet": "INV_BUY_SEP", "invoices": [ ... ] }`); the invoice-level
