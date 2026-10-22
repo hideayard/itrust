@@ -63,11 +63,11 @@ class GmrController extends Controller
             ],
             'invoice' => [
                 'model' => GmrInvoice::class,
-                'fields' => ['month', 'direction', 'invoice_date', 'ref_id', 'invoice_number', 'billed_to', 'payment_method', 'issue_date', 'due_date', 'status', 'qty', 'rate', 'amount'],
+                'fields' => ['month', 'direction', 'invoice_date', 'ref_id', 'invoice_number', 'billed_to', 'payment_method', 'issue_date', 'due_date', 'status', 'qty', 'rate', 'amount', 'tax_pct', 'tax_amount'],
             ],
             'invoice_detail' => [
                 'model' => GmrInvoiceDetail::class,
-                'fields' => ['month', 'detail_date', 'ref_id', 'invoice_number', 'description', 'qty', 'unit_price', 'amount'],
+                'fields' => ['month', 'detail_date', 'ref_id', 'invoice_number', 'description', 'qty', 'unit_price', 'amount', 'fee'],
             ],
             'monthly_summary' => [
                 'model' => GmrMonthlySummary::class,
@@ -625,6 +625,8 @@ class GmrController extends Controller
             'qty' => $this->toFloat($model->qty),
             'rate' => $this->toFloat($model->rate),
             'amount' => $this->toFloat($model->amount),
+            'tax_pct' => $this->toFloat($model->tax_pct),
+            'tax_amount' => $this->toFloat($model->tax_amount),
         ];
 
         if ($withDetails) {
@@ -650,6 +652,7 @@ class GmrController extends Controller
             'qty' => $this->toFloat($detail->qty),
             'unit_price' => $this->toFloat($detail->unit_price),
             'amount' => $this->toFloat($detail->amount),
+            'fee' => $this->toFloat($detail->fee),
         ];
     }
 
@@ -743,6 +746,8 @@ class GmrController extends Controller
         $model->qty = $qty;
         $model->rate = $qty > 0 ? $amount / $qty : 0;
         $model->amount = $amount;
+        $model->tax_pct = (float) ($data['tax_pct'] ?? $data['taxPct'] ?? 0);
+        $model->tax_amount = (float) ($data['tax_amount'] ?? $data['taxValue'] ?? 0);
 
         if (!$model->save()) {
             throw new \RuntimeException(
@@ -766,6 +771,7 @@ class GmrController extends Controller
             $detail->qty = (float) ($line['qty'] ?? 0);
             $detail->unit_price = (float) ($line['price'] ?? $line['unit_price'] ?? 0);
             $detail->amount = $detail->qty * $detail->unit_price;
+            $detail->fee = (float) ($line['fee'] ?? 0);
 
             if (!$detail->save()) {
                 throw new \RuntimeException(

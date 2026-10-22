@@ -48,8 +48,8 @@ A missing/wrong token returns `401` with `{"success": false, "message": "Unautho
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `buy_trade`       | `month`, `trade_day`, `trade_date`, `ref_id`, `nominal`, `price`, `total`                    |
 | `exchange`        | `month`, `trade_day`, `trade_date`, `ref_id`, `nominal`, `rate_buy`, `buy_amount`, `rate_sell`, `sell_amount`, `fee_pct`, `fee_amount`, `omset`, `profit` |
-| `invoice`         | `month`, `direction`, `invoice_date`, `ref_id`, `invoice_number`, `billed_to`, `payment_method`, `issue_date`, `due_date`, `status`, `qty`, `rate`, `amount` |
-| `invoice_detail`  | `month`, `detail_date`, `ref_id`, `invoice_number`, `description`, `qty`, `unit_price`, `amount` |
+| `invoice`         | `month`, `direction`, `invoice_date`, `ref_id`, `invoice_number`, `billed_to`, `payment_method`, `issue_date`, `due_date`, `status`, `qty`, `rate`, `amount`, `tax_pct`, `tax_amount` |
+| `invoice_detail`  | `month`, `detail_date`, `ref_id`, `invoice_number`, `description`, `qty`, `unit_price`, `amount`, `fee` |
 | `monthly_summary` | `month`, `nominal`, `rate_buy_avg`, `buy_amount`, `rate_sell_avg`, `sell_amount`, `fee`, `profit` |
 | `bank_balance`    | `entry_type`, `balance_day`, `balance_date`, `global_amount`, `sisa_usdt`, `tambah_modal`, `out_amount`, `total`, `profit`, `remark`, `bca`, `bca_bisnis`, `blu_bca`, `mandiri`, `bri`, `bri_vega`, `bni`, `sinarmas`, `total_bank`, `usdt`, `rate`, `total_usdt` |
 
@@ -292,8 +292,10 @@ curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \
       "qty": 142830.07,
       "rate": 17627.34,
       "amount": 2518000000,
+      "tax_pct": 0,
+      "tax_amount": 0,
       "details": [
-        { "id": 501, "detail_date": "2026-08-31", "ref_id": null, "description": "BUY USD", "qty": 29365.07, "unit_price": 17640, "amount": 518000000 }
+        { "id": 501, "detail_date": "2026-08-31", "ref_id": null, "description": "BUY USD", "qty": 29365.07, "unit_price": 17640, "amount": 518000000, "fee": 0 }
       ]
     }
   ]

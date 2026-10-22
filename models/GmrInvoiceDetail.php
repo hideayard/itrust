@@ -24,6 +24,7 @@ use yii\db\Expression;
  * @property float|null $qty
  * @property float|null $unit_price
  * @property float|null $amount
+ * @property float|null $fee
  * @property string|null $created_at
  * @property string|null $updated_at
  */
@@ -51,7 +52,7 @@ class GmrInvoiceDetail extends ActiveRecord
         return [
             [['source_sheet', 'sync_key'], 'required'],
             [['sheet_row'], 'integer'],
-            [['qty', 'unit_price', 'amount'], 'number'],
+            [['qty', 'unit_price', 'amount', 'fee'], 'number'],
             [['detail_date'], 'date', 'format' => 'php:Y-m-d'],
             [['detail_date', 'created_at', 'updated_at'], 'safe'],
             [['source_sheet'], 'string', 'max' => 64],
@@ -79,6 +80,7 @@ class GmrInvoiceDetail extends ActiveRecord
             'qty' => 'Qty',
             'unit_price' => 'Unit Price',
             'amount' => 'Amount',
+            'fee' => 'Fee',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
