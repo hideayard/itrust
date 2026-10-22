@@ -520,6 +520,7 @@ function buildBuyInvoices(mainSheetName, detailSheetName) {
       status:        row[INV_COL.STATUS] || '',
       fee_pct:       Number(row[INV_COL_BUY.FEE_PCT]) || 0,
       fee_amount:    Number(row[INV_COL_BUY.FEE_RP])  || 0,
+      total:         Number(row[INV_COL_BUY.TOTAL])   || 0,
       lines:         lines,
       __src:         src
     });

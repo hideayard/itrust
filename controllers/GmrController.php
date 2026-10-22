@@ -63,7 +63,7 @@ class GmrController extends Controller
             ],
             'invoice' => [
                 'model' => GmrInvoice::class,
-                'fields' => ['month', 'direction', 'invoice_date', 'ref_id', 'invoice_number', 'billed_to', 'payment_method', 'issue_date', 'due_date', 'status', 'qty', 'rate', 'amount', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'],
+                'fields' => ['month', 'direction', 'invoice_date', 'ref_id', 'invoice_number', 'billed_to', 'payment_method', 'issue_date', 'due_date', 'status', 'qty', 'rate', 'amount', 'total', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'],
             ],
             'invoice_detail' => [
                 'model' => GmrInvoiceDetail::class,
@@ -629,6 +629,7 @@ class GmrController extends Controller
             'tax_amount' => $this->toFloat($model->tax_amount),
             'fee_pct' => $this->toFloat($model->fee_pct),
             'fee_amount' => $this->toFloat($model->fee_amount),
+            'total' => $this->toFloat($model->total),
         ];
 
         if ($withDetails) {
@@ -753,6 +754,9 @@ class GmrController extends Controller
         $model->tax_amount = (float) ($data['tax_amount'] ?? $data['taxValue'] ?? 0);
         $model->fee_pct = (float) ($data['fee_pct'] ?? $data['feePct'] ?? 0);
         $model->fee_amount = (float) ($data['fee_amount'] ?? $data['feeValue'] ?? 0);
+        // The sheet's total wins; when it is absent (or 0) GmrInvoice::beforeSave()
+        // derives it from amount + tax + fee.
+        $model->total = (float) ($data['total'] ?? 0);
 
         if (!$model->save()) {
             throw new \RuntimeException(

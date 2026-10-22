@@ -10,8 +10,9 @@ use yii\db\Expression;
  * This is the model class for table "gmr_invoice".
  *
  * Sourced from the INV_BUY_<MON> and INV_SELL_<MON> sheets. Both sheet families
- * are normalised into the same shape (qty = USD, rate = IDR/USD, amount = IDR
- * total); direction distinguishes the buy and sell invoices.
+ * are normalised into the same shape (qty = USD, rate = IDR/USD, amount = IDR,
+ * total = amount + tax + fee); direction distinguishes the buy and sell
+ * invoices.
  *
  * @property int $id
  * @property string|null $month
@@ -30,6 +31,7 @@ use yii\db\Expression;
  * @property float|null $qty
  * @property float|null $rate
  * @property float|null $amount
+ * @property float|null $total
  * @property float|null $tax_pct
  * @property float|null $tax_amount
  * @property float|null $fee_pct
@@ -63,6 +65,27 @@ class GmrInvoice extends ActiveRecord
         ];
     }
 
+    /**
+     * Keep `total` in step with its components: a total supplied by the sheet
+     * is kept as-is, otherwise it is derived (this is what gives SELL invoices,
+     * whose sheet has no total column, one too).
+     *
+     * @param bool $insert
+     * @return bool
+     */
+    public function beforeSave($insert)
+    {
+        if (!parent::beforeSave($insert)) {
+            return false;
+        }
+
+        if ($this->total === null || (float) $this->total <= 0) {
+            $this->total = (float) $this->amount + (float) $this->tax_amount + (float) $this->fee_amount;
+        }
+
+        return true;
+    }
+
     public function rules()
     {
         return [
@@ -70,7 +93,7 @@ class GmrInvoice extends ActiveRecord
             [['direction'], 'in', 'range' => [self::DIRECTION_BUY, self::DIRECTION_SELL]],
             [['direction'], 'default', 'value' => self::DIRECTION_BUY],
             [['sheet_row'], 'integer'],
-            [['qty', 'rate', 'amount', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'], 'number'],
+            [['qty', 'rate', 'amount', 'total', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'], 'number'],
             [['invoice_date', 'issue_date', 'due_date'], 'date', 'format' => 'php:Y-m-d'],
             [['invoice_date', 'issue_date', 'due_date', 'created_at', 'updated_at'], 'safe'],
             [['source_sheet'], 'string', 'max' => 64],
@@ -105,6 +128,7 @@ class GmrInvoice extends ActiveRecord
             'qty' => 'Qty (USD)',
             'rate' => 'Rate',
             'amount' => 'Amount (IDR)',
+            'total' => 'Total (IDR)',
             'tax_pct' => 'Tax (%)',
             'tax_amount' => 'Tax (IDR)',
             'fee_pct' => 'Fee (%)',
