@@ -10,7 +10,8 @@ use yii\db\Expression;
  * This is the model class for table "gmr_invoice_detail".
  *
  * Sourced from the INV_DETAIL_BUY_<MON> sheets: one line per buy leg inside an
- * invoice (DATE, ID, INVOICE NUMBER, DESCRIPTION, QTY, UNIT PRICE, AMOUNT).
+ * invoice (DATE, ID, INVOICE NUMBER, DESCRIPTION, QTY, UNIT PRICE, AMOUNT, and
+ * the line fee as FEE (%) / FEE (Rp)).
  *
  * @property int $id
  * @property string|null $month
@@ -24,7 +25,8 @@ use yii\db\Expression;
  * @property float|null $qty
  * @property float|null $unit_price
  * @property float|null $amount
- * @property float|null $fee
+ * @property float|null $fee_pct
+ * @property float|null $fee_amount
  * @property string|null $created_at
  * @property string|null $updated_at
  */
@@ -52,7 +54,7 @@ class GmrInvoiceDetail extends ActiveRecord
         return [
             [['source_sheet', 'sync_key'], 'required'],
             [['sheet_row'], 'integer'],
-            [['qty', 'unit_price', 'amount', 'fee'], 'number'],
+            [['qty', 'unit_price', 'amount', 'fee_pct', 'fee_amount'], 'number'],
             [['detail_date'], 'date', 'format' => 'php:Y-m-d'],
             [['detail_date', 'created_at', 'updated_at'], 'safe'],
             [['source_sheet'], 'string', 'max' => 64],
@@ -80,7 +82,8 @@ class GmrInvoiceDetail extends ActiveRecord
             'qty' => 'Qty',
             'unit_price' => 'Unit Price',
             'amount' => 'Amount',
-            'fee' => 'Fee',
+            'fee_pct' => 'Fee (%)',
+            'fee_amount' => 'Fee (Rp)',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];

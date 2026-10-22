@@ -48,8 +48,8 @@ A missing/wrong token returns `401` with `{"success": false, "message": "Unautho
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `buy_trade`       | `month`, `trade_day`, `trade_date`, `ref_id`, `nominal`, `price`, `total`                    |
 | `exchange`        | `month`, `trade_day`, `trade_date`, `ref_id`, `nominal`, `rate_buy`, `buy_amount`, `rate_sell`, `sell_amount`, `fee_pct`, `fee_amount`, `omset`, `profit` |
-| `invoice`         | `month`, `direction`, `invoice_date`, `ref_id`, `invoice_number`, `billed_to`, `payment_method`, `issue_date`, `due_date`, `status`, `qty`, `rate`, `amount`, `tax_pct`, `tax_amount` |
-| `invoice_detail`  | `month`, `detail_date`, `ref_id`, `invoice_number`, `description`, `qty`, `unit_price`, `amount`, `fee` |
+| `invoice`         | `month`, `direction`, `invoice_date`, `ref_id`, `invoice_number`, `billed_to`, `payment_method`, `issue_date`, `due_date`, `status`, `qty`, `rate`, `amount`, `tax_pct`, `tax_amount`, `fee_pct`, `fee_amount` |
+| `invoice_detail`  | `month`, `detail_date`, `ref_id`, `invoice_number`, `description`, `qty`, `unit_price`, `amount`, `fee_pct`, `fee_amount` |
 | `monthly_summary` | `month`, `nominal`, `rate_buy_avg`, `buy_amount`, `rate_sell_avg`, `sell_amount`, `fee`, `profit` |
 | `bank_balance`    | `entry_type`, `balance_day`, `balance_date`, `global_amount`, `sisa_usdt`, `tambah_modal`, `out_amount`, `total`, `profit`, `remark`, `bca`, `bca_bisnis`, `blu_bca`, `mandiri`, `bri`, `bri_vega`, `bni`, `sinarmas`, `total_bank`, `usdt`, `rate`, `total_usdt` |
 
@@ -182,9 +182,11 @@ curl -s -X POST "https://itrust-tech.id/web/gmr/sync-invoice" \
       "dueDate": "2026-08-31",
       "paymentMethod": "BANK BCA",
       "status": "PAID",
+      "fee_pct": 0.5,
+      "fee_amount": 2590000,
       "lines": [
-        { "description": "BUY USD", "qty": 29365.07, "price": 17640 },
-        { "description": "BUY USD", "qty": 113475,   "price": 17625 }
+        { "description": "BUY USD", "qty": 29365.07, "price": 17640, "fee_pct": 0.5,  "fee_amount": 2590000 },
+        { "description": "BUY USD", "qty": 113475,   "price": 17625, "fee_pct": 0.35, "fee_amount": 7000000 }
       ]
     }
   ]'
@@ -205,6 +207,12 @@ Accepted aliases: `invoice_number` for `id`; `billed_to` for `customer`;
 `issueDate`; `payment_method` for `paymentMethod`; `unit_price` for `price`.
 `direction` (`BUY`/`SELL`) is optional and otherwise inferred from the line
 descriptions. `month` defaults to the month of the invoice date.
+
+A fee can sit on the invoice header and on each line, always as a pair:
+`fee_pct` (the percentage) and `fee_amount` (the resulting IDR value), mirroring
+`tax_pct` / `tax_amount`. Both default to `0`. Accepted aliases: `feePct` for
+`fee_pct`, `feeValue` for `fee_amount`, and on a line a legacy `fee` is read as
+`fee_amount`.
 
 `source_sheet` may be given per invoice or at the payload level
 (`{ "source_sheet": "INV_BUY_SEP", "invoices": [ ... ] }`); the invoice-level
@@ -294,8 +302,10 @@ curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \
       "amount": 2518000000,
       "tax_pct": 0,
       "tax_amount": 0,
+      "fee_pct": 0,
+      "fee_amount": 0,
       "details": [
-        { "id": 501, "detail_date": "2026-08-31", "ref_id": null, "description": "BUY USD", "qty": 29365.07, "unit_price": 17640, "amount": 518000000, "fee": 0 }
+        { "id": 501, "detail_date": "2026-08-31", "ref_id": null, "description": "BUY USD", "qty": 29365.07, "unit_price": 17640, "amount": 518000000, "fee_pct": 0, "fee_amount": 0 }
       ]
     }
   ]

@@ -279,6 +279,8 @@
           "ref_id": { "type": "string" },
           "refId": { "type": "string" },
           "direction": { "type": "string", "enum": ["BUY", "SELL"], "description": "Defaults to the direction guessed from the line descriptions." },
+          "fee_pct": { "type": "number", "example": 0.5, "description": "Header fee percentage (%). Also accepted as feePct; defaults to 0." },
+          "fee_amount": { "type": "number", "example": 2590000, "description": "Header fee value in IDR. Also accepted as feeValue; defaults to 0." },
           "lines": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/LineInput" }
@@ -292,7 +294,9 @@
           "description": { "type": "string", "example": "BUY USD" },
           "qty": { "type": "number", "example": 29365.07 },
           "price": { "type": "number", "example": 17640, "description": "Also accepted as unit_price." },
-          "unit_price": { "type": "number" }
+          "unit_price": { "type": "number" },
+          "fee_pct": { "type": "number", "example": 0.5, "description": "Line fee percentage (%). Also accepted as feePct; defaults to 0." },
+          "fee_amount": { "type": "number", "example": 2590000, "description": "Line fee value in IDR. Also accepted as feeValue (legacy: fee); defaults to 0." }
         }
       },
       "InvoiceSyncResponse": {
@@ -360,6 +364,10 @@
           "qty": { "type": "number", "nullable": true, "description": "USD qty." },
           "rate": { "type": "number", "nullable": true, "description": "IDR per USD." },
           "amount": { "type": "number", "nullable": true, "description": "IDR total." },
+          "tax_pct": { "type": "number", "nullable": true, "description": "Tax percentage (%)." },
+          "tax_amount": { "type": "number", "nullable": true, "description": "Tax value (IDR)." },
+          "fee_pct": { "type": "number", "nullable": true, "description": "Header fee percentage (%)." },
+          "fee_amount": { "type": "number", "nullable": true, "description": "Header fee value (IDR)." },
           "details": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/InvoiceDetail" },
@@ -376,7 +384,9 @@
           "description": { "type": "string", "nullable": true },
           "qty": { "type": "number", "nullable": true },
           "unit_price": { "type": "number", "nullable": true },
-          "amount": { "type": "number", "nullable": true }
+          "amount": { "type": "number", "nullable": true },
+          "fee_pct": { "type": "number", "nullable": true, "description": "Line fee percentage (%)." },
+          "fee_amount": { "type": "number", "nullable": true, "description": "Line fee value (IDR)." }
         }
       }
     }

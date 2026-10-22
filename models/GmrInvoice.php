@@ -32,6 +32,8 @@ use yii\db\Expression;
  * @property float|null $amount
  * @property float|null $tax_pct
  * @property float|null $tax_amount
+ * @property float|null $fee_pct
+ * @property float|null $fee_amount
  * @property string|null $created_at
  * @property string|null $updated_at
  */
@@ -68,7 +70,7 @@ class GmrInvoice extends ActiveRecord
             [['direction'], 'in', 'range' => [self::DIRECTION_BUY, self::DIRECTION_SELL]],
             [['direction'], 'default', 'value' => self::DIRECTION_BUY],
             [['sheet_row'], 'integer'],
-            [['qty', 'rate', 'amount', 'tax_pct', 'tax_amount'], 'number'],
+            [['qty', 'rate', 'amount', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'], 'number'],
             [['invoice_date', 'issue_date', 'due_date'], 'date', 'format' => 'php:Y-m-d'],
             [['invoice_date', 'issue_date', 'due_date', 'created_at', 'updated_at'], 'safe'],
             [['source_sheet'], 'string', 'max' => 64],
@@ -105,6 +107,8 @@ class GmrInvoice extends ActiveRecord
             'amount' => 'Amount (IDR)',
             'tax_pct' => 'Tax (%)',
             'tax_amount' => 'Tax (IDR)',
+            'fee_pct' => 'Fee (%)',
+            'fee_amount' => 'Fee (Rp)',
             'created_at' => 'Created At',
             'updated_at' => 'Updated At',
         ];
