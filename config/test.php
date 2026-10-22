@@ -16,6 +16,7 @@ return [
     'components' => [
         'db' => $db,
         'mailer' => [
+            'class' => 'yii\symfonymailer\Mailer',
             'useFileTransport' => true,
         ],
         'assetManager' => [

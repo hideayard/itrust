@@ -37,14 +37,13 @@ $config = [
             'errorAction' => 'site/error',
         ],
                 'mailer' => [
-            'class' => 'yii\swiftmailer\Mailer',
+            'class' => 'yii\symfonymailer\Mailer',
             'transport' => [
-                'class' => 'Swift_SmtpTransport',
+                'scheme' => ($params['smtp']['encryption'] ?? 'tls') === 'ssl' ? 'smtps' : 'smtp',
                 'host' => $params['smtp']['host'] ?? 'smtp.gmail.com',
                 'username' => $params['smtp']['username'] ?? ($params['smtpUsername'] ?? ''),
                 'password' => $params['smtp']['password'] ?? ($params['smtpPassword'] ?? ''),
                 'port' => $params['smtp']['port'] ?? 587,
-                'encryption' => $params['smtp']['encryption'] ?? 'tls',
             ],
         ],
         'log' => [

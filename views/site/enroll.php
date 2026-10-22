@@ -366,7 +366,7 @@ function getDuration($videoID){
     }
 }
 
-function secondsToHumanReadable(int $seconds, int $requiredParts = null)
+function secondsToHumanReadable(int $seconds, ?int $requiredParts = null)
 {
     $from     = new \DateTime('@0');
     $to       = new \DateTime("@$seconds");

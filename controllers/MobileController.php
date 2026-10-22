@@ -5093,7 +5093,7 @@ public function actionGetDevicesWithData()
                     'to_name' => $toName,
                     'from_email' => Yii::$app->params['adminEmail'],
                     'timestamp' => date('Y-m-d H:i:s'),
-                    'mailer_config' => YII_DEBUG ? Yii::$app->mailer->transport : null
+                    'mailer_config' => YII_DEBUG ? get_class(Yii::$app->mailer) : null
                 ]
             ];
         }
@@ -5204,7 +5204,7 @@ public function actionGetDevicesWithData()
                 Yii::error('Failed to send password reset email - mailer returned false');
 
                 if ($debug) {
-                    Yii::error('Debug - Mailer configuration: ' . json_encode(Yii::$app->mailer->transport));
+                    Yii::error('Debug - Mailer configuration: ' . get_class(Yii::$app->mailer));
                 }
 
                 return false;
@@ -6090,32 +6090,17 @@ public function actionGetDevicesWithData()
                 return true;
             }
 
-            $transport = (new \Swift_SmtpTransport(
-                $smtpConfig['host'],
-                $smtpConfig['port'],
-                $smtpConfig['encryption'] ?? 'tls'
-            ))
-                ->setUsername($smtpConfig['username'])
-                ->setPassword($smtpConfig['password']);
-
-            $mailer = new \Swift_Mailer($transport);
-
-            $message = (new \Swift_Message($subject))
+            Yii::$app->mailer->compose()
                 ->setFrom([$smtpConfig['username'] => 'Geran Komuniti Iskandar Puteri'])
                 ->setTo($user->user_email)
-                ->setBody($htmlBody, 'text/html')
-                ->addPart($textBody, 'text/plain');
+                ->setSubject($subject)
+                ->setHtmlBody($htmlBody)
+                ->setTextBody($textBody)
+                ->send();
 
-            $sent = $mailer->send($message);
-
-            if ($sent) {
-                Yii::info('OTP email sent to: ' . $user->user_email);
-                return true;
-            } else {
-                Yii::error('Failed to send OTP email - mailer returned false');
-                return false;
-            }
-        } catch (\Exception $e) {
+            Yii::info('OTP email sent to: ' . $user->user_email);
+            return true;
+        } catch (\Throwable $e) {
             Yii::error('Failed to send OTP email: ' . $e->getMessage());
             $this->saveEmailToFile($user->user_email, $subject, $htmlBody, $textBody);
             return false;
