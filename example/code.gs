@@ -432,6 +432,13 @@ function logout() {
  *              BAGIAN INVOICE (BUY + SELL + DETAIL)
  * ============================================================ */
 
+/**
+ * Label bulan sesuai skema server (gmr_invoice.month = JAN..DEC),
+ * dipetakan dari urutan baris E2:E13 / I2:I13 di LEGEND.
+ */
+var MONTH_LABELS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+
 function readLegendConfig() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet = ss.getSheetByName(CONFIG.LEGEND_SHEET_NAME);
@@ -539,7 +546,7 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
       invoice_date:   formatDateValue(row[INV_COL.DATE]),        // A
       issue_date:     formatDateValue(row[INV_COL.ISSUE_DATE]),  // F
       due_date:       formatDateValue(row[INV_COL.DUE_DATE]),    // G
-      ref_id:         row[INV_COL.ID] || '',                     // B
+      ref_id:         String(row[INV_COL.ID] || ''),             // B
       billed_to:      row[INV_COL.BILLED_TO] || '',              // D
       payment_method: row[INV_COL.PAYMENT_METHOD] || '',         // E
       status:         row[INV_COL.STATUS] || '',                 // H
@@ -564,6 +571,8 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
  * BUILD INVOICE — SELL
  * ------------------------------------------------------------
  * Mapping sama seperti BUY (tanpa detail sheet).
+ * SELL juga punya kolom Fee & Total:
+ *   L=FEE_PCT | M=FEE_RP | N=TOTAL | O=SYNC_STATUS | P=SYNC_DATE
  * ============================================================
  */
 function buildSellInvoices(mainSheetName, month) {
@@ -595,7 +604,7 @@ function buildSellInvoices(mainSheetName, month) {
       invoice_date:   formatDateValue(row[INV_COL.DATE]),        // A
       issue_date:     formatDateValue(row[INV_COL.ISSUE_DATE]),  // F
       due_date:       formatDateValue(row[INV_COL.DUE_DATE]),    // G
-      ref_id:         row[INV_COL.ID] || '',                     // B
+      ref_id:         String(row[INV_COL.ID] || ''),             // B
       billed_to:      row[INV_COL.BILLED_TO] || '',              // D
       payment_method: row[INV_COL.PAYMENT_METHOD] || '',         // E
       status:         row[INV_COL.STATUS] || '',                 // H
@@ -604,9 +613,9 @@ function buildSellInvoices(mainSheetName, month) {
       amount:         Number(row[INV_COL.AMOUNT]) || 0,          // K
       tax_pct:        0,
       tax_amount:     0,
-      fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,
-      fee_amount:     Number(row[INV_COL_EXTRA.FEE_RP])  || 0,
-      total:          Number(row[INV_COL_EXTRA.TOTAL])   || 0,
+      fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // L
+      fee_amount:     Number(row[INV_COL_EXTRA.FEE_RP])  || 0,   // M
+      total:          Number(row[INV_COL_EXTRA.TOTAL])   || 0,   // N
       lines: [{
         description: '',
         qty:   Number(row[INV_COL.QTY])   || 0,
@@ -621,21 +630,22 @@ function buildSellInvoices(mainSheetName, month) {
 
 /**
  * Build semua invoice dari semua sheet yang aktif di LEGEND.
- * `month` = nomor bulan 1..12 berdasarkan urutan baris E2:E13 / I2:I13.
+ * `month` = label bulan JAN..DEC berdasarkan urutan baris E2:E13 / I2:I13,
+ * sesuai skema server (gmr_invoice.month).
  */
 function buildAllInvoices() {
   var months = readLegendConfig();
   var invoices = [];
 
   months.forEach(function (m, idx) {
-    var monthNum = idx + 1;   // 1..12
+    var monthLabel = MONTH_LABELS[idx] || '';
     if (m.buySheet) {
       Array.prototype.push.apply(invoices,
-        buildBuyInvoices(m.buySheet, m.detailSheet, monthNum));
+        buildBuyInvoices(m.buySheet, m.detailSheet, monthLabel));
     }
     if (m.sellSheet) {
       Array.prototype.push.apply(invoices,
-        buildSellInvoices(m.sellSheet, monthNum));
+        buildSellInvoices(m.sellSheet, monthLabel));
     }
   });
 
