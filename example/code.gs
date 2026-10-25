@@ -4,6 +4,10 @@
  * ============================================================
  */
 var CONFIG = CONFIG || {
+  // Identitas aplikasi (dipakai menu About)
+  APP_NAME:    'iTrust Sync Server',
+  APP_VERSION: '1.1.0',
+
   BASE_URL: 'https://itrust-tech.id/web/',
 
   LOGIN_PATH_PREFIX:    'mobile',
@@ -29,8 +33,8 @@ var CONFIG = CONFIG || {
   PAUSE_MS_BETWEEN_BATCHES: 300,
 
   // Dipertahankan sebagai fallback default
-  SYNC_STATUS_COLUMN:      15,   // O
-  SYNC_MODIFIED_AT_COLUMN: 16,   // P
+  SYNC_STATUS_COLUMN:      17,   // Q
+  SYNC_MODIFIED_AT_COLUMN: 18,   // R
 
   // Teks status untuk baris dengan amount 0 / kosong
   INVALID_STATUS_TEXT: 'not valid data'
@@ -40,12 +44,12 @@ var CONFIG = CONFIG || {
  * ============================================================
  * KOLOM SYNC PER JENIS INVOICE (1-based, untuk getRange)
  * ------------------------------------------------------------
- * BUY + SELL : K=AMOUNT | L=Fee % | M=Fee Rp | N=Total | O=Sync Status | P=Date Sync
+ * BUY + SELL : M=AMOUNT | N=Fee % | O=Fee Rp | P=Total | Q=Sync Status | R=Date Sync
  * ============================================================
  */
 var SYNC_COLUMNS = {
-  BUY:  { STATUS: 15, MODIFIED_AT: 16 },  // O, P
-  SELL: { STATUS: 15, MODIFIED_AT: 16 }   // O, P
+  BUY:  { STATUS: 17, MODIFIED_AT: 18 },  // Q, R
+  SELL: { STATUS: 17, MODIFIED_AT: 18 }   // Q, R
 };
 
 /**
@@ -63,23 +67,25 @@ function buildUrl_(pathPrefix, endpoint) {
  * KONFIGURASI KOLOM INVOICE (indeks 0-based untuk baca array)
  * ------------------------------------------------------------
  * A=DATE | B=ID | C=INVOICE_NUMBER | D=BILLED_TO | E=PAYMENT_METHOD
- * F=ISSUE_DATE | G=DUE_DATE | H=STATUS | I=QTY | J=PRICE | K=AMOUNT
- * L=FEE_PCT | M=FEE_RP | N=TOTAL | O=SYNC_STATUS | P=SYNC_DATE
+ * F=ACCOUNT_NUMBER | G=ACCOUNT_NAME | H=ISSUE_DATE | I=DUE_DATE | J=STATUS
+ * K=QTY | L=PRICE | M=AMOUNT | N=FEE_PCT | O=FEE_RP | P=TOTAL
+ * Q=SYNC_STATUS | R=SYNC_DATE
  * ============================================================
  */
 var INV_COL = {
   DATE: 0, ID: 1, INVOICE_NUMBER: 2, BILLED_TO: 3,
-  PAYMENT_METHOD: 4, ISSUE_DATE: 5, DUE_DATE: 6,
-  STATUS: 7, QTY: 8, PRICE: 9, AMOUNT: 10
+  PAYMENT_METHOD: 4, ACCOUNT_NUMBER: 5, ACCOUNT_NAME: 6,
+  ISSUE_DATE: 7, DUE_DATE: 8, STATUS: 9,
+  QTY: 10, PRICE: 11, AMOUNT: 12
 };
 
 // Kolom tambahan setelah AMOUNT (dipakai BUY dan SELL)
 var INV_COL_EXTRA = {
-  FEE_PCT: 11,       // L
-  FEE_RP:  12,       // M
-  TOTAL:   13,       // N
-  SYNC_STATUS: 14,   // O (0-based)
-  SYNC_DATE:   15    // P (0-based)
+  FEE_PCT: 13,       // N
+  FEE_RP:  14,       // O
+  TOTAL:   15,       // P
+  SYNC_STATUS: 16,   // Q (0-based)
+  SYNC_DATE:   17    // R (0-based)
 };
 
 var DETAIL_COL = {
@@ -121,6 +127,8 @@ function onOpen() {
     .addItem('Cek Status Token & Koneksi', 'checkTokenStatusUserAction')
     .addItem('Login / Update Token', 'showLoginModal')
     .addItem('Logout', 'logout')
+    .addSeparator()
+    .addItem('About', 'showAbout')
     .addToUi();
 }
 
@@ -135,6 +143,50 @@ function showLoginModal() {
     .setWidth(400)
     .setHeight(400);
   SpreadsheetApp.getUi().showModalDialog(html, ' ');
+}
+
+/**
+ * ============================================================
+ * MODAL ABOUT
+ * ------------------------------------------------------------
+ * Menampilkan nama aplikasi, versi, dan info koneksi/runtime:
+ * server, endpoint sync, status login, timezone, dan batch limit.
+ * ============================================================
+ */
+function showAbout() {
+  var rows = [
+    ['Aplikasi',    CONFIG.APP_NAME],
+    ['Versi',       CONFIG.APP_VERSION],
+    ['Server',      CONFIG.BASE_URL],
+    ['Endpoint',    buildUrl_(CONFIG.SYNC_PATH_PREFIX, CONFIG.SYNC_ENDPOINT)],
+    ['Status',      getTokenFromLegendSheet() ? 'Sudah login' : 'Belum login'],
+    ['Timezone',    getEffectiveTimezone_()],
+    ['Batch limit', getBatchLimit() + ' invoice / request']
+  ];
+
+  var rowsHtml = rows.map(function (row) {
+    return '<tr><td class="key">' + row[0] + '</td><td>' + row[1] + '</td></tr>';
+  }).join('');
+
+  var html = HtmlService.createHtmlOutput(
+    '<!DOCTYPE html><html><head><style>' +
+    'body{font-family:Arial,sans-serif;padding:16px;margin:0;color:#333;}' +
+    'h2{margin:0 0 4px 0;font-size:18px;}' +
+    '.ver{color:#888;font-size:12px;margin:0 0 12px 0;}' +
+    'table{border-collapse:collapse;width:100%;font-size:12px;}' +
+    'td{padding:6px;border-bottom:1px solid #eee;vertical-align:top;word-break:break-all;}' +
+    'td.key{color:#777;white-space:nowrap;width:96px;}' +
+    '.foot{margin-top:14px;font-size:11px;color:#aaa;text-align:center;line-height:1.5;}' +
+    '</style></head><body>' +
+    '<h2>🚀 ' + CONFIG.APP_NAME + '</h2>' +
+    '<p class="ver">Versi ' + CONFIG.APP_VERSION + '</p>' +
+    '<table>' + rowsHtml + '</table>' +
+    '<div class="foot">Sinkronisasi invoice Google Sheets → server GMR.<br>' +
+    'Login, preview, dan kirim invoice dari menu 🚀 Sync Server.</div>' +
+    '</body></html>'
+  ).setWidth(400).setHeight(340);
+
+  SpreadsheetApp.getUi().showModalDialog(html, 'About');
 }
 
 /**
@@ -479,20 +531,22 @@ function readSheetRows(sheetName) {
  * BUILD INVOICE — BUY
  * ------------------------------------------------------------
  * Mapping kolom ke field payload:
- *   A (DATE)          → invoice_date
- *   B (ID)            → ref_id
- *   C (INVOICE_NUMBER)→ invoice_number
- *   D (BILLED_TO)     → billed_to
- *   E (PAYMENT_METHOD)→ payment_method
- *   F (ISSUE_DATE)    → issue_date
- *   G (DUE_DATE)      → due_date
- *   H (STATUS)        → status
- *   I (QTY)           → qty
- *   J (PRICE)         → rate
- *   K (AMOUNT)        → amount
- *   L (FEE_PCT)       → fee_pct
- *   M (FEE_RP)        → fee_amount
- *   N (TOTAL)         → total
+ *   A (DATE)           → invoice_date
+ *   B (ID)             → ref_id
+ *   C (INVOICE_NUMBER) → invoice_number
+ *   D (BILLED_TO)      → billed_to
+ *   E (PAYMENT_METHOD) → payment_method
+ *   F (ACCOUNT_NUMBER) → account_number
+ *   G (ACCOUNT_NAME)   → account_name
+ *   H (ISSUE_DATE)     → issue_date
+ *   I (DUE_DATE)       → due_date
+ *   J (STATUS)         → status
+ *   K (QTY)            → qty
+ *   L (PRICE)          → rate
+ *   M (AMOUNT)         → amount
+ *   N (FEE_PCT)        → fee_pct
+ *   O (FEE_RP)         → fee_amount
+ *   P (TOTAL)          → total
  * ============================================================
  */
 function buildBuyInvoices(mainSheetName, detailSheetName, month) {
@@ -544,20 +598,22 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
       month:          month || '',
       source_sheet:   mainSheetName,
       invoice_date:   formatDateValue(row[INV_COL.DATE]),        // A
-      issue_date:     formatDateValue(row[INV_COL.ISSUE_DATE]),  // F
-      due_date:       formatDateValue(row[INV_COL.DUE_DATE]),    // G
+      issue_date:     formatDateValue(row[INV_COL.ISSUE_DATE]),  // H
+      due_date:       formatDateValue(row[INV_COL.DUE_DATE]),    // I
       ref_id:         String(row[INV_COL.ID] || ''),             // B
       billed_to:      row[INV_COL.BILLED_TO] || '',              // D
       payment_method: row[INV_COL.PAYMENT_METHOD] || '',         // E
-      status:         row[INV_COL.STATUS] || '',                 // H
-      qty:            Number(row[INV_COL.QTY])    || 0,          // I
-      rate:           Number(row[INV_COL.PRICE])  || 0,          // J
-      amount:         Number(row[INV_COL.AMOUNT]) || 0,          // K
+      account_number: row[INV_COL.ACCOUNT_NUMBER] || '',         // F
+      account_name:   row[INV_COL.ACCOUNT_NAME] || '',           // G
+      status:         row[INV_COL.STATUS] || '',                 // J
+      qty:            Number(row[INV_COL.QTY])    || 0,          // K
+      rate:           Number(row[INV_COL.PRICE])  || 0,          // L
+      amount:         Number(row[INV_COL.AMOUNT]) || 0,          // M
       tax_pct:        0,
       tax_amount:     0,
-      fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // L
-      fee_amount:     Number(row[INV_COL_EXTRA.FEE_RP])  || 0,   // M
-      total:          Number(row[INV_COL_EXTRA.TOTAL])   || 0,   // N
+      fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // N
+      fee_amount:     Number(row[INV_COL_EXTRA.FEE_RP])  || 0,   // O
+      total:          Number(row[INV_COL_EXTRA.TOTAL])   || 0,   // P
       lines:          lines,
       __src:          src
     });
@@ -571,8 +627,9 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
  * BUILD INVOICE — SELL
  * ------------------------------------------------------------
  * Mapping sama seperti BUY (tanpa detail sheet).
- * SELL juga punya kolom Fee & Total:
- *   L=FEE_PCT | M=FEE_RP | N=TOTAL | O=SYNC_STATUS | P=SYNC_DATE
+ * SELL juga punya kolom Account, Fee & Total:
+ *   F=ACCOUNT_NUMBER | G=ACCOUNT_NAME | N=FEE_PCT | O=FEE_RP | P=TOTAL
+ *   Q=SYNC_STATUS | R=SYNC_DATE
  * ============================================================
  */
 function buildSellInvoices(mainSheetName, month) {
@@ -602,20 +659,22 @@ function buildSellInvoices(mainSheetName, month) {
       month:          month || '',
       source_sheet:   mainSheetName,
       invoice_date:   formatDateValue(row[INV_COL.DATE]),        // A
-      issue_date:     formatDateValue(row[INV_COL.ISSUE_DATE]),  // F
-      due_date:       formatDateValue(row[INV_COL.DUE_DATE]),    // G
+      issue_date:     formatDateValue(row[INV_COL.ISSUE_DATE]),  // H
+      due_date:       formatDateValue(row[INV_COL.DUE_DATE]),    // I
       ref_id:         String(row[INV_COL.ID] || ''),             // B
       billed_to:      row[INV_COL.BILLED_TO] || '',              // D
       payment_method: row[INV_COL.PAYMENT_METHOD] || '',         // E
-      status:         row[INV_COL.STATUS] || '',                 // H
-      qty:            Number(row[INV_COL.QTY])    || 0,          // I
-      rate:           Number(row[INV_COL.PRICE])  || 0,          // J
-      amount:         Number(row[INV_COL.AMOUNT]) || 0,          // K
+      account_number: row[INV_COL.ACCOUNT_NUMBER] || '',         // F
+      account_name:   row[INV_COL.ACCOUNT_NAME] || '',           // G
+      status:         row[INV_COL.STATUS] || '',                 // J
+      qty:            Number(row[INV_COL.QTY])    || 0,          // K
+      rate:           Number(row[INV_COL.PRICE])  || 0,          // L
+      amount:         Number(row[INV_COL.AMOUNT]) || 0,          // M
       tax_pct:        0,
       tax_amount:     0,
-      fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // L
-      fee_amount:     Number(row[INV_COL_EXTRA.FEE_RP])  || 0,   // M
-      total:          Number(row[INV_COL_EXTRA.TOTAL])   || 0,   // N
+      fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // N
+      fee_amount:     Number(row[INV_COL_EXTRA.FEE_RP])  || 0,   // O
+      total:          Number(row[INV_COL_EXTRA.TOTAL])   || 0,   // P
       lines: [{
         description: '',
         qty:   Number(row[INV_COL.QTY])   || 0,
@@ -986,8 +1045,8 @@ function sendInvoicesPayload_(payloadArray, token, invalidCount) {
 /**
  * ============================================================
  *  TANDAI BARIS INVALID
- *  BUY  → O (kolom 15)
- *  SELL → O (kolom 15)
+ *  BUY  → Q (kolom 17)
+ *  SELL → Q (kolom 17)
  * ============================================================
  */
 function markInvalidRows_(invalidInvoices) {
@@ -1023,8 +1082,8 @@ function markInvalidRows_(invalidInvoices) {
  * ============================================================
  *  TULIS FLAG KE KOLOM SYNC STATUS & DATE SYNC
  *  ------------------------------------------------------------
- *  BUY  → O (status), P (date sync)
- *  SELL → O (status), P (date sync)
+ *  BUY  → Q (status), R (date sync)
+ *  SELL → Q (status), R (date sync)
  *
  *  Date Sync memakai CLIENT TIMEZONE (dari browser user).
  *  Fallback: Script TZ → 'UTC'.

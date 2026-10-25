@@ -63,7 +63,7 @@ class GmrController extends Controller
             ],
             'invoice' => [
                 'model' => GmrInvoice::class,
-                'fields' => ['month', 'direction', 'invoice_date', 'ref_id', 'invoice_number', 'billed_to', 'payment_method', 'issue_date', 'due_date', 'status', 'qty', 'rate', 'amount', 'total', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'],
+                'fields' => ['month', 'direction', 'invoice_date', 'ref_id', 'invoice_number', 'billed_to', 'payment_method', 'account_number', 'account_name', 'issue_date', 'due_date', 'status', 'qty', 'rate', 'amount', 'total', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'],
             ],
             'invoice_detail' => [
                 'model' => GmrInvoiceDetail::class,
@@ -621,6 +621,8 @@ class GmrController extends Controller
             'ref_id' => $model->ref_id,
             'billed_to' => $model->billed_to,
             'payment_method' => $model->payment_method,
+            'account_number' => $model->account_number,
+            'account_name' => $model->account_name,
             'status' => $model->status,
             'qty' => $this->toFloat($model->qty),
             'rate' => $this->toFloat($model->rate),
@@ -746,6 +748,8 @@ class GmrController extends Controller
         $model->invoice_number = $invoiceNumber;
         $model->billed_to = $data['customer'] ?? $data['billed_to'] ?? null;
         $model->payment_method = $data['paymentMethod'] ?? $data['payment_method'] ?? null;
+        $model->account_number = $data['account_number'] ?? $data['accountNumber'] ?? null;
+        $model->account_name = $data['account_name'] ?? $data['accountName'] ?? null;
         $model->status = $data['status'] ?? null;
         $model->qty = $qty;
         $model->rate = $qty > 0 ? $amount / $qty : 0;

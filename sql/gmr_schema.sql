@@ -82,6 +82,8 @@ CREATE TABLE IF NOT EXISTS `gmr_invoice` (
   `invoice_number` VARCHAR(64)     DEFAULT NULL,
   `billed_to`      VARCHAR(128)    DEFAULT NULL,
   `payment_method` VARCHAR(64)     DEFAULT NULL,
+  `account_number` VARCHAR(64)     DEFAULT NULL COMMENT 'Bank account number',
+  `account_name`   VARCHAR(128)    DEFAULT NULL COMMENT 'Bank account name',
   `issue_date`     DATE            DEFAULT NULL,
   `due_date`       DATE            DEFAULT NULL,
   `status`         VARCHAR(32)     DEFAULT NULL,

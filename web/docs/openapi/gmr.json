@@ -274,6 +274,10 @@
           "issue_date": { "type": "string", "format": "date" },
           "paymentMethod": { "type": "string", "example": "BANK BCA", "description": "Also accepted as payment_method." },
           "payment_method": { "type": "string" },
+          "accountNumber": { "type": "string", "example": "1234567890", "description": "Bank account number (sheet column F). Also accepted as account_number." },
+          "account_number": { "type": "string" },
+          "accountName": { "type": "string", "example": "PT I TRUST TEKNOLOGI", "description": "Bank account name (sheet column G). Also accepted as account_name." },
+          "account_name": { "type": "string" },
           "status": { "type": "string", "enum": ["PENDING", "PAID", "CANCEL"], "example": "PAID" },
           "month": { "type": "string", "example": "AUG", "description": "Defaults to the month of the invoice date." },
           "ref_id": { "type": "string" },
@@ -281,7 +285,7 @@
           "direction": { "type": "string", "enum": ["BUY", "SELL"], "description": "Defaults to the direction guessed from the line descriptions." },
           "fee_pct": { "type": "number", "example": 0.5, "description": "Header fee percentage (%). Also accepted as feePct; defaults to 0." },
           "fee_amount": { "type": "number", "example": 2590000, "description": "Header fee value in IDR. Also accepted as feeValue; defaults to 0." },
-          "total": { "type": "number", "example": 520590000, "description": "The sheet's Total column (N), stored verbatim; empty cell becomes 0." },
+          "total": { "type": "number", "example": 520590000, "description": "The sheet's Total column (P), stored verbatim; empty cell becomes 0." },
           "lines": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/LineInput" }
@@ -361,6 +365,8 @@
           "ref_id": { "type": "string", "nullable": true },
           "billed_to": { "type": "string", "nullable": true },
           "payment_method": { "type": "string", "nullable": true },
+          "account_number": { "type": "string", "nullable": true, "description": "Bank account number (sheet column F)." },
+          "account_name": { "type": "string", "nullable": true, "description": "Bank account name (sheet column G)." },
           "status": { "type": "string", "nullable": true },
           "qty": { "type": "number", "nullable": true, "description": "USD qty." },
           "rate": { "type": "number", "nullable": true, "description": "IDR per USD." },

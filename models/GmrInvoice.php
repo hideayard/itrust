@@ -25,6 +25,8 @@ use yii\db\Expression;
  * @property string|null $invoice_number
  * @property string|null $billed_to
  * @property string|null $payment_method
+ * @property string|null $account_number
+ * @property string|null $account_name
  * @property string|null $issue_date
  * @property string|null $due_date
  * @property string|null $status
@@ -82,6 +84,8 @@ class GmrInvoice extends ActiveRecord
             [['invoice_number'], 'string', 'max' => 64],
             [['billed_to'], 'string', 'max' => 128],
             [['payment_method'], 'string', 'max' => 64],
+            [['account_number'], 'string', 'max' => 64],
+            [['account_name'], 'string', 'max' => 128],
             [['status'], 'string', 'max' => 32],
             [['sync_key'], 'unique'],
         ];
@@ -101,6 +105,8 @@ class GmrInvoice extends ActiveRecord
             'invoice_number' => 'Invoice Number',
             'billed_to' => 'Billed To',
             'payment_method' => 'Payment Method',
+            'account_number' => 'Account Number',
+            'account_name' => 'Account Name',
             'issue_date' => 'Issue Date',
             'due_date' => 'Due Date',
             'status' => 'Status',

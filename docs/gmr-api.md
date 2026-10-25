@@ -48,7 +48,7 @@ A missing/wrong token returns `401` with `{"success": false, "message": "Unautho
 | ----------------- | ------------------------------------------------------------------------------------------- |
 | `buy_trade`       | `month`, `trade_day`, `trade_date`, `ref_id`, `nominal`, `price`, `total`                    |
 | `exchange`        | `month`, `trade_day`, `trade_date`, `ref_id`, `nominal`, `rate_buy`, `buy_amount`, `rate_sell`, `sell_amount`, `fee_pct`, `fee_amount`, `omset`, `profit` |
-| `invoice`         | `month`, `direction`, `invoice_date`, `ref_id`, `invoice_number`, `billed_to`, `payment_method`, `issue_date`, `due_date`, `status`, `qty`, `rate`, `amount`, `total`, `tax_pct`, `tax_amount`, `fee_pct`, `fee_amount` |
+| `invoice`         | `month`, `direction`, `invoice_date`, `ref_id`, `invoice_number`, `billed_to`, `payment_method`, `account_number`, `account_name`, `issue_date`, `due_date`, `status`, `qty`, `rate`, `amount`, `total`, `tax_pct`, `tax_amount`, `fee_pct`, `fee_amount` |
 | `invoice_detail`  | `month`, `detail_date`, `ref_id`, `invoice_number`, `description`, `qty`, `unit_price`, `amount`, `fee_pct`, `fee_amount` |
 | `monthly_summary` | `month`, `nominal`, `rate_buy_avg`, `buy_amount`, `rate_sell_avg`, `sell_amount`, `fee`, `profit` |
 | `bank_balance`    | `entry_type`, `balance_day`, `balance_date`, `global_amount`, `sisa_usdt`, `tambah_modal`, `out_amount`, `total`, `profit`, `remark`, `bca`, `bca_bisnis`, `blu_bca`, `mandiri`, `bri`, `bri_vega`, `bni`, `sinarmas`, `total_bank`, `usdt`, `rate`, `total_usdt` |
@@ -181,6 +181,8 @@ curl -s -X POST "https://itrust-tech.id/web/gmr/sync-invoice" \
       "date": "2026-08-31",
       "dueDate": "2026-08-31",
       "paymentMethod": "BANK BCA",
+      "accountNumber": "1234567890",
+      "accountName": "PT I TRUST TEKNOLOGI",
       "status": "PAID",
       "fee_pct": 0.5,
       "fee_amount": 2590000,
@@ -205,9 +207,14 @@ curl -s -X POST "https://itrust-tech.id/web/gmr/sync-invoice" \
 
 Accepted aliases: `invoice_number` for `id`; `billed_to` for `customer`;
 `invoice_date` for `date`; `due_date` for `dueDate`; `issue_date` for
-`issueDate`; `payment_method` for `paymentMethod`; `unit_price` for `price`.
+`issueDate`; `payment_method` for `paymentMethod`; `account_number` for
+`accountNumber`; `account_name` for `accountName`; `unit_price` for `price`.
 `direction` (`BUY`/`SELL`) is optional and otherwise inferred from the line
 descriptions. `month` defaults to the month of the invoice date.
+
+The bank account the invoice is settled through rides along with the payment
+method: `account_number` and `account_name` (columns F and G on both the BUY and
+SELL sheets, right after PAYMENT METHOD). Both default to `null`.
 
 A fee can sit on the invoice header and on each line, always as a pair:
 `fee_pct` (the percentage) and `fee_amount` (the resulting IDR value), mirroring
@@ -216,7 +223,7 @@ A fee can sit on the invoice header and on each line, always as a pair:
 `fee_amount`.
 
 The header also carries `total`, taken verbatim from the sheet's own Total column
-(N on both the BUY and SELL sheets). The sheet formula is the source of truth, so
+(P on both the BUY and SELL sheets). The sheet formula is the source of truth, so
 the server never recomputes it; an empty cell is stored as `0`.
 
 `source_sheet` may be given per invoice or at the payload level
@@ -301,6 +308,8 @@ curl -s -H "Authorization: Bearer CHANGE_ME_GMR_SYNC_TOKEN" \
       "ref_id": null,
       "billed_to": "NABIL",
       "payment_method": "BANK BCA",
+      "account_number": "1234567890",
+      "account_name": "PT I TRUST TEKNOLOGI",
       "status": "PAID",
       "qty": 142830.07,
       "rate": 17627.34,
