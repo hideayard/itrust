@@ -603,8 +603,8 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
       ref_id:         String(row[INV_COL.ID] || ''),             // B
       billed_to:      row[INV_COL.BILLED_TO] || '',              // D
       payment_method: row[INV_COL.PAYMENT_METHOD] || '',         // E
-      account_number: row[INV_COL.ACCOUNT_NUMBER] || '',         // F
-      account_name:   row[INV_COL.ACCOUNT_NAME] || '',           // G
+      account_number: String(row[INV_COL.ACCOUNT_NUMBER] || ''), // F
+      account_name:   String(row[INV_COL.ACCOUNT_NAME] || ''),   // G
       status:         row[INV_COL.STATUS] || '',                 // J
       qty:            Number(row[INV_COL.QTY])    || 0,          // K
       rate:           Number(row[INV_COL.PRICE])  || 0,          // L
@@ -664,8 +664,8 @@ function buildSellInvoices(mainSheetName, month) {
       ref_id:         String(row[INV_COL.ID] || ''),             // B
       billed_to:      row[INV_COL.BILLED_TO] || '',              // D
       payment_method: row[INV_COL.PAYMENT_METHOD] || '',         // E
-      account_number: row[INV_COL.ACCOUNT_NUMBER] || '',         // F
-      account_name:   row[INV_COL.ACCOUNT_NAME] || '',           // G
+      account_number: String(row[INV_COL.ACCOUNT_NUMBER] || ''), // F
+      account_name:   String(row[INV_COL.ACCOUNT_NAME] || ''),   // G
       status:         row[INV_COL.STATUS] || '',                 // J
       qty:            Number(row[INV_COL.QTY])    || 0,          // K
       rate:           Number(row[INV_COL.PRICE])  || 0,          // L

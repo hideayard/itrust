@@ -77,6 +77,12 @@ class GmrInvoice extends ActiveRecord
             [['qty', 'rate', 'amount', 'total', 'tax_pct', 'tax_amount', 'fee_pct', 'fee_amount'], 'number'],
             [['invoice_date', 'issue_date', 'due_date'], 'date', 'format' => 'php:Y-m-d'],
             [['invoice_date', 'issue_date', 'due_date', 'created_at', 'updated_at'], 'safe'],
+            // A spreadsheet cell holding a bare number (an account number with no
+            // letters) arrives as an int/float, which the string rules below would
+            // reject. Normalise it first; validators run in the order listed.
+            [['account_number', 'account_name'], 'filter', 'filter' => function ($value) {
+                return is_scalar($value) ? (string) $value : null;
+            }],
             [['source_sheet'], 'string', 'max' => 64],
             [['sync_key'], 'string', 'max' => 191],
             [['month'], 'string', 'max' => 16],
