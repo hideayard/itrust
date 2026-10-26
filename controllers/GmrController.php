@@ -380,7 +380,10 @@ class GmrController extends Controller
             return ['success' => false, 'message' => 'Provide id or invoice_number'];
         }
 
-        $query = GmrInvoice::find()->with('details');
+        // Detail line items are hidden for now; restore the eager load below
+        // (and pass true to serializeInvoice further down) to bring them back.
+        // $query = GmrInvoice::find()->with('details');
+        $query = GmrInvoice::find();
 
         if ($id !== null && $id !== '') {
             $query->andWhere(['id' => (int) $id]);
@@ -399,7 +402,8 @@ class GmrController extends Controller
 
         return [
             'success' => true,
-            'invoice' => $this->serializeInvoice($model, true),
+            // 'invoice' => $this->serializeInvoice($model, true),
+            'invoice' => $this->serializeInvoice($model, false),
         ];
     }
 
@@ -429,7 +433,10 @@ class GmrController extends Controller
             return ['success' => false, 'message' => 'Provide id or invoice_number'];
         }
 
-        $query = GmrInvoice::find()->with('details');
+        // Detail line items are hidden for now; restore the eager load below
+        // (and pass true to serializeInvoice further down) to bring them back.
+        // $query = GmrInvoice::find()->with('details');
+        $query = GmrInvoice::find();
 
         if ($id !== null && $id !== '') {
             $query->andWhere(['id' => (int) $id]);
@@ -448,7 +455,8 @@ class GmrController extends Controller
 
         return $this->toonResponse([
             'success' => true,
-            'invoice' => $this->serializeInvoice($model, true),
+            // 'invoice' => $this->serializeInvoice($model, true),
+            'invoice' => $this->serializeInvoice($model, false),
         ]);
     }
 
@@ -706,14 +714,23 @@ class GmrController extends Controller
         $dueDate = $this->normalizeDate($data['dueDate'] ?? $data['due_date'] ?? null);
         $issueDate = $this->normalizeDate($data['issueDate'] ?? $data['issue_date'] ?? null) ?? $date;
 
-        $qty = 0.0;
-        $amount = 0.0;
+        // Line totals, used only when the payload does not carry the sheet's own
+        // header figures.
+        $lineQty = 0.0;
+        $lineAmount = 0.0;
         foreach ($lines as $line) {
-            $lineQty = (float) ($line['qty'] ?? 0);
+            $lineQtyValue = (float) ($line['qty'] ?? 0);
             $linePrice = (float) ($line['price'] ?? $line['unit_price'] ?? 0);
-            $qty += $lineQty;
-            $amount += $lineQty * $linePrice;
+            $lineQty += $lineQtyValue;
+            $lineAmount += $lineQtyValue * $linePrice;
         }
+
+        // The workbook's own QTY / PRICE / AMOUNT columns are the source of
+        // truth, so a supplied value wins over the line-item sum; the sum is
+        // only a fallback for payloads that send nothing but their lines.
+        $qty = (float) ($data['qty'] ?? $lineQty);
+        $rate = (float) ($data['rate'] ?? ($lineQty > 0 ? $lineAmount / $lineQty : 0));
+        $amount = (float) ($data['amount'] ?? $lineAmount);
 
         // Invoices are keyed by their number alone so a re-sync always updates
         // the existing row instead of inserting a second one when the detected
@@ -752,7 +769,7 @@ class GmrController extends Controller
         $model->account_name = $data['account_name'] ?? $data['accountName'] ?? null;
         $model->status = $data['status'] ?? null;
         $model->qty = $qty;
-        $model->rate = $qty > 0 ? $amount / $qty : 0;
+        $model->rate = $rate;
         $model->amount = $amount;
         $model->tax_pct = (float) ($data['tax_pct'] ?? $data['taxPct'] ?? 0);
         $model->tax_amount = (float) ($data['tax_amount'] ?? $data['taxValue'] ?? 0);

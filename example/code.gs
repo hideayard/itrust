@@ -542,11 +542,16 @@ function readSheetRows(sheetName) {
  *   I (DUE_DATE)       → due_date
  *   J (STATUS)         → status
  *   K (QTY)            → qty
- *   L (PRICE)          → rate
- *   M (AMOUNT)         → amount
+ *   L (PRICE)          → amount   (isi kolom = total IDR)
+ *   M (AMOUNT)         → rate     (isi kolom = rate)
  *   N (FEE_PCT)        → fee_pct
  *   O (FEE_RP)         → fee_amount
  *   P (TOTAL)          → total
+ *
+ * Catatan: di sheet INV_BUY isi kolom PRICE & AMOUNT tertukar dengan
+ * headernya (PRICE = total IDR, AMOUNT = rate) — kebalikan dari INV_SELL,
+ * yang memang PRICE = rate dan AMOUNT = total. QTY/rate/amount diambil
+ * murni dari sheet ini, bukan dari penjumlahan INV_DETAIL_BUY.
  * ============================================================
  */
 function buildBuyInvoices(mainSheetName, detailSheetName, month) {
@@ -572,7 +577,8 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
 
     var src = { sheet: mainSheetName, row: idx + 2, kind: 'buy' };
 
-    if (isAmountInvalid_(row[INV_COL.AMOUNT])) {
+    // BUY: kolom AMOUNT berisi rate, kolom PRICE berisi total IDR → cek PRICE.
+    if (isAmountInvalid_(row[INV_COL.PRICE])) {
       invoices.push({
         source_sheet:   mainSheetName,
         invoice_number: invNo,
@@ -587,8 +593,8 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
     if (!lines || lines.length === 0) {
       lines = [{
         description: '',
-        qty:   Number(row[INV_COL.QTY])   || 0,
-        price: Number(row[INV_COL.PRICE]) || 0
+        qty:   Number(row[INV_COL.QTY])    || 0,
+        price: Number(row[INV_COL.AMOUNT]) || 0
       }];
     }
 
@@ -607,8 +613,8 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
       account_name:   String(row[INV_COL.ACCOUNT_NAME] || ''),   // G
       status:         row[INV_COL.STATUS] || '',                 // J
       qty:            Number(row[INV_COL.QTY])    || 0,          // K
-      rate:           Number(row[INV_COL.PRICE])  || 0,          // L
-      amount:         Number(row[INV_COL.AMOUNT]) || 0,          // M
+      rate:           Number(row[INV_COL.AMOUNT]) || 0,          // M (berisi rate)
+      amount:         Number(row[INV_COL.PRICE])  || 0,          // L (berisi total IDR)
       tax_pct:        0,
       tax_amount:     0,
       fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // N
