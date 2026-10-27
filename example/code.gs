@@ -35,6 +35,10 @@ var CONFIG = CONFIG || {
   // Dipertahankan sebagai fallback default
   SYNC_STATUS_COLUMN:      17,   // Q
   SYNC_MODIFIED_AT_COLUMN: 18,   // R
+  SYNC_FINGERPRINT_COLUMN: 19,   // S
+
+  // Judul kolom fingerprint (ditulis ke S1 kalau masih kosong)
+  FINGERPRINT_HEADER: 'Fingerprint',
 
   // Teks status untuk baris dengan amount 0 / kosong
   INVALID_STATUS_TEXT: 'not valid data'
@@ -44,12 +48,13 @@ var CONFIG = CONFIG || {
  * ============================================================
  * KOLOM SYNC PER JENIS INVOICE (1-based, untuk getRange)
  * ------------------------------------------------------------
- * BUY + SELL : M=AMOUNT | N=Fee % | O=Fee Rp | P=Total | Q=Sync Status | R=Date Sync
+ * BUY + SELL : M=AMOUNT | N=Fee % | O=Fee Rp | P=Total
+ *              Q=Sync Status | R=Date Sync | S=Fingerprint
  * ============================================================
  */
 var SYNC_COLUMNS = {
-  BUY:  { STATUS: 17, MODIFIED_AT: 18 },  // Q, R
-  SELL: { STATUS: 17, MODIFIED_AT: 18 }   // Q, R
+  BUY:  { STATUS: 17, MODIFIED_AT: 18, FINGERPRINT: 19 },  // Q, R, S
+  SELL: { STATUS: 17, MODIFIED_AT: 18, FINGERPRINT: 19 }   // Q, R, S
 };
 
 /**
@@ -69,7 +74,7 @@ function buildUrl_(pathPrefix, endpoint) {
  * A=DATE | B=ID | C=INVOICE_NUMBER | D=BILLED_TO | E=PAYMENT_METHOD
  * F=ACCOUNT_NUMBER | G=ACCOUNT_NAME | H=ISSUE_DATE | I=DUE_DATE | J=STATUS
  * K=QTY | L=PRICE | M=AMOUNT | N=FEE_PCT | O=FEE_RP | P=TOTAL
- * Q=SYNC_STATUS | R=SYNC_DATE
+ * Q=SYNC_STATUS | R=SYNC_DATE | S=FINGERPRINT
  * ============================================================
  */
 var INV_COL = {
@@ -85,7 +90,8 @@ var INV_COL_EXTRA = {
   FEE_RP:  14,       // O
   TOTAL:   15,       // P
   SYNC_STATUS: 16,   // Q (0-based)
-  SYNC_DATE:   17    // R (0-based)
+  SYNC_DATE:   17,   // R (0-based)
+  FINGERPRINT: 18    // S (0-based)
 };
 
 var DETAIL_COL = {
@@ -123,6 +129,8 @@ function onOpen() {
     .createMenu('🚀 Sync Server')
     .addItem('Preview JSON Invoice', 'previewInvoices')
     .addItem('Sinkronkan Invoice Ke Server', 'syncInvoicesToServer')
+    .addItem('Sinkronkan Perubahan (Baru/Modified)', 'syncChangesToServer')
+    .addItem('Sinkronkan Data Baru / Update (Sync Status)', 'syncByStatusToServer')
     .addSeparator()
     .addItem('Cek Status Token & Koneksi', 'checkTokenStatusUserAction')
     .addItem('Login / Update Token', 'showLoginModal')
@@ -528,6 +536,120 @@ function readSheetRows(sheetName) {
 
 /**
  * ============================================================
+ * FINGERPRINT PERUBAHAN (kolom S)
+ * ------------------------------------------------------------
+ * Hash dari NILAI INPUT baris invoice — persis nilai yang dikirim ke
+ * server — jadi setiap edit yang mengubah payload juga mengubah hash.
+ * Kolom Q (Sync Status), R (Date Sync) dan S itu sendiri tidak diikutkan.
+ *
+ * Dipakai oleh "Sinkronkan Perubahan": baris hanya dikirim kalau hash-nya
+ * beda dari yang tersimpan di kolom S, atau kolom S masih kosong.
+ * Untuk invoice BUY, baris INV_DETAIL_BUY ikut di-hash lewat `lines`,
+ * sehingga edit di sheet detail juga terdeteksi.
+ * ============================================================
+ */
+function computeFingerprint_(value) {
+  var bytes = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5,
+    JSON.stringify(value),
+    Utilities.Charset.UTF_8
+  );
+
+  var hex = '';
+  for (var i = 0; i < bytes.length; i++) {
+    var b = (bytes[i] + 256) % 256;
+    hex += (b < 16 ? '0' : '') + b.toString(16);
+  }
+  return hex;
+}
+
+function fingerprintOf_(inv) {
+  return computeFingerprint_([
+    inv.direction,
+    inv.invoice_number,
+    inv.invoice_date,
+    inv.issue_date,
+    inv.due_date,
+    inv.ref_id,
+    inv.billed_to,
+    inv.payment_method,
+    inv.account_number,
+    inv.account_name,
+    inv.status,
+    inv.qty,
+    inv.rate,
+    inv.amount,
+    inv.tax_pct,
+    inv.tax_amount,
+    inv.fee_pct,
+    inv.fee_amount,
+    inv.total,
+    (inv.lines || []).map(function (line) {
+      return [line.description, line.qty, line.price];
+    })
+  ]);
+}
+
+function cellText_(value) {
+  return value === null || value === undefined ? '' : String(value).trim();
+}
+
+/**
+ * Tempelkan status sync + hasil perbandingan fingerprint ke objek invoice:
+ *   __syncStatus = isi kolom Q (Sync Status)
+ *   __fp         = hash kondisi baris sekarang
+ *   __storedFp   = hash terakhir yang berhasil dikirim (kolom S)
+ *   __changed    = true kalau baris baru atau isinya berubah
+ */
+function markFingerprint_(inv, row) {
+  inv.__syncStatus = cellText_(row[INV_COL_EXTRA.SYNC_STATUS]);
+  inv.__fp         = fingerprintOf_(inv);
+  inv.__storedFp   = cellText_(row[INV_COL_EXTRA.FINGERPRINT]);
+  inv.__changed    = inv.__storedFp !== inv.__fp;
+  return inv;
+}
+
+/**
+ * Mode "Sync Status" — kirim baris yang belum pernah sukses dikirim:
+ *   Q kosong   → baris baru
+ *   Q modified → sudah diedit setelah sync terakhir
+ *   Q synced / "not valid data" → dilewati
+ */
+function needsSendByStatus_(inv) {
+  var status = String(inv.__syncStatus || '').trim().toLowerCase();
+  return status === '' || status === 'modified';
+}
+
+/**
+ * Info per mode sync: judul dialog, label, dan filter barisnya.
+ *   'full'        → semuanya
+ *   'fingerprint' → bandingkan hash kolom S
+ *   'status'      → lihat kolom Q (Sync Status)
+ */
+function syncModeInfo_(mode) {
+  if (mode === 'fingerprint') {
+    return {
+      title:     'Sinkronisasi Perubahan',
+      label:     'Invoice baru / berubah (fingerprint)',
+      skipLabel: 'Tidak berubah',
+      test:      function (inv) { return inv.__changed; }
+    };
+  }
+
+  if (mode === 'status') {
+    return {
+      title:     'Sinkronisasi Data Baru / Update',
+      label:     'Invoice belum sync (Sync Status kosong / modified)',
+      skipLabel: 'Sudah synced',
+      test:      needsSendByStatus_
+    };
+  }
+
+  return { title: 'Sinkronisasi', label: 'full sync (semua baris)', skipLabel: null, test: null };
+}
+
+/**
+ * ============================================================
  * BUILD INVOICE — BUY
  * ------------------------------------------------------------
  * Mapping kolom ke field payload:
@@ -598,7 +720,7 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
       }];
     }
 
-    invoices.push({
+    var inv = {
       invoice_number: invNo,                                 // C
       direction:      'buy',
       month:          month || '',
@@ -613,16 +735,19 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
       account_name:   String(row[INV_COL.ACCOUNT_NAME] || ''),   // G
       status:         row[INV_COL.STATUS] || '',                 // J
       qty:            Number(row[INV_COL.QTY])    || 0,          // K
-      rate:           Number(row[INV_COL.PRICE])  || 0,          // L
-      amount:         Number(row[INV_COL.AMOUNT]) || 0,          // M
+      rate:           Number(row[INV_COL.AMOUNT]) || 0,          // M (BUY: berisi rate)
+      amount:         Number(row[INV_COL.PRICE])  || 0,          // L (BUY: berisi total IDR)
       tax_pct:        0,
       tax_amount:     0,
       fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // N
       fee_amount:     Number(row[INV_COL_EXTRA.FEE_RP])  || 0,   // O
       total:          Number(row[INV_COL_EXTRA.TOTAL])   || 0,   // P
-      lines:          lines,
-      __src:          src
-    });
+      lines:          lines
+    };
+
+    markFingerprint_(inv, row);
+    inv.__src = src;
+    invoices.push(inv);
   });
 
   return invoices;
@@ -659,7 +784,7 @@ function buildSellInvoices(mainSheetName, month) {
       return;
     }
 
-    invoices.push({
+    var inv = {
       invoice_number: invNo,                                 // C
       direction:      'sell',
       month:          month || '',
@@ -685,9 +810,12 @@ function buildSellInvoices(mainSheetName, month) {
         description: '',
         qty:   Number(row[INV_COL.QTY])   || 0,
         price: Number(row[INV_COL.PRICE]) || 0
-      }],
-      __src: src
-    });
+      }]
+    };
+
+    markFingerprint_(inv, row);
+    inv.__src = src;
+    invoices.push(inv);
   });
 
   return invoices;
@@ -726,9 +854,21 @@ function splitInvoices_(allInvoices) {
 }
 
 /**
- * PREVIEW JSON
+ * Buang semua field internal (__src, __fp, __changed, __invalid, __reason).
  */
-function previewInvoices() {
+function cleanInvoice_(inv) {
+  var out = {};
+  Object.keys(inv).forEach(function (key) {
+    if (key.indexOf('__') !== 0) out[key] = inv[key];
+  });
+  return out;
+}
+
+/**
+ * PREVIEW JSON
+ * `mode` = 'fingerprint' | 'status' (kosong = semua invoice).
+ */
+function previewInvoices(mode) {
   var allInvoices = buildAllInvoices();
   if (allInvoices.length === 0) {
     SpreadsheetApp.getUi().alert('Tidak ada invoice yang siap dikirim.');
@@ -739,13 +879,16 @@ function previewInvoices() {
   var validList   = parts.valid;
   var invalidList = parts.invalid;
 
-  var cleanValid = validList.map(function (inv) {
-    var c = {};
-    Object.keys(inv).forEach(function (k) {
-      if (k !== '__src' && k !== '__invalid' && k !== '__reason') c[k] = inv[k];
-    });
-    return c;
-  });
+  var info = syncModeInfo_(mode);
+
+  var skipped = 0;
+  if (info.test) {
+    skipped = validList.length;
+    validList = validList.filter(info.test);
+    skipped -= validList.length;
+  }
+
+  var cleanValid = validList.map(cleanInvoice_);
 
   var json = JSON.stringify(cleanValid, null, 2);
 
@@ -772,7 +915,13 @@ function previewInvoices() {
     'textarea{width:100%;height:340px;font-family:monospace;font-size:12px;' +
     'box-sizing:border-box;border:1px solid #ccc;border-radius:4px;}' +
     '</style></head><body>' +
-    '<h3>✅ Invoice Valid (akan dikirim): ' + cleanValid.length + '</h3>' +
+    '<h3>' + (info.test
+        ? '✅ ' + info.label + ' — akan dikirim: '
+        : '✅ Invoice Valid (akan dikirim): ') + cleanValid.length + '</h3>' +
+    (info.test
+        ? '<p style="margin:0 0 8px 0;color:#888;font-size:12px;">' +
+          skipped + ' baris ' + info.skipLabel.toLowerCase() + ' → dilewati.</p>'
+        : '') +
     '<textarea readonly>' + json.replace(/</g, '&lt;') + '</textarea>' +
     '<br>' + invalidHtml +
     '</body></html>'
@@ -821,6 +970,32 @@ function chunkArray_(arr, size) {
  * ============================================================
  */
 function syncInvoicesToServer() {
+  showSyncModal_('runSyncAfterModal', 'Menyiapkan sinkronisasi...');
+}
+
+/**
+ * Menu: kirim HANYA invoice baru / yang berubah.
+ * Perubahan dideteksi dengan membandingkan fingerprint tersimpan di kolom S.
+ */
+function syncChangesToServer() {
+  showSyncModal_('runSyncAfterModalChanges', 'Menyiapkan sinkronisasi perubahan...');
+}
+
+/**
+ * Menu: kirim HANYA invoice yang belum pernah sukses dikirim,
+ * dilihat dari kolom Q (Sync Status): kosong atau "modified".
+ * Jadi baris yang mau dikirim ulang cukup ditandai "modified"
+ * (atau kolom statusnya dikosongkan).
+ */
+function syncByStatusToServer() {
+  showSyncModal_('runSyncAfterModalStatus', 'Menyiapkan sinkronisasi data baru...');
+}
+
+/**
+ * Modal kecil: simpan timezone browser dulu, lalu panggil `triggerName`
+ * (nama fungsi global, tanpa tanda kurung).
+ */
+function showSyncModal_(triggerName, message) {
   var html = HtmlService.createHtmlOutput(
     '<!DOCTYPE html><html><head><style>' +
     'body{font-family:Arial,sans-serif;padding:18px;text-align:center;color:#555;margin:0;}' +
@@ -830,7 +1005,7 @@ function syncInvoicesToServer() {
     '.msg{font-size:13px;}' +
     '</style></head><body>' +
     '<div class="spinner"></div>' +
-    '<div class="msg">Menyiapkan sinkronisasi...</div>' +
+    '<div class="msg">' + message + '</div>' +
     '<script>' +
     '(function(){' +
     '  var tz = "UTC";' +
@@ -839,7 +1014,7 @@ function syncInvoicesToServer() {
     '  function trigger(){' +
     '    if (triggered) return;' +
     '    triggered = true;' +
-    '    try { google.script.run.runSyncAfterModal(); } catch(e){}' +
+    '    try { google.script.run.' + triggerName + '(); } catch(e){}' +
     '    try { google.script.host.close(); } catch(e){}' +
     '  }' +
     '  google.script.run' +
@@ -860,13 +1035,24 @@ function syncInvoicesToServer() {
  */
 function runSyncAfterModal() {
   Utilities.sleep(300);
-  runSyncFlow_();
+  runSyncFlow_('full');
+}
+
+function runSyncAfterModalChanges() {
+  Utilities.sleep(300);
+  runSyncFlow_('fingerprint');
+}
+
+function runSyncAfterModalStatus() {
+  Utilities.sleep(300);
+  runSyncFlow_('status');
 }
 
 /**
  * Body sync asli.
+ * `mode` = 'full' | 'fingerprint' | 'status' (lihat syncModeInfo_).
  */
-function runSyncFlow_() {
+function runSyncFlow_(mode) {
   var token = getValidToken();
   if (!token) return;
 
@@ -880,6 +1066,16 @@ function runSyncFlow_() {
   var validInvoices   = parts.valid;
   var invalidInvoices = parts.invalid;
 
+  var info = syncModeInfo_(mode);
+
+  // Mode terfilter: sisihkan baris yang tidak memenuhi kriteria.
+  var skippedCount = 0;
+  if (info.test) {
+    skippedCount = validInvoices.length;
+    validInvoices = validInvoices.filter(info.test);
+    skippedCount -= validInvoices.length;
+  }
+
   var ui = SpreadsheetApp.getUi();
   var limit = getBatchLimit();
   var totalBatches = validInvoices.length > 0
@@ -888,19 +1084,27 @@ function runSyncFlow_() {
 
   var effectiveTz = getEffectiveTimezone_();
 
-  var msg = 'Total invoice valid   : ' + validInvoices.length + '\n';
+  var msg = 'Mode               : ' + info.label + '\n';
+
+  if (info.test) {
+    msg += 'Akan dikirim       : ' + validInvoices.length + '\n';
+    msg += 'Dilewati           : ' + skippedCount + '  (' + info.skipLabel + ')\n';
+  } else {
+    msg += 'Total invoice valid: ' + validInvoices.length + '\n';
+  }
+
   if (invalidInvoices.length > 0) {
-    msg += 'Invoice tidak valid : ' + invalidInvoices.length +
+    msg += 'Invoice tidak valid: ' + invalidInvoices.length +
            '  → akan ditandai "' + CONFIG.INVALID_STATUS_TEXT + '" & TIDAK dikirim\n';
   }
-  msg += '\nTimezone Date Sync   : ' + effectiveTz + '\n';
+  msg += '\nTimezone Date Sync : ' + effectiveTz + '\n';
   msg += '\nAkan diproses dalam ' + totalBatches + ' batch ' +
     '(maks ' + limit + ' invoice per batch, dari LEGEND!' + CONFIG.BATCH_LIMIT_CELL + ').\n\n' +
     'Klik NO untuk melihat preview JSON dulu.\n' +
     'Klik YES untuk langsung kirim.';
 
-  var confirm = ui.alert('Konfirmasi Sinkronisasi', msg, ui.ButtonSet.YES_NO);
-  if (confirm === ui.Button.NO) { previewInvoices(); return; }
+  var confirm = ui.alert('Konfirmasi ' + info.title, msg, ui.ButtonSet.YES_NO);
+  if (confirm === ui.Button.NO) { previewInvoices(mode); return; }
   if (confirm !== ui.Button.YES) return;
 
   if (invalidInvoices.length > 0) {
@@ -910,17 +1114,31 @@ function runSyncFlow_() {
 
   if (validInvoices.length === 0) {
     ss_toastDone_();
-    ui.alert(
-      '⚠️ Tidak Ada Invoice Valid',
-      'Semua ' + invalidInvoices.length + ' invoice ditandai "' +
-      CONFIG.INVALID_STATUS_TEXT + '".\n\n' +
-      'Silakan perbaiki kolom AMOUNT (K) terlebih dahulu, lalu jalankan sync ulang.',
-      ui.ButtonSet.OK
-    );
+
+    if (info.test) {
+      ui.alert(
+        '✅ Tidak Ada Data Untuk Dikirim',
+        skippedCount + ' invoice ' + info.skipLabel.toLowerCase() +
+        (invalidInvoices.length > 0
+          ? ', dan ' + invalidInvoices.length + ' baris tidak valid ditandai "' +
+            CONFIG.INVALID_STATUS_TEXT + '".'
+          : '.') +
+        '\n\nTidak ada yang perlu dikirim.',
+        ui.ButtonSet.OK
+      );
+    } else {
+      ui.alert(
+        '⚠️ Tidak Ada Invoice Valid',
+        'Semua ' + invalidInvoices.length + ' invoice ditandai "' +
+        CONFIG.INVALID_STATUS_TEXT + '".\n\n' +
+        'Silakan perbaiki kolom AMOUNT (K) terlebih dahulu, lalu jalankan sync ulang.',
+        ui.ButtonSet.OK
+      );
+    }
     return;
   }
 
-  sendInvoicesPayload_(validInvoices, token, invalidInvoices.length);
+  sendInvoicesPayload_(validInvoices, token, invalidInvoices.length, skippedCount, mode);
 }
 
 function ss_toastDone_() {
@@ -929,18 +1147,19 @@ function ss_toastDone_() {
   } catch (e) { /* ignore */ }
 }
 
-function sendInvoicesPayload_(payloadArray, token, invalidCount) {
+function sendInvoicesPayload_(payloadArray, token, invalidCount, skippedCount, mode) {
   var url = buildUrl_(CONFIG.SYNC_PATH_PREFIX, CONFIG.SYNC_ENDPOINT);
   var ui  = SpreadsheetApp.getUi();
   var ss  = SpreadsheetApp.getActiveSpreadsheet();
 
+  var info  = syncModeInfo_(mode);
   var limit   = getBatchLimit();
   var batches = chunkArray_(payloadArray, limit);
   var totalBatches = batches.length;
 
-  Logger.log('[SYNC] ' + payloadArray.length + ' invoice valid (+' +
-             (invalidCount || 0) + ' invalid skipped) → ' + totalBatches +
-             ' batch (maks ' + limit + ') @ ' + url);
+  Logger.log('[SYNC] ' + String(mode || 'full').toUpperCase() + ' ' + payloadArray.length +
+             ' invoice (+' + (invalidCount || 0) + ' invalid, +' + (skippedCount || 0) +
+             ' skipped) → ' + totalBatches + ' batch (maks ' + limit + ') @ ' + url);
 
   var okCount   = 0;
   var failCount = 0;
@@ -958,14 +1177,8 @@ function sendInvoicesPayload_(payloadArray, token, invalidCount) {
       -1
     );
 
-    var sources = batch.map(function (inv) { return inv.__src || null; });
-    var cleanBatch = batch.map(function (inv) {
-      var c = {};
-      Object.keys(inv).forEach(function (k) {
-        if (k !== '__src' && k !== '__invalid' && k !== '__reason') c[k] = inv[k];
-      });
-      return c;
-    });
+    // Fingerprint ditulis per baris setelah batch ini sukses (writeSyncFlags_).
+    var cleanBatch = batch.map(cleanInvoice_);
 
     var options = {
       method: 'post',
@@ -984,7 +1197,7 @@ function sendInvoicesPayload_(payloadArray, token, invalidCount) {
         okCount++;
         totalSent += batch.length;
 
-        try { writeSyncFlags_(sources); }
+        try { writeSyncFlags_(batch); }
         catch (flagErr) { Logger.log('[FLAG ERROR] ' + flagErr); }
 
         Logger.log('[SUCCESS] ' + label + ' → ' + cleanResponseText(rawBody));
@@ -1026,7 +1239,13 @@ function sendInvoicesPayload_(payloadArray, token, invalidCount) {
   ss.toast('Selesai.', '✅ Sync', 3);
 
   var summary =
-    'Total invoice valid       : ' + payloadArray.length + '\n';
+    'Mode                      : ' + info.label + '\n' +
+    'Invoice dikirim           : ' + payloadArray.length + '\n';
+
+  if (info.test) {
+    summary += 'Dilewati                  : ' + (skippedCount || 0) +
+               ' (' + info.skipLabel + ')\n';
+  }
   if (invalidCount > 0) {
     summary += 'Invoice tidak valid       : ' + invalidCount +
                ' (ditandai "' + CONFIG.INVALID_STATUS_TEXT + '", tidak dikirim)\n';
@@ -1086,16 +1305,23 @@ function markInvalidRows_(invalidInvoices) {
 
 /**
  * ============================================================
- *  TULIS FLAG KE KOLOM SYNC STATUS & DATE SYNC
+ *  TULIS FLAG KE KOLOM SYNC STATUS / DATE SYNC / FINGERPRINT
  *  ------------------------------------------------------------
- *  BUY  → Q (status), R (date sync)
- *  SELL → Q (status), R (date sync)
+ *  BUY  → Q (status), R (date sync), S (fingerprint)
+ *  SELL → Q (status), R (date sync), S (fingerprint)
+ *
+ *  Fingerprint = hash kondisi baris yang BARU SAJA berhasil dikirim.
+ *  "Sinkronkan Perubahan" membandingkan kolom S ini dengan kondisi baris
+ *  sekarang untuk menentukan mana yang perlu dikirim.
  *
  *  Date Sync memakai CLIENT TIMEZONE (dari browser user).
  *  Fallback: Script TZ → 'UTC'.
+ *
+ *  Parameter `invoices` = objek invoice (bukan hanya __src-nya), karena
+ *  tiap baris perlu ikut menuliskan __fp-nya.
  * ============================================================
  */
-function writeSyncFlags_(sources) {
+function writeSyncFlags_(invoices) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   var tz = getEffectiveTimezone_();
@@ -1109,12 +1335,13 @@ function writeSyncFlags_(sources) {
   Logger.log('[SYNC FLAGS] Timestamp: ' + ts + ' (TZ: ' + tz + ')');
 
   var groups = {};
-  sources.forEach(function (src) {
+  invoices.forEach(function (inv) {
+    var src = inv && inv.__src;
     if (!src || !src.sheet || !src.row) return;
     var kind = src.kind || 'sell';
     var key = src.sheet + '||' + kind;
     if (!groups[key]) groups[key] = { sheet: src.sheet, kind: kind, rows: [] };
-    groups[key].rows.push(src.row);
+    groups[key].rows.push({ row: src.row, fp: inv.__fp || '' });
   });
 
   Object.keys(groups).forEach(function (key) {
@@ -1124,19 +1351,16 @@ function writeSyncFlags_(sources) {
 
     var cols = getSyncCols_(g.kind);
 
-    g.rows.forEach(function (rowNum) {
-      var currentRaw = sheet.getRange(rowNum, cols.STATUS).getValue();
-      var current = String(currentRaw || '').trim().toLowerCase();
+    // Judul kolom fingerprint: hanya ditulis kalau S1 masih kosong.
+    var headCell = sheet.getRange(1, cols.FINGERPRINT);
+    if (!String(headCell.getValue() || '').trim()) {
+      headCell.setValue(CONFIG.FINGERPRINT_HEADER);
+    }
 
-      var newStatus;
-      if (current === 'synced' || current === 'modified') {
-        newStatus = 'modified';
-      } else {
-        newStatus = 'synced';
-      }
-
-      sheet.getRange(rowNum, cols.STATUS).setValue(newStatus);
-      sheet.getRange(rowNum, cols.MODIFIED_AT).setValue(ts);
+    g.rows.forEach(function (item) {
+      // STATUS/MODIFIED_AT/FINGERPRINT berdampingan (Q,R,S) → tulis sekali.
+      sheet.getRange(item.row, cols.STATUS, 1, 3)
+           .setValues([['synced', ts, item.fp]]);
     });
   });
 }
