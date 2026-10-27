@@ -226,6 +226,17 @@ The header also carries `total`, taken verbatim from the sheet's own Total colum
 (P on both the BUY and SELL sheets). The sheet formula is the source of truth, so
 the server never recomputes it; an empty cell is stored as `0`.
 
+The header's `qty`, `rate` and `amount` work the same way: when the payload
+supplies them they are stored as sent, straight from the workbook's QTY / PRICE /
+AMOUNT columns. Note that on the INV_BUY sheets the PRICE column holds the IDR
+total and the AMOUNT column holds the rate — the reverse of INV_SELL, where
+PRICE is the rate and AMOUNT the total. The Apps Script sends each direction
+already normalised to `{ qty, rate, amount }`.
+
+A payload that omits them (a line-only shape) still works: they are then derived
+from the line items — `qty` = Σ line qty, `amount` = Σ (qty × price), `rate` =
+amount / qty.
+
 `source_sheet` may be given per invoice or at the payload level
 (`{ "source_sheet": "INV_BUY_SEP", "invoices": [ ... ] }`); the invoice-level
 value wins. It is stored on the header and copied to its line items, and

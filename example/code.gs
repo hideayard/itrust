@@ -613,8 +613,8 @@ function buildBuyInvoices(mainSheetName, detailSheetName, month) {
       account_name:   String(row[INV_COL.ACCOUNT_NAME] || ''),   // G
       status:         row[INV_COL.STATUS] || '',                 // J
       qty:            Number(row[INV_COL.QTY])    || 0,          // K
-      rate:           Number(row[INV_COL.AMOUNT]) || 0,          // M (berisi rate)
-      amount:         Number(row[INV_COL.PRICE])  || 0,          // L (berisi total IDR)
+      rate:           Number(row[INV_COL.PRICE])  || 0,          // L
+      amount:         Number(row[INV_COL.AMOUNT]) || 0,          // M
       tax_pct:        0,
       tax_amount:     0,
       fee_pct:        Number(row[INV_COL_EXTRA.FEE_PCT]) || 0,   // N
