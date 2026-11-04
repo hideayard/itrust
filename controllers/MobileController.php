@@ -40,16 +40,26 @@ class MobileController extends Controller
         // Remove CSRF validation for API requests
         unset($behaviors['authenticator']);
 
-        // Add CORS filter
+        // ---- CORS ----
+        // "Disable CORS" = echo the request's Origin back. A literal '*' will NOT
+        // work here: browsers reject a wildcard when the request carries credentials.
+        // To restrict instead, set params['corsDisabled'] = false and list the
+        // frontends in params['corsAllowedOrigins'].
+        $corsDisabled = Yii::$app->params['corsDisabled'] ?? true;
+        $allowedOrigins = Yii::$app->params['corsAllowedOrigins'] ?? [
+            'https://itrust-tech.id',
+            'https://www.itrust-tech.id',
+            'https://gmrinternationalid.pages.dev',
+        ];
+        $requestOrigin = Yii::$app->request->headers->get('Origin');
+        if ($corsDisabled && $requestOrigin !== null) {
+            $allowedOrigins = [$requestOrigin];
+        }
+
         $behaviors['corsFilter'] = [
             'class' => \yii\filters\Cors::className(),
             'cors' => [
-                // Explicit allow-list (never '*' when credentials are allowed).
-                // config/params.php (corsAllowedOrigins) can override this.
-                'Origin' => Yii::$app->params['corsAllowedOrigins'] ?? [
-                    'https://itrust-tech.id',
-                    'https://www.itrust-tech.id',
-                ],
+                'Origin' => $allowedOrigins,
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,

@@ -27,7 +27,7 @@
         "firebase/php-jwt": "^7.2"
     },
     "require-dev": {
-        "yiisoft/yii2-debug": "~2.1.28",
+        "yiisoft/yii2-debug": "^2.1",
         "yiisoft/yii2-gii": "~2.2.7",
         "yiisoft/yii2-faker": "~2.0.5",
         "codeception/codeception": "^5.1",
