@@ -44,7 +44,12 @@ class MobileController extends Controller
         $behaviors['corsFilter'] = [
             'class' => \yii\filters\Cors::className(),
             'cors' => [
-                'Origin' => ['*'], // Or restrict to specific domains: ['http://yourdomain.com']
+                // Explicit allow-list (never '*' when credentials are allowed).
+                // config/params.php (corsAllowedOrigins) can override this.
+                'Origin' => Yii::$app->params['corsAllowedOrigins'] ?? [
+                    'https://itrust-tech.id',
+                    'https://www.itrust-tech.id',
+                ],
                 'Access-Control-Request-Method' => ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'],
                 'Access-Control-Request-Headers' => ['*'],
                 'Access-Control-Allow-Credentials' => true,
@@ -1288,10 +1293,7 @@ class MobileController extends Controller
 
     public function actionLogin()
     {
-        // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
-        Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        Yii::$app->response->format = Response::FORMAT_JSON;
 
         // Handle OPTIONS request (preflight)
         if (Yii::$app->request->isOptions) {
@@ -1299,75 +1301,145 @@ class MobileController extends Controller
             return;
         }
 
-        Yii::$app->response->format = Response::FORMAT_JSON;
+        // API authentication is stateless: do not depend on a PHP session or cookies.
+        Yii::$app->user->enableSession = false;
+
+        // Fail fast with a clear error if the JWT configuration is incomplete.
+        try {
+            self::jwtConfig();
+        } catch (\yii\base\InvalidConfigException $e) {
+            Yii::error('Mobile login misconfiguration: ' . $e->getMessage(), __METHOD__);
+            Yii::$app->response->statusCode = 500;
+            return [
+                'success' => false,
+                'message' => 'Server configuration error. Please contact support.',
+                'token' => null,
+                'error_code' => 'SERVER_CONFIG_ERROR',
+            ];
+        }
+
+        // Get POST data
+        $request = Yii::$app->request;
+        $username = $request->post('username');
+        $password = $request->post('password');
+
+        // Validate input
+        if (empty($username) || empty($password)) {
+            return [
+                'success' => false,
+                'message' => 'Username and password are required',
+                'token' => null,
+                'error_code' => 'MISSING_CREDENTIALS',
+            ];
+        }
+
+        // 1) Authentication (credential check + identity login)
+        $model = new LoginForm();
+        $model->user_name = $username;
+        $model->user_pass = $password;
 
         try {
-            // Get POST data
-            $request = Yii::$app->request;
-            $username = $request->post('username');
-            $password = $request->post('password');
-
-            // Validate input
-            if (empty($username) || empty($password)) {
-                return [
-                    'success' => false,
-                    'message' => 'Username and password are required',
-                    'token' => null
-                ];
-            }
-
-            // Create login form model
-            $model = new LoginForm();
-            $model->user_name = $username;
-            $model->user_pass = $password;
-
-            // Attempt login
-            if ($model->login()) {
-                // Get the logged-in user
-                $user = Yii::$app->user->identity;
-
-                // Generate JWT token
-                $token = $this->generateJwtToken($user);
-
-                // Log the login activity
-                $clientIp = \app\helpers\CustomHelper::get_client_ip() ?? 'localhost';
-
-                TelegramHelper::sendSimpleMessage(
-                    [
-                        'text' => "Mobile User Login : " . $model->user_name . "\nFrom : " . $clientIp,
-                        'parse_mode' => 'html'
-                    ],
-                    Yii::$app->params['group_id']
-                );
-
-                return [
-                    'success' => true,
-                    'message' => 'Login successful',
-                    'token' => $token,
-                    'user' => [
-                        'id' => $user->user_id,
-                        'name' => $user->user_nama,
-                        'username' => $user->user_name,
-                        'user_tipe' => $user->user_tipe,
-                        'user_email' => $user->user_email,
-                        'photo' => $user->user_foto,
-                    ]
-                ];
-            } else {
-                return [
-                    'success' => false,
-                    'message' => 'Invalid username or password',
-                    'token' => null
-                ];
-            }
-        } catch (\Exception $e) {
-            Yii::error('Mobile login error: ' . $e->getMessage());
+            $authenticated = $model->login();
+        } catch (\Throwable $e) {
+            Yii::error(
+                'Mobile login authentication error: ' . $e->getMessage() . "\n" . $e->getTraceAsString(),
+                __METHOD__
+            );
             return [
                 'success' => false,
                 'message' => 'Login failed. Please try again.',
-                'token' => null
+                'token' => null,
+                'error_code' => 'AUTH_ERROR',
             ];
         }
+
+        if (!$authenticated) {
+            return [
+                'success' => false,
+                'message' => 'Invalid username or password',
+                'token' => null,
+                'error_code' => 'INVALID_CREDENTIALS',
+            ];
+        }
+
+        // 2) Token generation — a failure here is NOT a credential failure.
+        $user = Yii::$app->user->identity;
+        try {
+            $token = $this->generateJwtToken($user);
+        } catch (\Throwable $e) {
+            Yii::error(
+                'Mobile login token error: ' . $e->getMessage() . "\n" . $e->getTraceAsString(),
+                __METHOD__
+            );
+            return [
+                'success' => false,
+                'message' => 'Login succeeded but a token could not be issued. Please try again.',
+                'token' => null,
+                'error_code' => 'TOKEN_ERROR',
+            ];
+        }
+
+        // 3) Best-effort login notification. A failure here must NEVER fail the login.
+        try {
+            $this->sendLoginNotification($model->user_name, \app\helpers\CustomHelper::get_client_ip() ?? 'localhost');
+        } catch (\Throwable $e) {
+            Yii::warning('Mobile login notification failed (login still successful): ' . $e->getMessage(), __METHOD__);
+        }
+
+        return [
+            'success' => true,
+            'message' => 'Login successful',
+            'token' => $token,
+            'user' => [
+                'id' => $user->user_id,
+                'name' => $user->user_nama,
+                'username' => $user->user_name,
+                'user_tipe' => $user->user_tipe,
+                'user_email' => $user->user_email,
+                'photo' => $user->user_foto,
+            ]
+        ];
+    }
+
+    /**
+     * Resolve and validate the JWT secret. Never falls back to a hard-coded value.
+     *
+     * @return string
+     * @throws \yii\base\InvalidConfigException
+     */
+    private static function jwtSecret()
+    {
+        $secret = Yii::$app->params['jwtSecret'] ?? null;
+        if (!is_string($secret) || $secret === '') {
+            throw new \yii\base\InvalidConfigException('Required parameter "jwtSecret" is missing or empty.');
+        }
+        return $secret;
+    }
+
+    /**
+     * Return the required JWT configuration, or throw with the missing keys.
+     *
+     * @return array
+     * @throws \yii\base\InvalidConfigException
+     */
+    private static function jwtConfig()
+    {
+        $required = ['jwtSecret', 'jwtIssuer', 'jwtAudience', 'mobileServerUrl'];
+        $missing = [];
+        foreach ($required as $key) {
+            if (!isset(Yii::$app->params[$key]) || Yii::$app->params[$key] === '') {
+                $missing[] = $key;
+            }
+        }
+        if (!empty($missing)) {
+            throw new \yii\base\InvalidConfigException('Missing required config: ' . implode(', ', $missing));
+        }
+        return [
+            'secret' => Yii::$app->params['jwtSecret'],
+            'issuer' => Yii::$app->params['jwtIssuer'],
+            'audience' => Yii::$app->params['jwtAudience'],
+            'serverUrl' => Yii::$app->params['mobileServerUrl'],
+        ];
     }
 
     /**
@@ -1375,7 +1447,7 @@ class MobileController extends Controller
      */
     private function generateJwtToken($user)
     {
-        $secret = Yii::$app->params['jwtSecret'] ?? 'Ju5TS0m3!2@nd0M';
+        $secret = self::jwtSecret();
         $issuedAt = time();
         $expire = $issuedAt + (60 * 60 * 24 * 7); // Token valid for 7 days
 
@@ -1397,6 +1469,23 @@ class MobileController extends Controller
 
         $token = JwtHelper::encode($payload, $secret);
         return $token;
+    }
+
+    /**
+     * Notify Telegram about a successful mobile login.
+     *
+     * This is a best-effort side effect: callers must never let a failure here
+     * change the login result (see actionLogin()).
+     *
+     * @param string $username
+     * @param string $clientIp
+     */
+    protected function sendLoginNotification($username, $clientIp)
+    {
+        TelegramHelper::sendSimpleMessage(
+            "Mobile User Login : " . $username . "\nFrom : " . $clientIp,
+            Yii::$app->params['group_id']
+        );
     }
 
     public function actionValidateToken()
@@ -1437,7 +1526,7 @@ class MobileController extends Controller
      */
     private function validateJwtToken($token)
     {
-        $secret = Yii::$app->params['jwtSecret'] ?? 'Ju5TS0m3!2@nd0M';
+        $secret = self::jwtSecret();
 
         // Validate token
         try {
@@ -2630,7 +2719,7 @@ class MobileController extends Controller
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -2798,7 +2887,7 @@ public function actionGetDevices()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -2895,7 +2984,7 @@ public function actionGetDevices()
                 ];
             }
 
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token only (endpoint requirement includes token input)
             JwtHelper::validate($token, $secret);
@@ -3011,7 +3100,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -4645,7 +4734,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -4748,7 +4837,7 @@ public function actionGetDevicesWithData()
     public function actionOptions()
     {
         // Yii::$app->response->statusCode = 200;
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
         Yii::$app->response->statusCode = 200;
@@ -4761,7 +4850,7 @@ public function actionGetDevicesWithData()
     public function actionRegister()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -5106,7 +5195,7 @@ public function actionGetDevicesWithData()
     public function actionTestEmail()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -5227,7 +5316,7 @@ public function actionGetDevicesWithData()
     public function actionForgotPassword()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -5342,7 +5431,7 @@ public function actionGetDevicesWithData()
     public function actionGenerateOtp()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -5478,7 +5567,7 @@ public function actionGetDevicesWithData()
     public function actionCheckOtp()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -5644,7 +5733,7 @@ public function actionGetDevicesWithData()
     public function actionResetPassword()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -5850,7 +5939,7 @@ public function actionGetDevicesWithData()
     public function actionActionResetPassword()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -6352,7 +6441,7 @@ public function actionGetDevicesWithData()
     public function actionActionChangePassword()
     {
         // Add CORS headers
-        Yii::$app->response->headers->set('Access-Control-Allow-Origin', '*');
+        // CORS origin is applied by the corsFilter behavior (see behaviors()).
         Yii::$app->response->headers->set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
         Yii::$app->response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
 
@@ -6546,7 +6635,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -6674,7 +6763,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -6750,7 +6839,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -6817,7 +6906,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -6908,7 +6997,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -7017,7 +7106,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -7085,7 +7174,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -7187,7 +7276,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -7296,7 +7385,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
@@ -7369,7 +7458,7 @@ public function actionGetDevicesWithData()
             }
 
             // Get secret key from params
-            $secret = \Yii::$app->params['jwtSecret'] ?? 'your-default-secret-key';
+            $secret = self::jwtSecret();
 
             // Validate token
             $payload = JwtHelper::validate($token, $secret);
