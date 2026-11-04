@@ -1304,12 +1304,13 @@ class MobileController extends Controller
         // API authentication is stateless: do not depend on a PHP session or cookies.
         Yii::$app->user->enableSession = false;
 
-        // Fail fast with a clear error if the JWT configuration is incomplete.
+        // Fail fast if the JWT secret is not configured. Returned as a normal JSON
+        // error body (rather than a bare 5xx, whose body some deployments replace
+        // with an ErrorDocument page) so clients/proxies can read the reason.
         try {
-            self::jwtConfig();
+            self::jwtSecret();
         } catch (\yii\base\InvalidConfigException $e) {
             Yii::error('Mobile login misconfiguration: ' . $e->getMessage(), __METHOD__);
-            Yii::$app->response->statusCode = 500;
             return [
                 'success' => false,
                 'message' => 'Server configuration error. Please contact support.',
@@ -1417,32 +1418,6 @@ class MobileController extends Controller
     }
 
     /**
-     * Return the required JWT configuration, or throw with the missing keys.
-     *
-     * @return array
-     * @throws \yii\base\InvalidConfigException
-     */
-    private static function jwtConfig()
-    {
-        $required = ['jwtSecret', 'jwtIssuer', 'jwtAudience', 'mobileServerUrl'];
-        $missing = [];
-        foreach ($required as $key) {
-            if (!isset(Yii::$app->params[$key]) || Yii::$app->params[$key] === '') {
-                $missing[] = $key;
-            }
-        }
-        if (!empty($missing)) {
-            throw new \yii\base\InvalidConfigException('Missing required config: ' . implode(', ', $missing));
-        }
-        return [
-            'secret' => Yii::$app->params['jwtSecret'],
-            'issuer' => Yii::$app->params['jwtIssuer'],
-            'audience' => Yii::$app->params['jwtAudience'],
-            'serverUrl' => Yii::$app->params['mobileServerUrl'],
-        ];
-    }
-
-    /**
      * Generate JWT token for user
      */
     private function generateJwtToken($user)
@@ -1452,11 +1427,11 @@ class MobileController extends Controller
         $expire = $issuedAt + (60 * 60 * 24 * 7); // Token valid for 7 days
 
         $payload = [
-            'iss' => Yii::$app->params['jwtIssuer'], // Issuer
-            'aud' => Yii::$app->params['jwtAudience'], // Audience
+            'iss' => Yii::$app->params['jwtIssuer'] ?? null, // Issuer
+            'aud' => Yii::$app->params['jwtAudience'] ?? null, // Audience
             'iat' => $issuedAt, // Issued at
             'exp' => $expire, // Expire time
-            'url' => Yii::$app->params['mobileServerUrl'],
+            'url' => Yii::$app->params['mobileServerUrl'] ?? null,
             'data' => [
                 'id' => $user->user_id,
                 'name' => $user->user_nama,
