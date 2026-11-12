@@ -36,6 +36,10 @@ tests/_support/_generated
 /config/params.php
 /config/test_db.php
 
+# environment (berisi kredensial)
+.env
+.env.local
+
 /web/uploads
 vendor.zip
 .antigravity/swarm_locks.json

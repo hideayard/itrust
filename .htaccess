@@ -1,2 +1,27 @@
-RewriteEngine on
-RewriteRule ^$ web/ [L]
+# ---------------------------------------------------------------------------
+# .htaccess ROOT PROYEK iTrust
+#
+# Kalau document root hosting menunjuk ke root proyek (bukan folder web/),
+# berkas seperti .env, config/db.php, vendor/, runtime/logs, *.sql, dan
+# vendor*.zip akan bisa diunduh publik. Blok di bawah menutup semuanya:
+# hanya folder web/ yang boleh diakses.
+#
+# Aman dipakai juga di Laragon (subfolder /OLD/itrust/) karena pola RewriteRule
+# bersifat relatif terhadap folder ini.
+# ---------------------------------------------------------------------------
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # 1) URL kosong -> folder web/ (halaman utama aplikasi)
+    RewriteRule ^$ web/ [L]
+
+    # 2) Folder web/ diteruskan (aturannya ada di web/.htaccess)
+    RewriteRule ^web(/|$) - [L]
+
+    # 3) Sisanya DITOLAK (403) — mencegah .env, config/, vendor/, runtime/,
+    #    uploads/, *.sql, *.zip, dan sumber PHP lain terunduh.
+    #    /.well-known/ dikecualikan untuk verifikasi SSL (AutoSSL/Let's Encrypt).
+    RewriteCond %{REQUEST_URI} !/\.well-known/
+    RewriteRule ^ - [F,L]
+</IfModule>
