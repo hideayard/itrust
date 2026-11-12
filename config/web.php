@@ -10,6 +10,8 @@ $config = [
     'aliases' => [
         '@bower' => '@vendor/bower-asset',
         '@npm'   => '@vendor/npm-asset',
+        // Modul ERP (iTrustERP) — kode & database terpisah dari aplikasi ini.
+        '@erp'   => '@app/modules/erp',
     ],
     'components' => [
         'assetManager' => [
@@ -59,7 +61,7 @@ $config = [
         'urlManager' => [
             'enablePrettyUrl' => true,
             'showScriptName' => false,
-            'rules' => [
+            'rules' => array_merge([
                 //webhook telegram
                 'webhook/telegram' => 'webhook/telegram',
 
@@ -130,10 +132,15 @@ $config = [
                 'POST gmr/sync-invoice' => 'gmr/sync-invoice',
                 'POST gmr/sync-toon' => 'gmr/sync-toon',
 
-            ],
+            ], require __DIR__ . '/../modules/erp/config/routes.php'),
         ],
     ],
     'modules' => [
+        // Modul ERP iTrustERP: hanya aktif untuk URL /erp/api/v1/... sehingga
+        // konfigurasi, database, dan autentikasinya terpisah dari iTrust.
+        'erp' => [
+            'class' => 'erp\Module',
+        ],
         'gridview' =>  [
             'class' => '\kartik\grid\Module'
             // enter optional module parameters below - only if you need to  
