@@ -335,9 +335,17 @@ $this->title = $enroll->enrollCourse->course_title . ' | iTrust';
 //php function nanti akan dipakai saat insert new data
 function getDuration($videoID){
     $apikey = "AIzaSyCi7J_JZ5EfzFciXD1mzLYC7DG60-hETFk"; // Like this AIcvSyBsLA8znZn-i-aPLWFrsPOlWMkEyVaXAcv
-    $dur = file_get_contents("https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=$videoID&key=$apikey");
-    $VidDuration =json_decode($dur, true);
-    foreach ($VidDuration['items'] as $vidTime)
+    // Batasi waktu (detik) agar halaman tidak menggantung bila YouTube lambat.
+    $ctx = stream_context_create([
+        'http' => ['method' => 'GET', 'timeout' => 5],
+        'ssl' => ['verify_peer' => false, 'verify_peer_name' => false],
+    ]);
+    $dur = @file_get_contents("https://www.googleapis.com/youtube/v3/videos?part=contentDetails&id=$videoID&key=$apikey", false, $ctx);
+    if ($dur === false) {
+        return 0;
+    }
+    $VidDuration = json_decode($dur, true);
+    foreach (($VidDuration['items'] ?? []) as $vidTime)
     {
         $VidDuration= $vidTime['contentDetails']['duration'];
     }

@@ -189,6 +189,9 @@ class CustomHelper
             curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36');
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            // Jangan biarkan request menggantung bila Google lambat/tidak merespons.
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
             $result = curl_exec($ch);
             curl_close($ch);
         } else {
@@ -199,16 +202,23 @@ class CustomHelper
                 ),
                 'http' => array(
                 'method' => 'GET',
+                'timeout' => 10,
                 'header' => 'Accept-language: '.$option['your_language_for_tran']."\r\n" .
                 "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36\r\n"
                 )
             );  
             $result = file_get_contents($url, false, stream_context_create($arrContextOptions));
         }
-    
-        $fp = fopen('reviews.json', 'w');
-        fwrite($fp, $result);
-        fclose($fp);
+
+        if ($result === false) {
+            $result = '';
+        }
+
+        $fp = @fopen('reviews.json', 'w');
+        if ($fp !== false) {
+            fwrite($fp, $result);
+            fclose($fp);
+        }
     
         $data  = json_decode($result, true);
         #echo'<pre>';var_dump($data);echo'</pre>'; // DEV & DEBUG
