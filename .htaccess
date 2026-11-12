@@ -1,27 +1,33 @@
 # ---------------------------------------------------------------------------
 # .htaccess ROOT PROYEK iTrust
 #
-# Kalau document root hosting menunjuk ke root proyek (bukan folder web/),
-# berkas seperti .env, config/db.php, vendor/, runtime/logs, *.sql, dan
-# vendor*.zip akan bisa diunduh publik. Blok di bawah menutup semuanya:
-# hanya folder web/ yang boleh diakses.
+# Tujuan: menutup berkas sensitif (.env, config, vendor, runtime, dump, dsb.)
+# TANPA menolak seluruh path — supaya halaman error bawaan hosting
+# (mis. /500.shtml) tetap bisa ditampilkan dan tidak muncul pesan
+# "Additionally, a 403 Forbidden error was encountered while trying to use
+# an ErrorDocument".
 #
-# Aman dipakai juga di Laragon (subfolder /OLD/itrust/) karena pola RewriteRule
-# bersifat relatif terhadap folder ini.
+# Aman dipakai di hosting (document root = root proyek) maupun di Laragon
+# (subfolder /OLD/itrust/) karena pola RewriteRule relatif terhadap folder ini.
 # ---------------------------------------------------------------------------
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # 1) URL kosong -> folder web/ (halaman utama aplikasi)
+    # 1) Beranda proyek -> folder web/
     RewriteRule ^$ web/ [L]
 
-    # 2) Folder web/ diteruskan (aturannya ada di web/.htaccess)
-    RewriteRule ^web(/|$) - [L]
-
-    # 3) Sisanya DITOLAK (403) — mencegah .env, config/, vendor/, runtime/,
-    #    uploads/, *.sql, *.zip, dan sumber PHP lain terunduh.
-    #    /.well-known/ dikecualikan untuk verifikasi SSL (AutoSSL/Let's Encrypt).
+    # 2) Berkas berawalan titik (.env, .git, .htaccess, …)
+    #    /.well-known/ dikecualikan untuk verifikasi SSL.
     RewriteCond %{REQUEST_URI} !/\.well-known/
-    RewriteRule ^ - [F,L]
+    RewriteRule (^|/)\. - [F,L]
+
+    # 3) Ekstensi sensitif (dump/SQL/log/arsip)
+    RewriteRule \.(env|sql|log|zip|md|lock|yml|yaml|neon|sh|ps1|bat|dist)$ - [F,L]
+
+    # 4) Folder sumber & utilitas (tidak boleh diakses lewat web)
+    RewriteRule ^(config|vendor|runtime|tests|scripts|mt5|example|mail|uploads|views|models|controllers|helpers|widgets|commands|assets)(/|$) - [F,L]
+
+    # 5) Berkas utilitas di root
+    RewriteRule ^(yii|yii\.bat|requirements\.php|codeception\.yml|composer\.(json|lock)|Vagrantfile|docker-compose\.yml|invoice\.code-workspace)$ - [F,L]
 </IfModule>
