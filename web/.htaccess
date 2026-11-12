@@ -1,4 +1,9 @@
 RewriteEngine on
+
+# Tolak cepat pola pemindai bot — dijawab Apache tanpa membangkitkan proses PHP.
+RewriteRule ^(wp-|wordpress|xmlrpc\.php|phpinfo\.php|php\.ini|cgi-bin|admin\.php|wp-content|wp-includes|\.env) - [R=404,L]
+RewriteRule \.(sql|bak|old|zip|log|env|md|lock|yml|yaml|sh|ps1)$ - [R=404,L]
+
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteRule . index.php [L]

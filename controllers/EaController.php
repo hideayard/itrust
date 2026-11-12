@@ -162,10 +162,16 @@ class EaController extends Controller
 
             // First, check if there's an order specifically for this account
             $now = (new DateTime())->format('Y-m-d H:i:s');
+            // Hanya kolom yang dipakai + batasi jumlah baris: endpoint ini dipanggil
+            // tiap detik oleh EA, jadi harus seringan mungkin.
+            $columns = ['order_id', 'order_account', 'order_cmd', 'order_finished_account', 'order_multi_account', 'order_date', 'expired_date'];
+
             $directOrders = CloseOrder::find()
+                ->select($columns)
                 ->where(['order_account' => $accountID, 'order_status' => 0])
                 ->andWhere(['>', 'expired_date', $now])
                 ->orderBy(['order_date' => SORT_DESC])
+                ->limit(50)
                 ->all();
 
             $order = null;
@@ -179,14 +185,24 @@ class EaController extends Controller
 
             // If no direct order found, check multi-account orders
             if ($order === null) {
-                // Get all pending orders that have order_multi_account set
-                $multiOrders = CloseOrder::find()
+                // Cek murah dulu: hindari menarik semua baris bila tidak ada order multi.
+                $hasMultiOrders = (new \yii\db\Query())
+                    ->from('close_order')
+                    ->where(['order_status' => 0])
+                    ->andWhere(['>', 'expired_date', $now])
+                    ->andWhere(['not', ['order_multi_account' => null]])
+                    ->andWhere(['not', ['order_multi_account' => '']])
+                    ->exists();
+
+                $multiOrders = $hasMultiOrders ? CloseOrder::find()
+                    ->select($columns)
                     ->where(['order_status' => 0])
                     ->andWhere(['>', 'expired_date', $now])
                     ->andWhere(['not', ['order_multi_account' => null]])
                     ->andWhere(['not', ['order_multi_account' => '']])
                     ->orderBy(['order_date' => SORT_DESC])
-                    ->all();
+                    ->limit(50)
+                    ->all() : [];
 
                 foreach ($multiOrders as $multiOrder) {
                     $multiAccounts = array_map('strval', $multiOrder->getMultiAccounts());
