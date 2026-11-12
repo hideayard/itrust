@@ -3,6 +3,11 @@
 $params = require __DIR__ . '/params.php';
 $db = require __DIR__ . '/db.php';
 
+// Route modul ERP hanya dimuat bila request memang menuju modul (/erp/api/v1/...).
+// Tanpa ini, ratusan UrlRule ERP dibangun di SETIAP request iTrust sehingga
+// CPU/waktu respons membengkak (berdampak juga ke endpoint EA yang dipanggil terus-menerus).
+$erpRequest = (bool) preg_match('#(^|/)erp/api/v1(/|$)#', (string) ($_SERVER['REQUEST_URI'] ?? ''));
+
 $config = [
     'id' => 'ro',
     'basePath' => dirname(__DIR__),
@@ -132,7 +137,7 @@ $config = [
                 'POST gmr/sync-invoice' => 'gmr/sync-invoice',
                 'POST gmr/sync-toon' => 'gmr/sync-toon',
 
-            ], require __DIR__ . '/../modules/erp/config/routes.php'),
+            ], $erpRequest ? require __DIR__ . '/../modules/erp/config/routes.php' : []),
         ],
     ],
     'modules' => [
